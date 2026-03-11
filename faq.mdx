@@ -145,6 +145,10 @@ curl -X POST https://api.simmer.markets/api/sdk/troubleshoot \
 No auth required. See [Errors & Troubleshooting](/api/errors) for the full reference.
 </Accordion>
 
+<Accordion title="How do I get help when my bot hits an error?">
+Call `POST /api/sdk/troubleshoot` with a `message` field describing your issue. The endpoint auto-pulls your agent status, recent orders, and balance, then responds with a contextual fix in your language. 5 free calls/day, then \$0.02/call via x402. You can also include `error_text` with the raw error for faster diagnosis.
+</Accordion>
+
 <Accordion title='I get "not enough balance / allowance" but I have funds'>
 Usually a missing USDC.e approval. Activate trading from the dashboard: **Dashboard -> Portfolio -> Activate Trading** (one-time allowance transaction).
 

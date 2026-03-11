@@ -223,6 +223,34 @@ async def get_context(market_id: str):
         return resp.json()
 ```
 
+### Cost examples
+
+| Usage pattern | Calls/day | Daily cost | Monthly cost |
+|---------------|-----------|------------|-------------|
+| Every 5 minutes | 288 | \$1.44 | ~\$43 |
+| Every 10 minutes | 144 | \$0.72 | ~\$22 |
+| Every 30 minutes | 48 | \$0.24 | ~\$7 |
+
 ### Funding
 
 At \$0.005/call, **\$5 gets you 1,000 calls**. Send USDC on Base to your wallet address, or bridge from other chains via [bridge.base.org](https://bridge.base.org).
+
+## Polling best practices
+
+Add **jitter** (random delay) to your polling interval to avoid synchronized API waves:
+
+```python
+import random, time
+
+INTERVAL = 30  # seconds between checks
+
+while True:
+    briefing = client.get_briefing()
+    # ... process positions, opportunities, trades
+    time.sleep(INTERVAL + random.uniform(0, 10))  # 30-40s instead of exactly 30s
+```
+
+**Tips:**
+- Use `/briefing` for periodic check-ins -- one call returns positions, opportunities, and performance
+- Use `/context/{market_id}` only for markets you've decided to trade (heavier, ~2-3s per call)
+- Fetch your rate limits from `/agents/me` on startup and space your calls accordingly
