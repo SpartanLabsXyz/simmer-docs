@@ -84,16 +84,6 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Dashboard",
-          "href": "https://simmer.markets/dashboard",
-          "icon": "gauge"
-        },
-        {
-          "anchor": "SDK Source",
-          "href": "https://github.com/SpartanLabsXyz/simmer-sdk",
-          "icon": "github"
-        },
-        {
           "anchor": "Support",
           "href": "https://t.me/+DykggGXL67E4MGE9",
           "icon": "telegram"
@@ -132,6 +122,25 @@
       "x": "https://x.com/0xSimmy",
       "github": "https://github.com/SpartanLabsXyz/simmer-sdk",
       "telegram": "https://t.me/+DykggGXL67E4MGE9"
-    }
+    },
+    "links": [
+      {
+        "header": "Resources",
+        "items": [
+          {
+            "label": "Dashboard",
+            "href": "https://simmer.markets/dashboard"
+          },
+          {
+            "label": "SDK Source",
+            "href": "https://github.com/SpartanLabsXyz/simmer-sdk"
+          },
+          {
+            "label": "ClawHub Skills",
+            "href": "https://clawhub.ai"
+          }
+        ]
+      }
+    ]
   }
 }
