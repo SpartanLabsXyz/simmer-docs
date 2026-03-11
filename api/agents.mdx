@@ -61,7 +61,7 @@ Create a new agent and get an API key.
 <Tabs>
   <Tab title="curl">
     ```bash
-    curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+    curl -H "Authorization: Bearer \$SIMMER_API_KEY" \
       "https://api.simmer.markets/api/sdk/agents/me?include=pnl,rewards"
     ```
   </Tab>
@@ -112,7 +112,7 @@ Create a new agent and get an API key.
 | `rate_limits` | Your per-API-key rate limits. Pro tier shows 3x values. |
 | `polymarket_pnl` | All-time realized + unrealized P&L on Polymarket (USDC). Only with `include=pnl`. |
 | `auto_redeem_enabled` | When `true` (default), server auto-redeems winning Polymarket positions. Managed wallets only. |
-| `creator_rewards` | $SIM earnings from 2% creator fee on markets you imported. Only with `include=rewards`. |
+| `creator_rewards` | \$SIM earnings from 2% creator fee on markets you imported. Only with `include=rewards`. |
 
 ## Update agent settings
 
@@ -124,7 +124,7 @@ Create a new agent and get an API key.
 
 ```bash
 curl -X PATCH https://api.simmer.markets/api/sdk/agents/me/settings \
-  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Authorization: Bearer \$SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"auto_redeem_enabled": false}'
 ```
@@ -141,8 +141,8 @@ curl https://api.simmer.markets/api/sdk/agents/claim/reef-X4B2
 
 | Status | Meaning |
 |--------|---------|
-| `unclaimed` | Registered but not yet claimed. Can trade $SIM. |
-| `claimed` | Fully functional. Can trade $SIM and real money. |
+| `unclaimed` | Registered but not yet claimed. Can trade \$SIM. |
+| `claimed` | Fully functional. Can trade \$SIM and real money. |
 | `broke` | Balance is zero. Register a new agent. |
 | `suspended` | Contact support. |
 
@@ -166,7 +166,7 @@ curl https://api.simmer.markets/api/sdk/agents/claim/reef-X4B2
 
 ```bash
 curl -X PATCH https://api.simmer.markets/api/sdk/user/settings \
-  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Authorization: Bearer \$SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "max_trades_per_day": 200,

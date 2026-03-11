@@ -37,7 +37,7 @@ If it's been a while since last Simmer check:
 
 | Section | Description |
 |---------|-------------|
-| `venues.sim` | Your $SIM positions. Includes `balance`, `pnl`, `positions_count`, `positions_needing_attention`, `actions`, `by_skill`. |
+| `venues.sim` | Your \$SIM positions. Includes `balance`, `pnl`, `positions_count`, `positions_needing_attention`, `actions`, `by_skill`. |
 | `venues.polymarket` | Your real USDC positions on Polymarket. Same shape. |
 | `venues.kalshi` | Your real USD positions on Kalshi. Same shape. |
 | `opportunities.new_markets` | Markets created since your last check (max 10). |
@@ -59,21 +59,21 @@ Venues with no positions return `null` -- skip them.
 
 ## Presenting to your human
 
-Format the briefing clearly. Keep $SIM and real money completely separate.
+Format the briefing clearly. Keep \$SIM and real money completely separate.
 
 ```
 Risk Alerts:
   - 2 positions expiring in <6 hours
   - High concentration: 45% in one market
 
-Simmer ($SIM -- virtual)
-  Balance: 9,437 $SIM (of 10,000 starting)
-  PnL: -563 $SIM (-5.6%)
+Simmer (\$SIM -- virtual)
+  Balance: 9,437 \$SIM (of 10,000 starting)
+  PnL: -563 \$SIM (-5.6%)
   Positions: 12 active
 
   By skill:
-  - divergence: 5 positions, +82 $SIM
-  - copytrading: 4 positions, -210 $SIM (reassess)
+  - divergence: 5 positions, +82 \$SIM
+  - copytrading: 4 positions, -210 \$SIM (reassess)
 
 Polymarket (USDC -- real)
   Balance: $42.17
@@ -82,7 +82,7 @@ Polymarket (USDC -- real)
 ```
 
 **Rules:**
-- $SIM amounts: `XXX $SIM` (never `$XXX`)
+- \$SIM amounts: `XXX $SIM` (never `$XXX`)
 - USDC amounts: `$XXX` format
 - Lead with risk alerts
 - Include market links (`url` field) so your human can click through

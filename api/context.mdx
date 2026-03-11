@@ -21,7 +21,7 @@ Don't loop this endpoint for scanning. Use `GET /api/sdk/briefing` for heartbeat
 <Tabs>
   <Tab title="curl">
     ```bash
-    curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+    curl -H "Authorization: Bearer \$SIMMER_API_KEY" \
       "https://api.simmer.markets/api/sdk/context/MARKET_ID?my_probability=0.75"
     ```
   </Tab>
@@ -115,7 +115,7 @@ Single call that returns everything for a periodic check-in -- positions, opport
 <Tabs>
   <Tab title="curl">
     ```bash
-    curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+    curl -H "Authorization: Bearer \$SIMMER_API_KEY" \
       "https://api.simmer.markets/api/sdk/briefing?since=2026-02-08T00:00:00Z"
     ```
   </Tab>
@@ -133,7 +133,7 @@ Single call that returns everything for a periodic check-in -- positions, opport
 {
   "venues": {
     "sim": {
-      "currency": "$SIM",
+      "currency": "\$SIM",
       "balance": 10150.25,
       "pnl": 150.25,
       "positions_count": 17,
@@ -200,7 +200,7 @@ Single call that returns everything for a periodic check-in -- positions, opport
 
 | Section | Description |
 |---------|-------------|
-| `venues.sim` | $SIM positions. Includes `by_skill` breakdown. `null` if no positions. |
+| `venues.sim` | \$SIM positions. Includes `by_skill` breakdown. `null` if no positions. |
 | `venues.polymarket` | Real USDC positions. `null` if no wallet. |
 | `venues.kalshi` | Real USD positions. `null` if no positions. |
 | `positions_needing_attention` | Only positions with >15% move or resolving within 48h. |

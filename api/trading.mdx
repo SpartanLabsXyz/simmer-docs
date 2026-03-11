@@ -30,7 +30,7 @@ icon: arrow-right-arrow-left
   <Tab title="curl">
     ```bash
     curl -X POST https://api.simmer.markets/api/sdk/trade \
-      -H "Authorization: Bearer $SIMMER_API_KEY" \
+      -H "Authorization: Bearer \$SIMMER_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
         "market_id": "uuid",
@@ -59,7 +59,7 @@ icon: arrow-right-arrow-left
 
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/trade \
-  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Authorization: Bearer \$SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "market_id": "uuid",
@@ -79,7 +79,7 @@ Buys use `amount` (USD to spend). Sells use `shares` (number of shares to sell).
 
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/trade \
-  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Authorization: Bearer \$SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "market_id": "uuid",
@@ -146,7 +146,7 @@ Execute up to 30 trades in parallel. Buy-only (sells not supported). Failures do
 
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/trades/batch \
-  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Authorization: Bearer \$SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "trades": [
@@ -171,7 +171,7 @@ After a Polymarket market resolves, redeem winning positions to convert CTF toke
 
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/redeem \
-  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Authorization: Bearer \$SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"market_id": "your-market-id", "side": "yes"}'
 ```
@@ -194,7 +194,7 @@ Use `GET /api/sdk/positions` and look for `"redeemable": true` to find positions
 | `source` | string | Filter by trade source tag. Partial match. |
 
 ```bash
-curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+curl -H "Authorization: Bearer \$SIMMER_API_KEY" \
   "https://api.simmer.markets/api/sdk/positions?venue=polymarket"
 ```
 
@@ -211,7 +211,7 @@ curl -H "Authorization: Bearer $SIMMER_API_KEY" \
 `GET /api/sdk/portfolio`
 
 ```bash
-curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+curl -H "Authorization: Bearer \$SIMMER_API_KEY" \
   "https://api.simmer.markets/api/sdk/portfolio"
 ```
 
@@ -264,7 +264,7 @@ Automatic stop-loss and take-profit. Defaults: 50% stop-loss, 35% take-profit on
 
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/positions/MARKET_ID/monitor \
-  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Authorization: Bearer \$SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"side": "yes", "stop_loss_pct": 0.50, "take_profit_pct": 0.35}'
 ```
@@ -322,7 +322,7 @@ Replace polling with push notifications.
 
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/webhooks \
-  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Authorization: Bearer \$SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://my-bot.example.com/webhook",
@@ -355,7 +355,7 @@ View any Polymarket wallet's positions.
 
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/copytrading/execute \
-  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Authorization: Bearer \$SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "wallets": ["0x123...", "0x456..."],

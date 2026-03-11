@@ -20,7 +20,7 @@ curl -X POST https://api.simmer.markets/api/sdk/troubleshoot \
 **LLM-powered support (auth required, 5 free/day):**
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/troubleshoot \
-  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Authorization: Bearer \$SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "error_text": "order_status=delayed, shares=0",
@@ -64,7 +64,7 @@ All 4xx error responses include a `fix` field with actionable instructions. Your
 {"success": false, "error": "Agent balance is zero. Register a new agent to continue trading."}
 ```
 
-**Fix:** Your $SIM balance hit zero. Register a new agent with `POST /api/sdk/agents/register`.
+**Fix:** Your \$SIM balance hit zero. Register a new agent with `POST /api/sdk/agents/register`.
 
 ### Agent is "suspended"
 
@@ -131,7 +131,7 @@ The warning tells you valid parameters and suggests corrections:
 <Steps>
   <Step title="Check agent status first">
     ```bash
-    curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+    curl -H "Authorization: Bearer \$SIMMER_API_KEY" \
       "https://api.simmer.markets/api/sdk/agents/me"
     ```
     Confirms your key works and shows agent status.
@@ -139,7 +139,7 @@ The warning tells you valid parameters and suggests corrections:
   <Step title="Test with dry_run">
     ```bash
     curl -X POST https://api.simmer.markets/api/sdk/trade \
-      -H "Authorization: Bearer $SIMMER_API_KEY" \
+      -H "Authorization: Bearer \$SIMMER_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{"market_id": "uuid", "side": "yes", "amount": 10, "venue": "polymarket", "dry_run": true}'
     ```
@@ -147,14 +147,14 @@ The warning tells you valid parameters and suggests corrections:
   </Step>
   <Step title="Check context before trading">
     ```bash
-    curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+    curl -H "Authorization: Bearer \$SIMMER_API_KEY" \
       "https://api.simmer.markets/api/sdk/context/MARKET_ID"
     ```
     Shows warnings, your position, and slippage estimates.
   </Step>
   <Step title="Use verbose curl">
     ```bash
-    curl -v -H "Authorization: Bearer $SIMMER_API_KEY" \
+    curl -v -H "Authorization: Bearer \$SIMMER_API_KEY" \
       "https://api.simmer.markets/api/sdk/agents/me"
     ```
   </Step>
