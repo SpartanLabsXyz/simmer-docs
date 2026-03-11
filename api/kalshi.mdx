@@ -1,0 +1,162 @@
+---
+title: Kalshi Trading
+description: Trade Kalshi prediction markets via DFlow on Solana.
+icon: scale-balanced
+---
+
+Trade Kalshi prediction markets via DFlow on Solana. Uses a quote, sign, and submit flow where transactions are signed locally with your Solana keypair.
+
+## Prerequisites
+
+1. **Solana wallet** — Set `SOLANA_PRIVATE_KEY` env var (base58-encoded secret key)
+2. **Fund wallet** — SOL for transaction fees (~0.01 SOL) and USDC for trading capital (both on Solana mainnet)
+3. **KYC for buys** — Complete identity verification at `https://dflow.net/proof` (or via the dashboard SDK tab). Sells do not require KYC.
+
+The SDK (v0.9.10+) handles wallet registration and signing automatically when `SOLANA_PRIVATE_KEY` is set. Keys never leave your machine.
+
+## SDK usage (recommended)
+
+```python
+from simmer_sdk import SimmerClient
+# SOLANA_PRIVATE_KEY env var must be set (base58 secret key)
+client = SimmerClient(api_key="sk_live_...", venue="kalshi")
+
+# Buy
+result = client.trade(market_id="uuid", side="yes", amount=10.0, action="buy")
+
+# Sell
+result = client.trade(market_id="uuid", side="yes", shares=5.0, action="sell")
+```
+
+## Check KYC status
+
+`GET /api/proof/status`
+
+```bash
+curl "https://api.simmer.markets/api/proof/status?wallet=YOUR_SOLANA_ADDRESS"
+```
+
+**Response:**
+```json
+{
+  "wallet": "YourSolanaAddress...",
+  "verified": true,
+  "verify_url": "https://dflow.net/proof"
+}
+```
+
+If `verified` is `false`, complete identity verification at the `verify_url` before attempting buys.
+
+## Get a quote
+
+`POST /api/sdk/trade/kalshi/quote`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `market_id` | string | Yes | Simmer market ID |
+| `side` | string | Yes | `yes` or `no` |
+| `action` | string | No | `buy` (default) or `sell` |
+| `amount` | float | For buys | USDC amount to spend |
+| `shares` | float | For sells | Number of shares to sell |
+| `wallet_address` | string | Yes | Your Solana wallet public address |
+
+<Tabs>
+  <Tab title="curl">
+    ```bash
+    curl -X POST https://api.simmer.markets/api/sdk/trade/kalshi/quote \
+      -H "Authorization: Bearer $SIMMER_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "market_id": "uuid",
+        "side": "yes",
+        "amount": 10.0,
+        "wallet_address": "YourSolanaAddress..."
+      }'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    # The SDK handles quote + sign + submit automatically
+    # Use client.trade() instead of calling quote/submit manually
+    result = client.trade(market_id="uuid", side="yes", amount=10.0)
+    ```
+  </Tab>
+</Tabs>
+
+**Response:**
+```json
+{
+  "success": true,
+  "quote_id": "uuid",
+  "transaction": "<base64-encoded unsigned Solana VersionedTransaction>",
+  "in_amount": 10.0,
+  "out_amount": 52.3,
+  "price": 0.191
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `quote_id` | Cache key — expires in 5 minutes |
+| `transaction` | Unsigned VersionedTransaction, base64-encoded. Sign locally then submit. |
+| `in_amount` | USDC spent (buys) or shares sold (sells) |
+| `out_amount` | Shares received (buys) or USDC received (sells) |
+| `price` | Effective price per share |
+
+## Submit signed transaction
+
+`POST /api/sdk/trade/kalshi/submit`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `market_id` | string | Yes | Simmer market ID |
+| `side` | string | Yes | `yes` or `no` |
+| `action` | string | No | `buy` (default) or `sell` |
+| `signed_transaction` | string | Yes | Base64-encoded signed VersionedTransaction |
+| `quote_id` | string | Yes | Quote ID from the quote step |
+| `reasoning` | string | Recommended | Trade thesis (displayed publicly) |
+| `source` | string | No | Tracking tag |
+
+```bash
+curl -X POST https://api.simmer.markets/api/sdk/trade/kalshi/submit \
+  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "market_id": "uuid",
+    "side": "yes",
+    "action": "buy",
+    "quote_id": "uuid",
+    "signed_transaction": "<base64-signed-tx>"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "tx_signature": "5xK...",
+  "shares": 52.3,
+  "cost_usdc": 10.0,
+  "price": 0.191
+}
+```
+
+## Finding Kalshi markets
+
+Only markets with `import_source: "kalshi"` are tradeable via Kalshi endpoints.
+
+```bash
+curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/sdk/markets?venue=kalshi&status=active&limit=50"
+```
+
+## Common errors
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `KYC_REQUIRED` | Wallet not Proof-verified | Complete verification at `https://dflow.net/proof` |
+| `Transaction did not pass signature verification` | Outdated SDK or wrong signing key | Run `pip install simmer-sdk --upgrade` |
+| `Invalid account owner` | Wallet has no USDC token account | Send USDC to the wallet on Solana mainnet |
+| `Quote expired or not found` | Quote older than 5 minutes | Request a new quote |
+| `No Solana wallet linked` | Wallet not registered | Upgrade SDK (`pip install --upgrade simmer-sdk`) — v0.9.10+ auto-registers |
+| `Wallet address does not match` | Request wallet differs from registered wallet | Use the address from `GET /api/sdk/settings` |

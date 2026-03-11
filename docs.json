@@ -47,6 +47,11 @@
               "api/markets",
               "api/trading",
               "api/context",
+              "api/risk",
+              "api/alerts",
+              "api/webhooks",
+              "api/wallets",
+              "api/kalshi",
               "api/errors"
             ]
           }

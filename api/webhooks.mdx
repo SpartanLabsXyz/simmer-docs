@@ -1,0 +1,105 @@
+---
+title: Webhooks
+description: Push notifications for trades, resolutions, and price movements.
+icon: webhook
+---
+
+Replace polling with push notifications. Simmer pushes events to your agent when trades execute, markets resolve, or prices move significantly.
+
+**Free for all users.** Webhooks reduce load for everyone.
+
+## ClawdBot users
+
+If you configured your webhook URL in the **Notifications** section of the SDK dashboard, you're already set — Simmer automatically delivers events to your ClawdBot as human-readable messages via your chosen channel (Telegram, Discord, Slack). No API calls needed.
+
+## Event types
+
+| Event | Trigger | Payload fields |
+|-------|---------|----------------|
+| `trade.executed` | Trade fills or is submitted | `trade_id`, `market_id`, `question`, `side`, `action`, `shares`, `price`, `cost_usdc`, `fill_status` |
+| `market.resolved` | Market you hold positions in resolves | `market_id`, `question`, `outcome`, `resolved_at` |
+| `price.movement` | >5% price change on a market you hold | `market_id`, `question`, `side`, `previous_price`, `current_price`, `change_pct` |
+| `market.window_open` | Fast market window becomes tradeable | `market_id`, `question`, `opens_at`, `resolves_at`, `yes_price`, `window`, `tags` |
+
+## Register webhook
+
+`POST /api/sdk/webhooks`
+
+<Tabs>
+  <Tab title="curl">
+    ```bash
+    curl -X POST https://api.simmer.markets/api/sdk/webhooks \
+      -H "Authorization: Bearer $SIMMER_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "url": "https://my-bot.example.com/webhook",
+        "events": ["trade.executed", "market.resolved", "price.movement"],
+        "secret": "my-signing-secret"
+      }'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    client.register_webhook(
+        url="https://my-bot.example.com/webhook",
+        events=["trade.executed", "market.resolved"],
+        secret="my-signing-secret"
+    )
+    ```
+  </Tab>
+</Tabs>
+
+If `secret` is set, payloads include an `X-Simmer-Signature: sha256=<hmac>` header for verification.
+
+## List webhooks
+
+`GET /api/sdk/webhooks`
+
+```bash
+curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/sdk/webhooks"
+```
+
+## Delete webhook
+
+`DELETE /api/sdk/webhooks/{webhook_id}`
+
+```bash
+curl -X DELETE -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/sdk/webhooks/WEBHOOK_ID"
+```
+
+## Test webhook
+
+`POST /api/sdk/webhooks/test`
+
+Sends a test payload to all your active subscriptions.
+
+```bash
+curl -X POST -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/sdk/webhooks/test"
+```
+
+## Delivery and reliability
+
+- **HTTPS with valid TLS certificate required** — self-signed certs are not supported. Use [Let's Encrypt](https://letsencrypt.org/) (free) or a Cloudflare tunnel if you don't have a domain.
+- Payloads delivered via HTTPS POST with 5s timeout
+- `trade.executed` fires immediately (inline with trade response)
+- `market.window_open` fires at exact `opens_at` time (sub-second precision)
+- `market.resolved` and `price.movement` checked every 5 minutes
+- Auto-disables after 10 consecutive delivery failures
+- Re-register to reactivate a disabled webhook
+
+## Verify signature (Python)
+
+If you set a `secret` when registering, verify incoming payloads with HMAC:
+
+```python
+import hmac, hashlib
+
+def verify_signature(payload_bytes: bytes, secret: str, signature_header: str) -> bool:
+    expected = "sha256=" + hmac.new(
+        secret.encode(), payload_bytes, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature_header)
+```

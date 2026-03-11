@@ -1,0 +1,93 @@
+---
+title: Wallets & Copytrading
+description: View wallet positions, mirror trades from top wallets, and set up external wallets via REST.
+icon: wallet
+---
+
+## Get wallet positions
+
+`GET /api/sdk/wallet/{wallet_address}/positions`
+
+View any Polymarket wallet's open positions. Useful for scouting wallets before copytrading.
+
+<Tabs>
+  <Tab title="curl">
+    ```bash
+    curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+      "https://api.simmer.markets/api/sdk/wallet/0x123.../positions"
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    positions = client.get_wallet_positions("0x123...")
+    ```
+  </Tab>
+</Tabs>
+
+## Execute copytrading
+
+`POST /api/sdk/copytrading/execute`
+
+Mirror positions from top wallets. The server fetches each wallet's positions, filters to the top N, and places buy trades on your behalf.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `wallets` | string[] | Yes | Polymarket wallet addresses to copy |
+| `max_usd_per_position` | number | No | Max USD to spend per position (default varies) |
+| `top_n` | int | No | Number of top positions to copy per wallet (default 10) |
+
+<Tabs>
+  <Tab title="curl">
+    ```bash
+    curl -X POST https://api.simmer.markets/api/sdk/copytrading/execute \
+      -H "Authorization: Bearer $SIMMER_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "wallets": ["0x123...", "0x456..."],
+        "max_usd_per_position": 25.0,
+        "top_n": 10
+      }'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    result = client.execute_copytrading(
+        wallets=["0x123...", "0x456..."],
+        max_usd_per_position=25.0,
+        top_n=10
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## External wallet setup (REST API)
+
+If you're not using the Python SDK, set up an external (self-custody) wallet via REST:
+
+### 1. Check allowances
+
+```bash
+curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/polymarket/allowances/YOUR_WALLET_ADDRESS"
+```
+
+This returns which Polymarket contract approvals are missing.
+
+### 2. Sign approval transactions
+
+Sign each missing approval transaction locally with your private key. The approval transactions are standard ERC-20 `approve` calls to the Polymarket contracts on Polygon.
+
+### 3. Broadcast signed transactions
+
+```bash
+curl -X POST https://api.simmer.markets/api/sdk/wallet/broadcast-tx \
+  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"signed_tx": "0x..."}'
+```
+
+Repeat for each approval transaction. After all approvals are broadcast, your wallet is ready for trading.
+
+<Note>
+The Python SDK handles all of this automatically with `client.link_wallet()` and `client.set_approvals()`. The REST flow above is for agents not using the SDK.
+</Note>

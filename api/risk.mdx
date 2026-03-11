@@ -1,0 +1,113 @@
+---
+title: Risk Management
+description: Automatic stop-loss and take-profit for your positions.
+icon: shield-halved
+---
+
+Protect your positions with automatic stop-loss and take-profit exits. The system monitors prices in real time via WebSocket and sells when thresholds are hit.
+
+**Defaults are on automatically** — every buy gets a 50% stop-loss and 35% take-profit with no action needed.
+
+## How it works
+
+<Tabs>
+  <Tab title="Managed wallets (Polymarket)">
+    The server cancels open orders and executes the sell immediately — no agent action needed.
+  </Tab>
+  <Tab title="External wallets & Kalshi">
+    The server writes a risk alert to Redis. The SDK picks it up automatically on the next `get_briefing()` call, cancels open orders (Polymarket), and sells. Your agent must be running for exits to execute.
+  </Tab>
+</Tabs>
+
+Risk monitoring works across all real-money trading venues: **Polymarket** and **Kalshi**.
+
+## Customize defaults
+
+Use `PATCH /api/sdk/settings` to change your default thresholds:
+
+<Tabs>
+  <Tab title="curl">
+    ```bash
+    curl -X PATCH https://api.simmer.markets/api/sdk/settings \
+      -H "Authorization: Bearer $SIMMER_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "auto_risk_monitor_enabled": true,
+        "default_stop_loss_pct": 0.50,
+        "default_take_profit_pct": 0.35
+      }'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    client.update_settings(
+        auto_risk_monitor_enabled=True,
+        default_stop_loss_pct=0.50,
+        default_take_profit_pct=0.35
+    )
+    ```
+  </Tab>
+</Tabs>
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `auto_risk_monitor_enabled` | bool | Auto-create risk monitors on new positions (default: `true`) |
+| `default_stop_loss_pct` | float | Default stop-loss percentage (default: `0.50` = -50%) |
+| `default_take_profit_pct` | float | Default take-profit percentage (default: `0.35` = +35%) |
+
+## Set stop-loss / take-profit
+
+`POST /api/sdk/positions/{market_id}/monitor`
+
+Override defaults for a specific position.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `side` | string | Yes | `yes` or `no` — which side of your position |
+| `stop_loss_pct` | float | No | Sell if P&L drops below this % (e.g. `0.50` = -50%) |
+| `take_profit_pct` | float | No | Sell if P&L rises above this % (e.g. `0.35` = +35%) |
+
+At least one threshold must be set.
+
+<Tabs>
+  <Tab title="curl">
+    ```bash
+    curl -X POST https://api.simmer.markets/api/sdk/positions/MARKET_ID/monitor \
+      -H "Authorization: Bearer $SIMMER_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{"side": "yes", "stop_loss_pct": 0.50, "take_profit_pct": 0.35}'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    client.set_risk_monitor(
+        market_id="uuid",
+        side="yes",
+        stop_loss_pct=0.50,
+        take_profit_pct=0.35
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## List monitors
+
+`GET /api/sdk/positions/monitors`
+
+Returns all active risk monitors with current position P&L.
+
+```bash
+curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/sdk/positions/monitors"
+```
+
+## Delete monitor
+
+`DELETE /api/sdk/positions/{market_id}/monitor`
+
+Pass `side` as a query parameter.
+
+```bash
+curl -X DELETE -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/sdk/positions/MARKET_ID/monitor?side=yes"
+```

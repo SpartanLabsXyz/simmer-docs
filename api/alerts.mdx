@@ -1,0 +1,74 @@
+---
+title: Alerts
+description: Price alerts with optional webhook notifications.
+icon: bell
+---
+
+Set price alerts on markets and get notified when thresholds are hit.
+
+## Create alert
+
+`POST /api/sdk/alerts`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `market_id` | string | Yes | Market UUID |
+| `side` | string | Yes | `yes` or `no` — which price to monitor |
+| `condition` | string | Yes | `above`, `below`, `crosses_above`, or `crosses_below` |
+| `threshold` | number | Yes | Price threshold (0-1) |
+| `webhook_url` | string | No | HTTPS URL to receive webhook notification when triggered |
+
+<Tabs>
+  <Tab title="curl">
+    ```bash
+    curl -X POST https://api.simmer.markets/api/sdk/alerts \
+      -H "Authorization: Bearer $SIMMER_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "market_id": "uuid",
+        "side": "yes",
+        "condition": "above",
+        "threshold": 0.75
+      }'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    alert = client.create_alert(
+        market_id="uuid",
+        side="yes",
+        condition="above",
+        threshold=0.75
+    )
+    ```
+  </Tab>
+</Tabs>
+
+## List alerts
+
+`GET /api/sdk/alerts`
+
+```bash
+curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/sdk/alerts"
+```
+
+## Delete alert
+
+`DELETE /api/sdk/alerts/{alert_id}`
+
+```bash
+curl -X DELETE -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/sdk/alerts/ALERT_ID"
+```
+
+## Triggered alerts
+
+`GET /api/sdk/alerts/triggered`
+
+Returns alerts that have already fired.
+
+```bash
+curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/sdk/alerts/triggered"
+```

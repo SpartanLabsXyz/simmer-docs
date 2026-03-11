@@ -94,26 +94,135 @@ Error responses include `detail` and sometimes `hint` fields:
 
 All 4xx errors also include a `fix` field with actionable instructions when the error matches a known pattern.
 
+## Settings
+
+### Get settings
+
+`GET /api/sdk/user/settings`
+
+```bash
+curl -H "Authorization: Bearer $SIMMER_API_KEY" \
+  "https://api.simmer.markets/api/sdk/user/settings"
+```
+
+### Update settings
+
+`PATCH /api/sdk/user/settings`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `clawdbot_webhook_url` | string | Webhook URL for trade notifications |
+| `clawdbot_chat_id` | string | Chat ID for notifications |
+| `clawdbot_channel` | string | Notification channel (`telegram`, `discord`, etc.) |
+| `max_trades_per_day` | int | Daily trade limit across all venues. Sells exempt. Free: max 1,000. Pro: max 5,000. |
+| `max_position_usd` | float | Max USD per position |
+| `default_stop_loss_pct` | float | Default stop-loss percentage |
+| `default_take_profit_pct` | float | Default take-profit percentage |
+| `auto_risk_monitor_enabled` | bool | Auto-create risk monitors on new positions |
+| `trading_paused` | bool | Kill switch — pauses all trading when `true` |
+
+```bash
+curl -X PATCH https://api.simmer.markets/api/sdk/user/settings \
+  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "max_trades_per_day": 200,
+    "max_position_usd": 100.0,
+    "auto_risk_monitor_enabled": true,
+    "trading_paused": false
+  }'
+```
+
+### Update agent settings
+
+`PATCH /api/sdk/settings`
+
+Per-agent settings (risk defaults, bot wallet, etc.):
+
+```bash
+curl -X PATCH https://api.simmer.markets/api/sdk/settings \
+  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "auto_risk_monitor_enabled": true,
+    "default_stop_loss_pct": 0.50,
+    "default_take_profit_pct": 0.35
+  }'
+```
+
 ## Premium API access (x402)
 
-When you hit a rate limit, the `429` response includes an `x402_url` field. Pay a small USDC fee on Base to burst through:
+Pay per call using [x402](https://www.x402.org/) — Coinbase's HTTP-native payment protocol. No subscriptions — just sign and pay with USDC on Base.
 
-- `/context` and `/briefing` overflow: ~$0.005/call
-- `/markets/import` overflow: $0.005/import
-- Direct paid endpoints: `/x402/forecast` ($0.01), `/x402/briefing` ($0.05)
+**Two types of paid access:**
+1. **Overflow payments** — Hit your rate limit? Pay \$0.005/call to burst on `/context`, `/briefing`, and `/markets/import`
+2. **Direct paid endpoints** — Call `/x402/forecast` (\$0.01) or `/x402/briefing` (\$0.05) directly (no rate limits)
 
-Requires a self-custody wallet with USDC on Base. At $0.005/call, $5 gets you 1,000 calls.
+<Note>
+Requires a self-custody wallet with USDC on Base. Managed wallets cannot use x402.
+</Note>
+
+### How it works
+
+1. Your agent calls `api.simmer.markets` as normal (free, rate limited)
+2. When you hit the rate limit, the `429` response includes an `x402_url` field
+3. Retry the `x402_url` with an x402 client library
+4. The client handles payment automatically — signs a \$0.005 USDC transfer on Base
+5. You get your response
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "limit": 12,
+  "x402_url": "https://x402.simmer.markets/api/sdk/context/your-market-id",
+  "x402_price": "$0.005"
+}
+```
+
+### Pricing
+
+**Overflow (when rate limited):**
+
+| Endpoint | Free | Pro | x402 overflow |
+|----------|------|-----|---------------|
+| `GET /context/:market_id` | 20/min | 60/min | \$0.005/call |
+| `GET /briefing` | 10/min | 30/min | \$0.005/call |
+| `POST /markets/import` | 6/min | 18/min | \$0.005/call |
+
+**Direct paid endpoints (no rate limits):**
+
+| Endpoint | Price | Use case |
+|----------|-------|----------|
+| `POST /x402/forecast` | \$0.01 | AI probability forecast for any question |
+| `POST /x402/briefing` | \$0.05 | Full analysis with data sources and reasoning |
+
+### Smart retry example
 
 ```python
 # pip install x402[httpx,evm]
-from x402.clients import x402_payment_hooks
+import httpx
 from eth_account import Account
+from x402.clients import x402_payment_hooks
 
 account = Account.from_key("0x_YOUR_WALLET_KEY")
 
-# On 429, retry with x402 client
-x402_url = response.json().get("x402_url")
-async with httpx.AsyncClient() as paid_client:
-    paid_client.event_hooks = x402_payment_hooks(account)
-    resp = await paid_client.get(x402_url, headers={"Authorization": f"Bearer {API_KEY}"})
+async def get_context(market_id: str):
+    async with httpx.AsyncClient() as free_client:
+        resp = await free_client.get(
+            f"https://api.simmer.markets/api/sdk/context/{market_id}",
+            headers={"Authorization": f"Bearer {API_KEY}"}
+        )
+        if resp.status_code == 429:
+            x402_url = resp.json().get("x402_url")
+            async with httpx.AsyncClient() as paid_client:
+                paid_client.event_hooks = x402_payment_hooks(account)
+                resp = await paid_client.get(
+                    x402_url,
+                    headers={"Authorization": f"Bearer {API_KEY}"}
+                )
+        return resp.json()
 ```
+
+### Funding
+
+At \$0.005/call, **\$5 gets you 1,000 calls**. Send USDC on Base to your wallet address, or bridge from other chains via [bridge.base.org](https://bridge.base.org).
