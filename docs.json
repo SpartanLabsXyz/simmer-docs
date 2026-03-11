@@ -92,8 +92,8 @@
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/simmer-logo.png",
+    "dark": "/logo/simmer-logo.png"
   },
   "navbar": {
     "links": [
