@@ -11,22 +11,17 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Getting Started",
         "groups": [
           {
             "group": "Getting Started",
             "pages": [
               "index",
               "quickstart",
-              "venues"
-            ]
-          },
-          {
-            "group": "SDK",
-            "pages": [
-              "sdk/overview",
-              "sdk/wallets",
-              "sdk/heartbeat"
+              "venues",
+              "wallets",
+              "heartbeat",
+              "agent-support"
             ]
           }
         ]
@@ -79,12 +74,23 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Python SDK",
+        "groups": [
+          {
+            "group": "Python SDK",
+            "pages": [
+              "sdk/overview"
+            ]
+          }
+        ]
       }
     ],
     "global": {
       "anchors": [
         {
-          "anchor": "Support",
+          "anchor": "Telegram",
           "href": "https://t.me/+DykggGXL67E4MGE9",
           "icon": "telegram"
         }
@@ -92,8 +98,8 @@
     }
   },
   "logo": {
-    "light": "/logo/simmer-logo.png",
-    "dark": "/logo/simmer-logo.png"
+    "light": "/logo/simmer-logo-rounded.png",
+    "dark": "/logo/simmer-logo-rounded.png"
   },
   "navbar": {
     "links": [

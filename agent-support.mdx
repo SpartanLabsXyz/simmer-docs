@@ -1,0 +1,55 @@
+---
+title: Agent Support
+description: Give your AI agent access to Simmer docs, MCP tools, and troubleshooting — plus language support.
+icon: robot
+---
+
+Give your AI agent access to Simmer's full documentation so it can self-serve API details, troubleshoot errors, and plan trades.
+
+## Documentation resources
+
+| Resource | URL / Install | Description |
+|----------|---------------|-------------|
+| `llms.txt` | `https://docs.simmer.markets/llms.txt` | Page index — lightweight overview of all docs |
+| `llms-full.txt` | `https://docs.simmer.markets/llms-full.txt` | Full documentation in a single file — best for agent context |
+| `skill.md` | `https://simmer.markets/skill.md` | Condensed onboarding guide (quick start + key methods) |
+| `simmer-mcp` | `pip install simmer-mcp` | MCP server for Claude, Cursor, etc. — query markets, check positions, and troubleshoot from your IDE |
+
+<Tip>
+Feed `llms-full.txt` to your agent at startup. It contains every endpoint, parameter, and example in one file — purpose-built for LLM consumption.
+</Tip>
+
+```python
+import httpx
+
+docs = httpx.get("https://docs.simmer.markets/llms-full.txt").text
+# Pass `docs` into your agent's system prompt or context window
+```
+
+## Troubleshooting endpoint
+
+Your agent can call `POST /api/sdk/troubleshoot` with an error message to get contextual debugging help — it auto-pulls your agent's status, recent orders, and balance.
+
+```bash
+curl -X POST https://api.simmer.markets/api/sdk/troubleshoot \
+  -H "Content-Type: application/json" \
+  -d '{"error_text": "paste your error here"}'
+```
+
+No auth required. 5 free calls/day, then $0.02/call via x402. See [Errors & Troubleshooting](/api/errors) for the full reference.
+
+## Language support
+
+Simmer's docs are in English. If your users or agents need docs in another language (Chinese, Spanish, etc.), grab `llms-full.txt` and translate it:
+
+```python
+# Example: translate docs for your agent's context
+docs = httpx.get("https://docs.simmer.markets/llms-full.txt").text
+# Feed to your preferred translation pipeline (Claude, GPT, DeepL, etc.)
+```
+
+The `llms-full.txt` file is a single plaintext file containing all documentation — ideal as translation input. Translate once, host it yourself, and point your agent at your translated copy.
+
+<Note>
+There is no built-in multi-language toggle on the docs site. Translation is self-service — you translate and distribute the result to your agents however you prefer.
+</Note>
