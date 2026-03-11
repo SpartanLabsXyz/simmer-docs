@@ -23,7 +23,7 @@ client = SimmerClient(api_key="sk_live_...")
 # Or load from SIMMER_API_KEY env var
 client = SimmerClient()
 
-# Or load from credentials file (~/.config/simmer/credentials.json)
+# Or set SIMMER_API_KEY in your environment
 client = SimmerClient()
 ```
 
@@ -137,6 +137,28 @@ client.cancel_order("order-id")
 client.cancel_market_orders("market-id")
 client.cancel_all_orders()
 ```
+
+### Auto-redeem (external wallets)
+
+```python
+# Call once per cycle -- safe to call frequently
+results = client.auto_redeem()
+for r in results:
+    print(f"Redeemed {r['market_id']}: {r}")
+```
+
+For external wallets, the server can't sign redemptions for you. Call `auto_redeem()` in your agent's loop to claim winnings from resolved markets.
+
+### Kalshi trading
+
+```python
+client = SimmerClient(api_key="sk_live_...", venue="kalshi")
+# SOLANA_PRIVATE_KEY is auto-detected from env
+
+result = client.trade(market_id="uuid", side="yes", amount=10.0)
+```
+
+Requires a Pro plan, SOL for fees, USDC on Solana mainnet, and KYC at [dflow.net/proof](https://dflow.net/proof). See [Kalshi wallet setup](/wallets#kalshi-wallet-solana) for details.
 
 ### Position conflict detection
 

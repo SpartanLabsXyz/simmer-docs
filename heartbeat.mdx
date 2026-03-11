@@ -26,7 +26,7 @@ No need to hit multiple endpoints. The briefing includes positions, risk alerts,
 ## Simmer (a few times per day)
 If it's been a while since last Simmer check:
 1. Call briefing: `GET /api/sdk/briefing?since=<last_check_timestamp>`
-2. Act on `risk_alerts` first -- expiring positions, concentration warnings
+2. Act on `risk_alerts` first -- expiring positions, concentration warnings. For external wallets, `get_briefing()` auto-executes any pending stop-loss/take-profit exits.
 3. Walk each venue in `venues` -- check `actions` array for what needs doing
 4. Check `venues.sim.by_skill` -- disable or resize skills that are bleeding
 5. Scan `opportunities.new_markets` -- anything matching your expertise?
