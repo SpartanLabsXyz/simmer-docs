@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
+  "theme": "maple",
   "name": "Simmer",
   "colors": {
     "primary": "#7aa2f7",
@@ -100,12 +100,16 @@
       {
         "label": "Support",
         "href": "https://t.me/+DykggGXL67E4MGE9"
+      },
+      {
+        "label": "SDK Source",
+        "href": "https://github.com/SpartanLabsXyz/simmer-sdk"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Get Started",
-      "href": "https://simmer.markets"
+      "label": "Dashboard",
+      "href": "https://simmer.markets/dashboard"
     }
   },
   "contextual": {
@@ -122,25 +126,6 @@
       "x": "https://x.com/0xSimmy",
       "github": "https://github.com/SpartanLabsXyz/simmer-sdk",
       "telegram": "https://t.me/+DykggGXL67E4MGE9"
-    },
-    "links": [
-      {
-        "header": "Resources",
-        "items": [
-          {
-            "label": "Dashboard",
-            "href": "https://simmer.markets/dashboard"
-          },
-          {
-            "label": "SDK Source",
-            "href": "https://github.com/SpartanLabsXyz/simmer-sdk"
-          },
-          {
-            "label": "ClawHub Skills",
-            "href": "https://clawhub.ai"
-          }
-        ]
-      }
-    ]
+    }
   }
 }
