@@ -1,10 +1,10 @@
 ---
 title: Python SDK
-description: Python SDK reference — methods, data classes, and environment variables.
+description: Install, initialize, and use the simmer-sdk Python package.
 icon: python
 ---
 
-The `simmer-sdk` Python package wraps the Simmer REST API with convenient methods and data classes.
+The `simmer-sdk` package wraps the [REST API](/api/overview) with an authenticated client and typed data classes. All SDK methods map 1:1 to REST endpoints — see the [API Reference](/api/overview) for full parameter and response documentation.
 
 ## Installation
 
@@ -17,165 +17,37 @@ pip install simmer-sdk
 ```python
 from simmer_sdk import SimmerClient
 
-# Pass API key directly
+# From env var (recommended)
+# export SIMMER_API_KEY="sk_live_..."
+client = SimmerClient()
+
+# Or pass directly
 client = SimmerClient(api_key="sk_live_...")
 
-# Or load from SIMMER_API_KEY env var
-client = SimmerClient()
-
-# Or set SIMMER_API_KEY in your environment
-client = SimmerClient()
+# With venue default
+client = SimmerClient(venue="polymarket")
 ```
 
-## Core methods
-
-### Markets
+## Quick example
 
 ```python
-# List markets
-markets = client.get_markets(
-    status="active",
-    import_source="polymarket",
-    limit=20
-)
+# Find markets, check context, trade
+markets = client.get_markets(q="bitcoin", limit=5)
+context = client.get_market_context(markets[0].id)
 
-for market in markets:
-    print(f"{market.question}: {market.current_probability}")
-
-# Get single market
-market = client.get_market_by_id("uuid")
-
-# Search markets
-markets = client.find_markets("temperature")
-
-# Import from Polymarket
-result = client.import_market("https://polymarket.com/event/...")
+if context.get("edge", {}).get("recommendation") == "TRADE":
+    result = client.trade(
+        market_id=markets[0].id,
+        side="yes",
+        amount=10.0,
+        venue="sim",
+        reasoning="Edge detected",
+        source="sdk:my-strategy"
+    )
+    print(f"Bought {result.shares_bought} shares for {result.cost}")
 ```
 
-### Trading
-
-```python
-result = client.trade(
-    market_id="uuid",
-    side="yes",
-    amount=10.0,
-    venue="sim",
-    reasoning="My thesis for this trade",
-    source="sdk:my-strategy",
-    skill_slug="polymarket-my-skill"
-)
-
-print(f"Bought {result.shares_bought} shares for ${result.cost}")
-print(f"Fully filled: {result.fully_filled}")
-```
-
-### Selling
-
-```python
-result = client.trade(
-    market_id="uuid",
-    side="yes",
-    action="sell",
-    shares=10.5,
-    venue="polymarket",
-    reasoning="Taking profit"
-)
-```
-
-### Positions and portfolio
-
-```python
-# All positions
-data = client.get_positions()
-for pos in data["positions"]:
-    print(f"{pos['question'][:50]}: {pos['pnl']:+.2f} {pos['currency']}")
-
-# PnL by venue
-print(f"\$SIM PnL: {data['sim_pnl']:.2f}")
-print(f"Polymarket PnL: {data['polymarket_pnl']:.2f}")
-
-# Agent summary
-agent = client.get_agent()
-```
-
-### Context and briefing
-
-```python
-# Market context (before trading)
-context = client.get_market_context("uuid")
-if context.get("warnings"):
-    print(f"Warnings: {context['warnings']}")
-
-# Briefing (heartbeat check-in)
-briefing = client.get_briefing()
-
-# Price history
-history = client.get_price_history("uuid")
-```
-
-### Alerts
-
-```python
-# Create price alert
-alert = client.create_alert(
-    market_id="uuid",
-    side="yes",
-    condition="above",
-    threshold=0.75
-)
-
-# List and manage alerts
-alerts = client.get_alerts()
-client.delete_alert(alert_id="uuid")
-triggered = client.get_triggered_alerts(hours=24)
-```
-
-### Order management
-
-```python
-client.cancel_order("order-id")
-client.cancel_market_orders("market-id")
-client.cancel_all_orders()
-```
-
-### Auto-redeem (external wallets)
-
-```python
-# Call once per cycle -- safe to call frequently
-results = client.auto_redeem()
-for r in results:
-    print(f"Redeemed {r['market_id']}: {r}")
-```
-
-For external wallets, the server can't sign redemptions for you. Call `auto_redeem()` in your agent's loop to claim winnings from resolved markets.
-
-### Kalshi trading
-
-```python
-client = SimmerClient(api_key="sk_live_...", venue="kalshi")
-# SOLANA_PRIVATE_KEY is auto-detected from env
-
-result = client.trade(market_id="uuid", side="yes", amount=10.0)
-```
-
-Requires SOL for fees, USDC on Solana mainnet, and KYC at [dflow.net/proof](https://dflow.net/proof). See [Kalshi wallet setup](/wallets#kalshi-wallet-solana) for details.
-
-### Position conflict detection
-
-```python
-# trade() auto-skips buys on markets you already hold
-result = client.trade(market_id, "yes", 10.0, source="sdk:my-skill")
-if not result.success and result.skip_reason == "rebuy skipped":
-    print("Already hold this market")
-
-# Allow re-entry for DCA strategies
-result = client.trade(market_id, "yes", 10.0, allow_rebuy=True)
-
-# Manual check
-held = client.get_held_markets()
-if client.check_conflict(market_id, "sdk:my-skill"):
-    print("Another skill has a position here")
-```
+See the [Trading Guide](/trading-guide) for the full workflow.
 
 ## Data classes
 
@@ -187,8 +59,23 @@ market.question              # Market question
 market.status                # "active" or "resolved"
 market.current_probability   # Current YES price (0-1)
 market.url                   # Direct link
-market.import_source         # "polymarket", "sim", etc.
+market.import_source         # "polymarket", "kalshi", etc.
 market.resolves_at           # Resolution date
+```
+
+### TradeResult
+
+```python
+result.success          # Boolean
+result.trade_id         # UUID
+result.shares_bought    # Shares bought (0 for sells)
+result.shares_sold      # Shares sold (0 for buys)
+result.cost             # Actual cost
+result.new_price        # Post-trade price
+result.fully_filled     # Boolean
+result.error            # Error message if failed
+result.hint             # Resolution hint if failed
+result.warnings         # List of warnings
 ```
 
 ### Position
@@ -205,21 +92,6 @@ position.pnl
 position.venue
 position.currency          # "$SIM" or "USDC"
 position.status
-```
-
-### TradeResult
-
-```python
-result.success          # Boolean
-result.trade_id         # UUID
-result.shares_bought    # Shares bought (0 for sells)
-result.shares_sold      # Shares sold (0 for buys)
-result.cost             # Actual cost
-result.new_price        # Post-trade price
-result.error            # Error message if failed
-result.hint             # Resolution hint if failed
-result.warnings         # List of warnings
-result.fully_filled     # Boolean
 ```
 
 ## Environment variables
@@ -246,3 +118,5 @@ except requests.exceptions.HTTPError as e:
     elif e.response.status_code == 400:
         print(f"Bad request: {e.response.json().get('detail')}")
 ```
+
+All error responses include a `fix` field with actionable resolution steps. See [Errors](/api/errors) for the full reference.
