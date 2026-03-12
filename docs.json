@@ -239,7 +239,7 @@
     "primary": {
       "type": "button",
       "label": "Web App",
-      "href": "https://simmer.markets/dashboard"
+      "href": "https://simmer.markets"
     }
   },
   "contextual": {
