@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "maple",
+  "theme": "mint",
   "name": "Simmer",
   "colors": {
     "primary": "#7aa2f7",
@@ -33,15 +33,15 @@
             "group": "Features",
             "pages": [
               "heartbeat",
-              "skills/building",
-              "faq"
+              "skills/building"
             ]
           },
           {
             "group": "Reference",
             "pages": [
               "sdk/overview",
-              "agent-support"
+              "agent-support",
+              "faq"
             ]
           }
         ]
