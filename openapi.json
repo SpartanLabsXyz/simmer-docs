@@ -1446,7 +1446,7 @@
     "/api/sdk/positions/{market_id}/monitor": {
       "post": {
         "summary": "Risk Settings Set",
-        "description": "Set risk thresholds (stop-loss/take-profit) for a position.\n\nCreates or updates risk settings. The scheduler monitors positions every 15 minutes\nand automatically triggers a sell when thresholds are hit.\n\nParameters:\n- market_id: The market ID\n- side: Which side of the position ('yes' or 'no')\n- stop_loss_pct: Trigger sell if P&L drops below this % (default: 0.50 = -50%)\n- take_profit_pct: Trigger sell if P&L rises above this % (default: 0.35 = +35%)\n\nAt least one threshold must be set. Position data is derived from real_trades (not stored).",
+        "description": "Set risk thresholds (stop-loss/take-profit) for a position.\n\nCreates or updates risk settings. The scheduler monitors positions every 15 minutes\nand automatically triggers a sell when thresholds are hit.\n\nParameters:\n- market_id: The market ID\n- side: Which side of the position ('yes' or 'no')\n- stop_loss_pct: Trigger sell if P&L drops below this % (default: 0.50 = -50%)\n- take_profit_pct: Trigger sell if P&L rises above this % (default: off)\n\nAt least one threshold must be set. Position data is derived from real_trades (not stored).",
         "operationId": "api_sdk_risk_settings_set_api_sdk_positions__market_id__monitor_post",
         "parameters": [
           {
@@ -1492,7 +1492,7 @@
           }
         },
         "x-mint": {
-          "content": "**Defaults are on automatically** \u2014 every buy gets a 50% stop-loss and 35% take-profit with no action needed. Use this endpoint to override defaults for a specific position."
+          "content": "**Stop-loss is on by default** \u2014 every buy gets a 50% stop-loss automatically. Take-profit is off by default (prediction markets resolve naturally). Use this endpoint to set or override thresholds for a specific position."
         }
       },
       "delete": {

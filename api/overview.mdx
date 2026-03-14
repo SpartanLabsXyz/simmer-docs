@@ -116,9 +116,9 @@ curl -H "Authorization: Bearer $SIMMER_API_KEY" \
 | `clawdbot_channel` | string | Notification channel (`telegram`, `discord`, etc.) |
 | `max_trades_per_day` | int | Daily trade limit across all venues. Sells exempt. Free: max 1,000. Pro: max 5,000. |
 | `max_position_usd` | float | Max USD per position |
-| `default_stop_loss_pct` | float | Default stop-loss percentage |
-| `default_take_profit_pct` | float | Default take-profit percentage |
-| `auto_risk_monitor_enabled` | bool | Auto-create risk monitors on new positions |
+| `default_stop_loss_pct` | float | Default stop-loss percentage (default: 0.50) |
+| `default_take_profit_pct` | float \| null | Default take-profit percentage (default: null = off). Set to `0` to disable. |
+| `auto_risk_monitor_enabled` | bool | Auto-create risk monitors on new positions (default: true) |
 | `trading_paused` | bool | Kill switch — pauses all trading when `true` |
 
 ```bash
@@ -146,7 +146,7 @@ curl -X PATCH https://api.simmer.markets/api/sdk/settings \
   -d '{
     "auto_risk_monitor_enabled": true,
     "default_stop_loss_pct": 0.50,
-    "default_take_profit_pct": 0.35
+    "default_take_profit_pct": 0
   }'
 ```
 

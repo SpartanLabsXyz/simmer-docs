@@ -153,8 +153,9 @@ CONTENT_INJECTIONS = {
     },
     "/api/sdk/positions/{market_id}/monitor": {
         "post": (
-            "**Defaults are on automatically** \u2014 every buy gets a 50% stop-loss and 35% take-profit with no action needed. "
-            "Use this endpoint to override defaults for a specific position."
+            "**Stop-loss is on by default** \u2014 every buy gets a 50% stop-loss automatically. "
+            "Take-profit is off by default (prediction markets resolve naturally). "
+            "Use this endpoint to set or override thresholds for a specific position."
         ),
     },
     "/api/sdk/risk-alerts": {
