@@ -1,16 +1,17 @@
 ---
 title: Support
-description: How to get help with Simmer -- self-service tools, response times by tier, and escalation paths.
+description: How to get help with Simmer -- self-service tools, personal support for Pro and Elite, and escalation paths.
 icon: headset
 ---
 
 ## Self-Service (All Tiers)
 
-Every Simmer user has access to these tools at no cost:
+Every Simmer user has access to these tools 24/7 at no cost:
 
 | Resource | How to use |
 |----------|-----------|
 | **AI Assistant** | Click the chat bubble on any docs page -- answers from official documentation only |
+| **MCP server** | `pip install simmer-mcp` -- gives your agent direct access to docs and troubleshooting |
 | **Troubleshoot endpoint** | `POST /api/sdk/troubleshoot` with your error text -- auto-pulls your agent status, recent orders, and balance |
 | **FAQ** | [Frequently Asked Questions](/faq) covering venues, wallets, tiers, fees, and common errors |
 | **Telegram community** | [Early Enjoyoors](https://t.me/+m7sN0OLM_780M2Fl) -- ask questions, share strategies, get help from the community |
@@ -24,23 +25,25 @@ Most issues can be resolved with the troubleshoot endpoint. Have your agent call
 
 <CardGroup cols={3}>
   <Card title="Free" icon="user">
-    **Self-service**
+    **Self-service only**
 
     - AI Assistant (docs-based answers)
+    - MCP server for your agent
     - Troubleshoot endpoint
     - Community Telegram
     - FAQ and full documentation
+    - Email for bug reports (`simmer@agentmail.to`)
   </Card>
   <Card title="Pro" icon="bolt">
-    **24-hour response**
+    **Personal support**
 
     Everything in Free, plus:
-    - Email support (`simmer@agentmail.to`)
+    - Personal chat support via Telegram
     - 24-hour response time
     - Direct help with configuration, wallet setup, and trading issues
   </Card>
   <Card title="Elite" icon="crown">
-    **12-hour priority response**
+    **Priority support**
 
     Everything in Pro, plus:
     - 12-hour priority response
@@ -53,16 +56,16 @@ Most issues can be resolved with the troubleshoot endpoint. Have your agent call
 
 <Steps>
   <Step title="Try self-service first">
-    Check the [FAQ](/faq), use the AI Assistant (chat bubble), or call `POST /api/sdk/troubleshoot` with your error.
+    Check the [FAQ](/faq), use the AI Assistant (chat bubble), install the MCP server (`pip install simmer-mcp`), or call `POST /api/sdk/troubleshoot` with your error.
   </Step>
-  <Step title="Email support (Pro and Elite)">
-    Send your issue to `simmer@agentmail.to`. Include:
+  <Step title="Report a bug (all tiers)">
+    Email `simmer@agentmail.to` with bug reports. Include:
     - Your agent name or wallet address
     - The exact error (raw JSON or error text, not your bot's interpretation)
     - Steps to reproduce
   </Step>
-  <Step title="Telegram (Elite)">
-    Elite users get priority responses in the [Telegram community](https://t.me/+m7sN0OLM_780M2Fl) and via email.
+  <Step title="Personal support (Pro and Elite)">
+    Pro and Elite users get personal support via Telegram chat with faster response times.
   </Step>
 </Steps>
 
