@@ -177,6 +177,34 @@ Without this, winning positions sit unredeemed until the user manually collects 
 `auto_redeem()` checks the agent's `auto_redeem_enabled` setting and returns an empty list if disabled. It catches all errors internally and never raises -- safe to call unconditionally.
 </Tip>
 
+## Recommended primitives
+
+The SDK ships helper modules that handle common skill-builder tasks. Prefer these over rolling your own — they encode patterns from top traders, are tested, and are maintained alongside the SDK. Full reference: [Position Sizing](/sdk/position-sizing).
+
+### Position sizing — `simmer_sdk.sizing`
+
+Don't hard-code stake amounts and don't write your own Kelly. Use `size_position()`. It returns `0.0` when the edge is below your `min_ev` threshold, so the skill can simply skip the trade.
+
+```python
+from simmer_sdk.sizing import size_position
+
+amount = size_position(
+    p_win=0.70,         # your model's probability
+    market_price=0.55,  # current YES price
+    bankroll=bankroll,
+    min_ev=0.03,        # skip trades with edge < 3%
+)
+if amount > 0:
+    client.trade(market_id=..., side="BUY", outcome="YES",
+                 amount=amount, reasoning="...")
+```
+
+Expose sizing as user-tunable config by merging `SIZING_CONFIG_SCHEMA` into your skill's `CONFIG_SCHEMA` — users get `SIMMER_POSITION_SIZING`, `SIMMER_KELLY_MULTIPLIER`, and `SIMMER_MIN_EV` env vars for free.
+
+### External market data
+
+The SDK doesn't bundle third-party API clients. If your skill needs Polymarket metadata beyond what `SimmerClient.get_markets()` exposes — categories, descriptions, full event groupings, raw volume and liquidity — call [Polymarket's Gamma API](https://gamma-api.polymarket.com/) directly from the skill. It's free, no auth, well-documented. Keep the helper next to the skill so the SDK stays scoped to Simmer's surface area plus universal primitives.
+
 ## Publishing
 
 ```bash

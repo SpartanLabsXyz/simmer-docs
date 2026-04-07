@@ -1,0 +1,95 @@
+---
+title: Position Sizing
+description: Kelly Criterion and Expected Value sizing helpers shipped with simmer-sdk.
+icon: scale-balanced
+---
+
+`simmer_sdk.sizing` gives skill authors a tested, opinionated way to size trades on binary prediction markets. It combines the Kelly Criterion with an Expected Value gate so trades below your edge threshold are automatically skipped — no extra branching in your skill.
+
+The default is **fractional Kelly (0.25x)**. This is what most disciplined Polymarket traders use: it scales position size with edge but resists the drawdowns that full Kelly creates when your probability estimates are off.
+
+<Note>
+  Available in `simmer-sdk >= 0.9.21`. Don't roll your own — these helpers are tested and maintained alongside the SDK.
+</Note>
+
+## Quick start
+
+```python
+from simmer_sdk import SimmerClient
+from simmer_sdk.sizing import size_position
+
+client = SimmerClient()
+bankroll = client.get_portfolio()["available_balance"]
+
+amount = size_position(
+    p_win=0.70,         # your model's probability the outcome resolves YES
+    market_price=0.55,  # current YES price
+    bankroll=bankroll,
+    min_ev=0.03,        # skip trades with edge < 3%
+)
+
+if amount > 0:
+    client.trade(
+        market_id="...",
+        side="BUY",
+        outcome="YES",
+        amount=amount,
+        reasoning="Kelly: 70% vs 55%, +15% edge",
+    )
+```
+
+## API
+
+| Function | Description |
+|----------|-------------|
+| `size_position(p_win, market_price, bankroll, method="fractional_kelly", kelly_multiplier=0.25, min_ev=0.0, max_fraction=0.95)` | Returns the dollar amount to trade. Returns `0.0` when edge ≤ `min_ev`, Kelly is negative, or inputs are invalid. |
+| `kelly_fraction(p_win, market_price)` | Raw Kelly fraction `(p - c) / (1 - c)`. Negative = unfavorable. |
+| `expected_value(p_win, market_price)` | Edge per share: `p_win - market_price`. |
+| `SIZING_CONFIG_SCHEMA` | A `CONFIG_SCHEMA` fragment that exposes `SIMMER_POSITION_SIZING`, `SIMMER_KELLY_MULTIPLIER`, and `SIMMER_MIN_EV` env vars. |
+
+## Sizing methods
+
+| Method | Behavior |
+|--------|----------|
+| `"fractional_kelly"` *(default)* | Kelly fraction × `kelly_multiplier` (default 0.25). Recommended — scales with edge but resists drawdowns. |
+| `"kelly"` | Full Kelly. Mathematically optimal long-run growth, but a single bad probability estimate causes large swings. |
+| `"fixed"` | Fixed fraction of bankroll, using `kelly_multiplier` as the fraction. Simple but ignores edge magnitude. |
+
+`max_fraction` (default `0.95`) is a safety cap so even an aggressive Kelly call cannot go all-in.
+
+## NO bets
+
+`size_position` is written from the YES perspective. For NO trades, flip both inputs:
+
+```python
+amount = size_position(
+    p_win=1 - p_yes,
+    market_price=1 - yes_price,
+    bankroll=bankroll,
+)
+```
+
+## Config-driven sizing
+
+Skills should expose sizing as user-tunable config rather than hard-coding values. Merge `SIZING_CONFIG_SCHEMA` into your skill's `CONFIG_SCHEMA`:
+
+```python
+from simmer_sdk.sizing import SIZING_CONFIG_SCHEMA, size_position
+
+CONFIG_SCHEMA = {
+    "my_skill_param": {"env": "MY_PARAM", "default": 42, "type": int},
+    **SIZING_CONFIG_SCHEMA,
+}
+```
+
+Users can then tune behavior via env vars without editing code:
+
+| Env var | Default | Purpose |
+|---------|---------|---------|
+| `SIMMER_POSITION_SIZING` | `fractional_kelly` | Sizing method. |
+| `SIMMER_KELLY_MULTIPLIER` | `0.25` | Fraction of Kelly to use (or fixed fraction in `fixed` mode). |
+| `SIMMER_MIN_EV` | `0.0` | Minimum edge per share to take the trade. |
+
+## External market data
+
+The SDK does not bundle clients for third-party APIs (Polymarket Gamma, Kalshi public data, price feeds, etc.). The SDK's job is to expose the Simmer API surface plus universal primitives every skill needs. If your skill needs Polymarket metadata beyond what `SimmerClient.get_markets()` returns, call [Polymarket's Gamma API](https://gamma-api.polymarket.com/) directly from your skill — it's free, no auth, and well-documented. Keep third-party helpers next to the skill that uses them.
