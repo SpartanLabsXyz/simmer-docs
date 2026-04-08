@@ -1256,8 +1256,29 @@
     "/api/sdk/portfolio": {
       "get": {
         "summary": "Portfolio",
-        "description": "Get portfolio summary with exposure and concentration metrics.\n\nReturns aggregated portfolio data including:\n- USDC balance (from wallet)\n- Total exposure across all positions\n- Position count\n- Concentration metrics (top market %, top 3 markets %)\n- Breakdown by trade source\n\nRequires API key in Authorization header.",
+        "description": "Get portfolio summary with exposure and concentration metrics.\n\nReturns aggregated portfolio data including:\n- Per-venue buckets: `sim`, `polymarket`, `kalshi` \u2014 each with balance,\n  pnl, positions_count, total_exposure\n- `total`: summed counts and exposure across venues (units are mixed \u2014\n  use per-venue buckets for financially accurate aggregation)\n- Flat legacy fields (`balance_usdc`, `sim_balance`, `positions_count`,\n  etc.) kept populated for backwards compatibility\n\nQuery params:\n- venue: Filter which venues to compute. Default 'all'. The `total` and\n  per-venue buckets reflect this filter.\n\nRequires API key in Authorization header.",
         "operationId": "api_sdk_portfolio_api_sdk_portfolio_get",
+        "parameters": [
+          {
+            "name": "venue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Venue filter: 'all' (default), 'sim', 'polymarket', or 'kalshi'. Per-venue buckets are always populated when applicable; this filters which are computed.",
+              "default": "all",
+              "title": "Venue"
+            },
+            "description": "Venue filter: 'all' (default), 'sim', 'polymarket', or 'kalshi'. Per-venue buckets are always populated when applicable; this filters which are computed."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1265,6 +1286,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SDKPortfolioSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1404,7 +1435,7 @@
     "/api/sdk/context/{market_id}": {
       "get": {
         "summary": "Context",
-        "description": "Get rich context for a market - gives skills \"memory\" between runs.\n\nComposes data from:\n- Market info (current price, price history, resolution time)\n- Position data (shares, cost basis, P&L)\n- Recent trades (last 5 trades with reasoning)\n- Trading discipline (flip-flop detection, warnings)\n- Slippage estimates (for different trade sizes)\n- Edge analysis (time-adjusted threshold, recommendation)\n- Warnings (time decay, low liquidity, etc.)\n\nOptional query params:\n- my_probability: Your probability estimate (0-1). If provided, returns edge\n  calculation and TRADE/HOLD recommendation.\n\nRequires API key in Authorization header (rate limited: 300/minute).",
+        "description": "Get rich context for a market - gives skills \"memory\" between runs.\n\nComposes data from:\n- Market info (current price, price history, resolution time)\n- Position data (shares, cost basis, P&L) \u2014 per venue, in `positions`\n- Recent trades (last 5 trades with reasoning)\n- Trading discipline (flip-flop detection, warnings)\n- Slippage estimates (for different trade sizes)\n- Edge analysis (time-adjusted threshold, recommendation)\n- Warnings (time decay, low liquidity, etc.)\n\nOptional query params:\n- my_probability: Your probability estimate (0-1). If provided, returns edge\n  calculation and TRADE/HOLD recommendation.\n- venue: Which venue's positions to include. Default 'all'. The `positions`\n  response field always contains per-venue breakdown. The flat `position`\n  field mirrors the requested venue (or the first non-null one when\n  venue='all'), for backwards compatibility.\n\nAn agent can hold positions on the same market across multiple venues\nsimultaneously (e.g., paper-trading on sim + real trading on Polymarket).\nUse `positions.sim`, `positions.polymarket`, `positions.kalshi` to inspect\neach independently.\n\nRequires API key in Authorization header (rate limited: 300/minute).",
         "operationId": "api_sdk_context_api_sdk_context__market_id__get",
         "parameters": [
           {
@@ -1435,6 +1466,25 @@
               "title": "My Probability"
             },
             "description": "Your probability estimate (0-1) for edge calculation"
+          },
+          {
+            "name": "venue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Venue filter for position lookup: 'all' (default), 'sim', 'polymarket', or 'kalshi'. Response always includes per-venue positions in the `positions` field.",
+              "default": "all",
+              "title": "Venue"
+            },
+            "description": "Venue filter for position lookup: 'all' (default), 'sim', 'polymarket', or 'kalshi'. Response always includes per-venue positions in the `positions` field."
           }
         ],
         "responses": {
@@ -2167,7 +2217,7 @@
     "/api/sdk/wallet/{wallet_address}/positions": {
       "get": {
         "summary": "Wallet Positions",
-        "description": "Fetch Polymarket positions for any wallet address.\n\nUses Dome API to query on-chain positions (includes title, market_slug, shares).\nFetches current prices from Polymarket CLOB API (Dome doesn't include prices).\n\nRequires API key in Authorization header (rate limited: 60/minute).\nCached for 30s per wallet to prevent heavy pollers from saturating DB/API.",
+        "description": "Fetch Polymarket positions for any wallet address.\n\nUses shared position fetcher (PolyNode primary, PM Data API fallback).\nPolyNode returns curPrice directly \u2014 no separate CLOB price fetch needed.\n\nRequires API key in Authorization header (rate limited: 60/minute).\nCached for 30s per wallet to prevent heavy pollers from saturating DB/API.",
         "operationId": "api_sdk_wallet_positions_api_sdk_wallet__wallet_address__positions_get",
         "parameters": [
           {
@@ -2323,7 +2373,7 @@
     "/api/sdk/trades": {
       "get": {
         "summary": "Get Trades",
-        "description": "Get trade history for a user's SDK trades.\n\nRequires API key in Authorization header.\n\n- venue='polymarket' (default): queries real_trades table (real Polymarket trades)\n- venue='sim': queries sim_trades table (simulated LMSR trades)\n\nDeprecated: venue='sandbox'/'simmer' are deprecated, use venue='sim' instead.\n\nReturns trades from the user's wallet (rate limited: 300/minute).",
+        "description": "Get trade history for a user's SDK trades.\n\nRequires API key in Authorization header.\n\n- venue='all' (default): merged trades across sim_trades + real_trades, sorted by created_at desc\n- venue='sim': queries sim_trades table (simulated LMSR trades)\n- venue='polymarket': queries real_trades table (real Polymarket trades)\n- venue='kalshi': queries real_trades table filtered to Kalshi trades\n\nEach trade row includes a `venue` field identifying which venue it came from.\n\nDeprecated: venue='sandbox'/'simmer' are deprecated, use venue='sim' instead.\n\nReturns trades from the user's wallet (rate limited: 300/minute).",
         "operationId": "api_sdk_get_trades_api_sdk_trades_get",
         "parameters": [
           {
@@ -2339,11 +2389,11 @@
                   "type": "null"
                 }
               ],
-              "description": "Venue: 'polymarket' (real_trades) or 'sim' (sim_trades)",
-              "default": "polymarket",
+              "description": "Venue filter: 'all' (default \u2014 sim + polymarket merged), 'sim', 'polymarket', or 'kalshi'",
+              "default": "all",
               "title": "Venue"
             },
-            "description": "Venue: 'polymarket' (real_trades) or 'sim' (sim_trades)"
+            "description": "Venue filter: 'all' (default \u2014 sim + polymarket merged), 'sim', 'polymarket', or 'kalshi'"
           },
           {
             "name": "limit",
@@ -2829,6 +2879,39 @@
             ],
             "title": "Upgrade Contact"
           },
+          "sim_win_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sim Win Count"
+          },
+          "sim_loss_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sim Loss Count"
+          },
+          "sim_win_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sim Win Rate"
+          },
           "polymarket_pnl": {
             "anyOf": [
               {
@@ -2839,6 +2922,83 @@
               }
             ],
             "title": "Polymarket Pnl"
+          },
+          "polymarket_win_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Win Count"
+          },
+          "polymarket_loss_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Loss Count"
+          },
+          "polymarket_win_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Win Rate"
+          },
+          "kalshi_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kalshi Pnl"
+          },
+          "kalshi_win_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kalshi Win Count"
+          },
+          "kalshi_loss_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kalshi Loss Count"
+          },
+          "kalshi_win_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kalshi Win Rate"
           },
           "auto_redeem_enabled": {
             "type": "boolean",
@@ -4165,6 +4325,43 @@
         "title": "SDKContextPosition",
         "description": "Position info for SDK context."
       },
+      "SDKContextPositions": {
+        "properties": {
+          "sim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SDKContextPosition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "polymarket": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SDKContextPosition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kalshi": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SDKContextPosition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "SDKContextPositions",
+        "description": "Per-venue positions for a single market.\n\nAn agent can hold positions on the same market across multiple venues\nsimultaneously (sim paper-trading + real Polymarket/Kalshi). Each\nfield is populated independently based on that venue's position storage:\n- sim: from agent_market_positions\n- polymarket: aggregated from real_trades (venue='polymarket')\n- kalshi: aggregated from real_trades (venue='kalshi')\n\nFields are None when no position exists on that venue."
+      },
       "SDKContextResponse": {
         "properties": {
           "market": {
@@ -4172,6 +4369,16 @@
           },
           "position": {
             "$ref": "#/components/schemas/SDKContextPosition"
+          },
+          "positions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SDKContextPositions"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "recent_trades": {
             "items": {
@@ -4759,11 +4966,107 @@
             "type": "array",
             "title": "Warnings",
             "default": []
+          },
+          "sim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SDKPortfolioVenueBucket"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "polymarket": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SDKPortfolioVenueBucket"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kalshi": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SDKPortfolioVenueBucket"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SDKPortfolioTotal"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
         "title": "SDKPortfolioSummary",
-        "description": "Portfolio summary with aggregated metrics."
+        "description": "Portfolio summary with aggregated metrics.\n\nVenue-bucketed fields (`sim`, `polymarket`, `kalshi`, `total`) are the\npreferred shape for multi-venue agents. The flat fields (`balance_usdc`,\n`sim_balance`, `positions_count`, etc.) remain populated for backwards\ncompatibility with older SDK/skill versions."
+      },
+      "SDKPortfolioTotal": {
+        "properties": {
+          "positions_count": {
+            "type": "integer",
+            "title": "Positions Count",
+            "default": 0
+          },
+          "total_exposure": {
+            "type": "number",
+            "title": "Total Exposure",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "SDKPortfolioTotal",
+        "description": "Total across all venues.\n\nCounts are summed directly; exposure is summed in venue-native units\nand is not currency-normalized (since $SIM \u2260 USDC). Use the per-venue\nbuckets for accurate financial aggregation."
+      },
+      "SDKPortfolioVenueBucket": {
+        "properties": {
+          "balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance"
+          },
+          "pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl"
+          },
+          "positions_count": {
+            "type": "integer",
+            "title": "Positions Count",
+            "default": 0
+          },
+          "total_exposure": {
+            "type": "number",
+            "title": "Total Exposure",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "SDKPortfolioVenueBucket",
+        "description": "Per-venue portfolio rollup.\n\nbalance is in the venue's native currency:\n- sim: $SIM\n- polymarket: USDC (Polygon)\n- kalshi: USDC (Solana)"
       },
       "SDKPriceHistoryResponse": {
         "properties": {
@@ -5189,7 +5492,9 @@
           "execute": {
             "type": "boolean",
             "title": "Execute",
-            "default": false
+            "description": "DEPRECATED. Legacy flag that returns Polymarket order params for client-side CLOB submission instead of executing the trade. YES side only \u2014 NO is not supported. Does not write to sim_trades and is incompatible with venue='sim'. Use venue='polymarket' for server-side execution (handles both managed and external wallets) or venue='sim' for sandbox trades.",
+            "default": false,
+            "deprecated": true
           },
           "reasoning": {
             "anyOf": [
