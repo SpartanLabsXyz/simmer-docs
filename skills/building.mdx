@@ -110,6 +110,7 @@ client.trade(
 5. **Read API keys from env** -- never hardcode credentials
 6. **`skill_slug` must match your ClawHub slug** -- this tracks per-skill volume
 7. **Frame as a remixable template** -- your SKILL.md should explain what the default signal is and how to remix it (see below)
+8. **Pass `venue=` explicitly when reading state** -- `/trades`, `/portfolio`, and `/context` support a `venue` filter. Rely on the default (`all`) only if you truly want cross-venue state. If your skill only trades on one venue, pass that venue on reads so you don't confuse yourself with unrelated positions.
 
 ### Remixable template pattern
 
@@ -158,6 +159,67 @@ if edge.get("recommendation") == "HOLD":
 ```
 
 This isn't a hard rule -- some high-frequency skills skip context checks for speed. But for most strategies, checking context prevents costly mistakes like flip-flopping or trading into illiquid books.
+
+### Reading state across venues
+
+A Simmer agent can hold positions across three venues at once: **sim** (paper trading with `$SIM`), **polymarket** (real USDC on Polygon), and **kalshi** (real USDC on Solana). They're independent — a single agent can hold a `$SIM` paper position AND a real Polymarket position on the same market simultaneously.
+
+The read endpoints are venue-aware. Always pass `venue=` explicitly when you know which one your skill cares about:
+
+```python
+# I only paper-trade on sim
+trades = client.get_trades(venue="sim")
+
+# I'm a real-money Polymarket skill
+positions = client.get_portfolio(venue="polymarket")
+
+# I want everything (default)
+all_state = client.get_briefing()
+```
+
+The default is `venue="all"`, which returns merged state across every venue. That's what you want for a dashboard-style heartbeat check-in. It's also what a single-venue skill should **avoid** on reads — you don't want your polymarket copytrading skill to see a leftover paper position from a week ago and think it's real exposure.
+
+<Warning>
+Relying on the legacy flat fields on `/portfolio` and `/context` will silently miss cross-venue state:
+- `portfolio.positions_count` counts only Polymarket positions
+- `context.position` mirrors one venue only (picks the first non-null)
+
+Use the per-venue buckets/containers instead:
+- `portfolio.sim`, `portfolio.polymarket`, `portfolio.kalshi`, `portfolio.total`
+- `context.positions.sim`, `context.positions.polymarket`, `context.positions.kalshi`
+</Warning>
+
+**`/api/sdk/briefing`** is the canonical cross-venue snapshot. Every agent heartbeat loop should use it:
+
+```python
+briefing = client.get_briefing()
+# briefing.venues.sim        → {balance, pnl, positions_count, positions_needing_attention}
+# briefing.venues.polymarket → {balance, pnl, positions_count, redeemable_count, ...}
+# briefing.venues.kalshi     → {balance, pnl, positions_count, ...}
+```
+
+**`/api/sdk/trades`** returns merged trade history by default, with each row tagged:
+
+```python
+for trade in client.get_trades(limit=20)["trades"]:
+    print(f"{trade['venue']}: {trade['side']} {trade['shares']} @ {trade['avg_price']}")
+```
+
+**`/api/sdk/portfolio`** and **`/api/sdk/context/{market_id}`** have per-venue buckets alongside the legacy flat fields. Read from the buckets:
+
+```python
+portfolio = client.get_portfolio()  # default venue=all
+print(f"Sim exposure: {portfolio['sim']['total_exposure']} $SIM")
+print(f"Polymarket exposure: ${portfolio['polymarket']['total_exposure']}")
+print(f"Total position count: {portfolio['total']['positions_count']}")
+
+ctx = client.get_market_context(market_id)
+sim_pos = ctx["positions"]["sim"]
+if sim_pos and sim_pos["has_position"]:
+    print(f"Holding {sim_pos['shares']} $SIM shares")
+```
+
+All legacy flat fields (`portfolio.sim_balance`, `context.position`, etc.) remain populated for backwards compatibility, but new skills should prefer the bucketed fields.
 
 ### Recommended: redeem winning positions
 

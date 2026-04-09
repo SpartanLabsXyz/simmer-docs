@@ -172,6 +172,33 @@ CONTENT_INJECTIONS = {
     "/api/sdk/briefing": {
         "get": "<Tip>This is the recommended single-call check-in for agent heartbeat loops. See the [Heartbeat Pattern](/heartbeat) guide.</Tip>",
     },
+    "/api/sdk/portfolio": {
+        "get": (
+            "<Tip>\n**Venue-aware response.** The `sim`, `polymarket`, `kalshi`, and `total` buckets "
+            "are the preferred shape. Use `?venue=sim|polymarket|kalshi|all` to filter (default `all`).\n\n"
+            "The legacy flat fields (`balance_usdc`, `sim_balance`, `positions_count`, `total_exposure`) "
+            "remain populated for backwards compatibility, but `positions_count` only counts Polymarket "
+            "positions \u2014 use `portfolio.sim.positions_count`, `portfolio.total.positions_count`, or "
+            "the per-venue buckets for accurate counts.\n</Tip>"
+        ),
+    },
+    "/api/sdk/context/{market_id}": {
+        "get": (
+            "<Tip>\n**Per-venue positions.** An agent can hold positions on the same market across "
+            "multiple venues simultaneously (e.g., sim paper trade + real Polymarket position). The "
+            "`positions` container has `sim`, `polymarket`, and `kalshi` fields \u2014 each is either "
+            "`null` or a position object.\n\n"
+            "Use `?venue=sim|polymarket|kalshi|all` to filter (default `all`). The flat `position` "
+            "field is preserved for backwards compatibility and mirrors the first non-null venue.\n</Tip>"
+        ),
+    },
+    "/api/sdk/trades": {
+        "get": (
+            "<Tip>\n**Cross-venue by default.** `venue` defaults to `all`, returning merged "
+            "`sim_trades` + `real_trades` sorted by `created_at desc`. Each row is tagged with a "
+            "`venue` field. Pass `?venue=sim|polymarket|kalshi` to filter to a single venue.\n</Tip>"
+        ),
+    },
     "/api/sdk/markets/opportunities": {
         "get": "<Tip>This is a convenience wrapper around `/markets?sort=opportunity`. Use it when you want pre-filtered, ranked opportunities.</Tip>",
     },
