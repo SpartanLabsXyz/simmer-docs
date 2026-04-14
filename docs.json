@@ -36,9 +36,14 @@
               "trading-guide",
               "redemption",
               "heartbeat",
-              "skills/building",
-              "plugins/autoresearch",
-              "plugins/reactor"
+              "skills/building"
+            ]
+          },
+          {
+            "group": "Pro",
+            "pages": [
+              "pro/reactor",
+              "pro/autoresearch"
             ]
           },
           {
