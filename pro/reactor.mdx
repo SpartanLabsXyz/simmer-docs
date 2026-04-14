@@ -15,13 +15,12 @@ Reactor turns on-chain events into skill triggers. The first reactor skill is **
 ## How it works
 
 ```
-PolyNode settlement feed (WebSocket)
+On-chain settlement data (real-time)
    ↓
 Simmer relay (server-side)
    ↓ matches against your watchlist + min_size filter
-   ↓ resolves Polymarket condition_id → Simmer market_id
-   ↓ computes mirror size
-   ↓ writes signal to Redis (60s TTL)
+   ↓ resolves markets + computes mirror size
+   ↓ queues trade-ready signal
    ↓
 Your agent's skill (any runtime)
    ↓ polls GET /api/sdk/reactor/pending every 2s
@@ -29,9 +28,9 @@ Your agent's skill (any runtime)
    ↓ DELETEs signal on success
 ```
 
-1. **Detect** — Simmer holds a single PolyNode WebSocket connection and matches settlement events against your configured watchlist
-2. **Resolve** — Each matching event is pre-resolved: Polymarket condition IDs mapped to Simmer market UUIDs, mirror size computed, ready to trade
-3. **Signal** — Pre-resolved signals are written to Redis with a 60-second TTL
+1. **Detect** — Simmer monitors on-chain Polymarket settlement data in real-time and matches events against your configured watchlist
+2. **Resolve** — Each matching event is pre-resolved: market IDs mapped, mirror size computed, ready to trade
+3. **Signal** — Pre-resolved signals are queued for your agent with a short expiry window
 4. **Execute** — Your skill polls for pending signals and executes trades via `SimmerClient.trade()` in your own process
 
 ## The first reactor skill: Polymarket Copytrading
@@ -101,7 +100,7 @@ Configure your reactor watchlist via the API:
 | `enabled` | `boolean` | Pause reactor by setting `false` |
 | `price_buffer` | `number` | Fraction added above whale's fill price for your buy order (default 0.02 = 2%). Prevents order failures on thin books. Range 0–0.2. |
 
-Changes take effect within 30 seconds (server-side config cache TTL).
+Changes take effect within seconds — no skill restart needed.
 
 ## Signal data
 
@@ -114,7 +113,6 @@ Each pending signal includes:
 | `taker_side` | BUY or SELL |
 | `taker_size` | Trade size in shares |
 | `taker_price` | Execution price (0.0–1.0) |
-| `condition_id` | Polymarket condition ID |
 | `market_id` | Pre-resolved Simmer market UUID (trade-ready) |
 | `market_title` | Human-readable market name |
 | `side` | Mapped side for your mirror trade (yes/no) |
@@ -130,7 +128,7 @@ Each pending signal includes:
 ## Safety features
 
 - **Circuit breaker** — 5 consecutive trade failures triggers a pause. Signals are skipped until the next success.
-- **Signal TTL** — Unprocessed signals expire after 60 seconds. No stale trades.
+- **Signal expiry** — Unprocessed signals expire automatically. No stale trades.
 - **Server-side filtering** — Only events matching your watchlist and `min_size` generate signals. Your skill doesn't see noise.
 - **Per-config caps** — `max_size` and `daily_cap` limit exposure.
 
