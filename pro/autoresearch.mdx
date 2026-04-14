@@ -27,32 +27,67 @@ Your agent drives the loop — autoresearch provides the tools, your agent provi
 ## Install
 
 ```bash
-openclaw plugins install simmer-autoresearch
+npm install -g simmer-autoresearch
 ```
 
-Requires `SIMMER_API_KEY` env var set (or pass `apiKey` in plugin config).
+Then add the MCP server to your agent's config:
 
-## Config
+<CodeGroup>
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `apiKey` | `$SIMMER_API_KEY` | Simmer API key. Optional if env var is set. |
-| `apiUrl` | `https://api.simmer.markets` | API base URL |
-| `maxExperiments` | `50` | Max experiments per session. Prevents runaway loops. `0` = unlimited. |
-
-Example `plugins.json`:
-
-```json
+```json OpenClaw
 {
-  "simmer-autoresearch": {
-    "maxExperiments": 30
+  "mcpServers": {
+    "simmer-autoresearch": {
+      "command": "simmer-autoresearch",
+      "env": {
+        "SIMMER_API_KEY": "your-api-key"
+      }
+    }
   }
 }
 ```
 
+```json Hermes
+{
+  "mcpServers": {
+    "simmer-autoresearch": {
+      "command": "simmer-autoresearch",
+      "env": {
+        "SIMMER_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+```json Claude Code
+{
+  "mcpServers": {
+    "simmer-autoresearch": {
+      "command": "simmer-autoresearch",
+      "env": {
+        "SIMMER_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+## Config
+
+Configure autoresearch via environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SIMMER_API_KEY` | — | **Required.** Your Simmer API key. |
+| `SIMMER_API_URL` | `https://api.simmer.markets` | API base URL. Override for self-hosted. |
+| `AUTORESEARCH_MAX_EXPERIMENTS` | `50` | Max experiments per session. Prevents runaway loops. `0` = unlimited. |
+
 ## Tools
 
-The plugin registers four tools your agent can call:
+The MCP server registers four tools your agent can call:
 
 ### `init_experiment`
 
@@ -137,14 +172,11 @@ Additional skill-specific fields are freeform. Values must be strings or numbers
 
 Signal data is **private** — only visible to the trade owner via authenticated API calls. Never exposed publicly.
 
-## Commands
+## Session management
 
-| Command | Description |
-|---------|-------------|
-| `/autoresearch <skill>` | Start or resume autoresearch mode for a skill |
-| `/autoresearch off` | Stop autoresearch mode |
-| `/autoresearch status` | Current skill, experiment count, keep rate, budget remaining, pause state |
-| `/autoresearch reset` | Clear state and start fresh (clears pause if paused) |
+v2 uses SKILL.md behavioral instructions instead of CLI commands. Your agent manages its own session state — there is no `/autoresearch` command interface. Include the autoresearch SKILL.md in your agent's context to wire up the research loop behavior.
+
+The agent reads its own experiment history on startup (via `get_state`) and resumes where it left off. To reset, call `init_experiment` with a new session name.
 
 ## Safety features
 
@@ -152,17 +184,17 @@ Signal data is **private** — only visible to the trade owner via authenticated
 
 - **Baseline crash** — If the very first experiment in a session crashes, autoresearch pauses automatically. This usually means the skill is misconfigured.
 - **Consecutive crashes** — 3 crashes in a row triggers auto-pause. Your agent can't run more experiments until the issue is investigated.
-- **Recovery** — `init_experiment` (new session) or `/autoresearch reset` clears the pause.
+- **Recovery** — Call `init_experiment` with a new session name to clear the pause and start fresh.
 
 ### Budget caps
 
-Experiments are capped at `maxExperiments` (default 50) per session. At 80% of the cap, your agent gets a warning. At the limit, `run_experiment` is blocked.
+Experiments are capped at `AUTORESEARCH_MAX_EXPERIMENTS` (default 50) per session. At 80% of the cap, your agent gets a warning. At the limit, `run_experiment` is blocked.
 
-Set `maxExperiments: 0` to disable the cap (not recommended for unattended agents).
+Set `AUTORESEARCH_MAX_EXPERIMENTS=0` to disable the cap (not recommended for unattended agents).
 
 ### Metric verification
 
-The plugin cross-checks self-reported P&L metrics against the Simmer API. If the agent-reported metric diverges significantly from actual trade data, a warning is logged. This prevents metric gaming — the agent can't inflate results by changing how metrics are calculated.
+The server cross-checks self-reported P&L metrics against the Simmer API. If the agent-reported metric diverges significantly from actual trade data, a warning is logged. This prevents metric gaming — the agent can't inflate results by changing how metrics are calculated.
 
 ## Experiment persistence
 
@@ -175,12 +207,46 @@ Git auto-commits on `keep` decisions so you can track what changed and roll back
 
 ## API endpoints
 
-These endpoints power the plugin's server-side sync. You don't call them directly — the plugin handles it.
+These endpoints power the server's sync. You don't call them directly — the MCP server handles it.
 
 | Endpoint | Description |
 |----------|-------------|
 | `POST /api/sdk/autoresearch/experiments` | Sync experiment results |
 | `GET /api/sdk/autoresearch/experiments` | List experiment history |
-| `GET /api/sdk/autoresearch/state` | Resume state for plugin startup |
+| `GET /api/sdk/autoresearch/state` | Resume state for server startup |
 | `POST /api/sdk/autoresearch/backtest` | Replay trades against new config |
 | `GET /api/sdk/outcomes` | Trade outcome summary (metric verification) |
+
+## Legacy (v1 Plugin)
+
+<Accordion title="Legacy (v1 Plugin) — OpenClaw only">
+
+v1 was an OpenClaw plugin, not an MCP server. If you're still running v1:
+
+```bash
+openclaw plugins install simmer-autoresearch
+```
+
+Configure via `plugins.json`:
+
+```json
+{
+  "simmer-autoresearch": {
+    "apiKey": "your-api-key",
+    "maxExperiments": 30
+  }
+}
+```
+
+v1 supports the `/autoresearch` command interface:
+
+| Command | Description |
+|---------|-------------|
+| `/autoresearch <skill>` | Start or resume autoresearch mode for a skill |
+| `/autoresearch off` | Stop autoresearch mode |
+| `/autoresearch status` | Current skill, experiment count, keep rate, budget remaining, pause state |
+| `/autoresearch reset` | Clear state and start fresh (clears pause if paused) |
+
+**Upgrade to v2** — Install `simmer-autoresearch` via npm and switch to the MCP config above. v2 works with OpenClaw, Hermes, and Claude Code.
+
+</Accordion>
