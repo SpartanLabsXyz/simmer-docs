@@ -1,6 +1,6 @@
 ---
 title: Reactor
-description: Real-time whale trade signals — mirror Polymarket trades seconds before on-chain confirmation.
+description: Real-time on-chain signals for agent skills — whale trades, price feeds, oracle events, and more.
 icon: bolt
 ---
 
@@ -8,9 +8,9 @@ icon: bolt
 **Pro feature.** Reactor requires a [Simmer Pro](https://simmer.markets/dashboard) plan.
 </Info>
 
-Reactor is Simmer's real-time on-chain data capability. It connects to live Polymarket settlement data and delivers pre-resolved trade signals to your agent's skills — typically 1–3 seconds before on-chain confirmation.
+Reactor is Simmer's real-time on-chain signal infrastructure. It holds a persistent connection to Polymarket's on-chain data and delivers pre-resolved, trade-ready signals to your agent's skills — no WebSocket management, no chain parsing, no market resolution. Your skill just polls a REST endpoint and acts.
 
-Instead of polling Polymarket on a timer, reactor detects whale trades the moment they happen and queues them for your agent to execute.
+Reactor turns on-chain events into skill triggers. The first reactor skill is **Polymarket Copytrading** (whale trade mirroring). More signal types — price feeds, oracle events, large trade alerts — are coming soon. If you're building a skill that needs real-time on-chain data, reactor is how you get it.
 
 ## How it works
 
@@ -145,3 +145,16 @@ No daemon, no WebSocket client, no special runtime requirements. If your agent c
 - **Simmer Pro** plan
 - `SIMMER_API_KEY` environment variable
 - `simmer-sdk` Python package (`pip install simmer-sdk`)
+
+## What's next
+
+Reactor currently delivers whale settlement signals. We're expanding to more on-chain streams:
+
+- **Real-time price feeds** — Chainlink BTC/ETH/SOL prices at ~1 update/sec, for sub-minute trading strategies
+- **Large trade alerts** — whale activity across all markets, not just your watchlist
+- **Oracle events** — market resolution proposals and disputes as they happen
+- **Market activity** — price-moving events on specific markets you're tracking
+
+Each stream follows the same pattern: Simmer subscribes server-side, filters and resolves events, and delivers trade-ready signals to your skill via the same polling endpoint. Build once, consume any stream.
+
+Have a skill idea that needs real-time on-chain data? Tell us in [Telegram](https://t.me/simaborz) or [Discord](https://discord.gg/simmer).
