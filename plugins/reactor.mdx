@@ -1,113 +1,142 @@
 ---
 title: Reactor
-description: Real-time market event stream — turn live Polymarket activity into trading signals.
+description: Real-time whale trade signals — mirror Polymarket trades seconds before on-chain confirmation.
 icon: bolt
 ---
 
 <Info>
-**Coming soon.** Reactor is in development and not yet available for install.
+**Pro feature.** Reactor requires a [Simmer Pro](https://simmer.markets/dashboard) plan.
 </Info>
 
-Reactor is a real-time event stream plugin for OpenClaw. It connects to live Polymarket settlement data via WebSocket — trades are visible seconds before on-chain confirmation — and routes events to your agent or skills.
+Reactor is Simmer's real-time on-chain data capability. It connects to live Polymarket settlement data and delivers pre-resolved trade signals to your agent's skills — typically 1–3 seconds before on-chain confirmation.
 
-Instead of running skills on a timer and hoping you catch something, reactor fires the moment something happens.
+Instead of polling Polymarket on a timer, reactor detects whale trades the moment they happen and queues them for your agent to execute.
 
 ## How it works
 
 ```
-Real-time settlement feed → reactor plugin → dispatch
-                                              ├── autoReact: execute skill immediately (no LLM)
-                                              └── passive: inject events into agent context (LLM decides)
+PolyNode settlement feed (WebSocket)
+   ↓
+Simmer relay (server-side)
+   ↓ matches against your watchlist + min_size filter
+   ↓ resolves Polymarket condition_id → Simmer market_id
+   ↓ computes mirror size
+   ↓ writes signal to Redis (60s TTL)
+   ↓
+Your agent's skill (any runtime)
+   ↓ polls GET /api/sdk/reactor/pending every 2s
+   ↓ executes trade via SimmerClient.trade()
+   ↓ DELETEs signal on success
 ```
 
-1. **Connect** — Plugin maintains a persistent WebSocket to a real-time Polymarket settlement feed (mempool-level data)
-2. **Filter** — Events filtered server-side and client-side against your watchlist (specific wallets, minimum trade sizes)
-3. **Dispatch** — Either run a skill immediately (autoReact) or buffer events for your agent to reason about (passive)
+1. **Detect** — Simmer holds a single PolyNode WebSocket connection and matches settlement events against your configured watchlist
+2. **Resolve** — Each matching event is pre-resolved: Polymarket condition IDs mapped to Simmer market UUIDs, mirror size computed, ready to trade
+3. **Signal** — Pre-resolved signals are written to Redis with a 60-second TTL
+4. **Execute** — Your skill polls for pending signals and executes trades via `SimmerClient.trade()` in your own process
+
+## The first reactor skill: Polymarket Copytrading
+
+The `polymarket-copytrading` skill has a built-in reactor mode that handles the full pipeline:
+
+```bash
+# Install the skill
+npx clawhub@latest install polymarket-copytrading
+
+# Configure your watchlist
+curl -X PATCH "https://api.simmer.markets/api/sdk/reactor/config" \
+  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "wallets": ["0x1234...abcd", "0x5678...efgh"],
+    "min_size": 1000,
+    "max_size": 50,
+    "mirror_fraction": 0.01,
+    "daily_cap": 100,
+    "venue": "sim",
+    "enabled": true
+  }'
+
+# Run reactor mode (polls every 2s, runs until SIGINT)
+python copytrading_trader.py --reactor
+
+# Or single poll for cron-style invocation
+python copytrading_trader.py --reactor --once
+```
+
+The same skill also has a polling mode (free tier) for portfolio-style copying. See the [skill's SKILL.md](https://github.com/SpartanLabsXyz/simmer-sdk/tree/main/skills/polymarket-copytrading) for the full comparison.
 
 ## What reactor enables
 
-Reactor provides a raw event stream. What your agent does with it depends on your skills and strategy.
+Reactor provides pre-resolved trade signals. What your agent does with them depends on your skills and strategy.
 
 ### Whale copytrading
 
-Track specific wallets and copy their trades as they happen. In autoReact mode, the copytrading skill fires within seconds of a whale's trade — before on-chain confirmation.
+Track specific wallets and mirror their trades as they happen. The built-in copytrading skill handles sizing, dedup, and execution automatically.
 
 ### Flow-based signals
 
-Any skill can consume reactor events as an input signal. A whale dumping $50K on "NO" is useful context for momentum, sentiment, or research-driven strategies — not just copytrading.
-
-### Smart entry timing
-
-If your agent already wants to trade a market, reactor events can provide confirmation. "I want to buy YES on X" + "whale just bought $20K YES on X" = higher conviction entry.
+Any skill can poll the pending endpoint. A whale dumping $50K on "NO" is useful context for momentum, sentiment, or research-driven strategies — not just copytrading.
 
 ### Market discovery
 
-Whales trading on markets your agent hasn't seen yet is a discovery signal. Reactor can surface new opportunities that your other skills can evaluate.
+Whales trading on markets your agent hasn't seen yet is a discovery signal. Reactor pre-resolves market IDs and auto-imports missing markets.
 
-### Risk alerts
+## Configuration
 
-Detect when multiple tracked wallets exit the same market. That's a risk signal your agent should know about, even if it doesn't copy their trades.
+Configure your reactor watchlist via the API:
 
-## Dispatch modes
+| Field | Type | Description |
+|-------|------|-------------|
+| `wallets` | `string[]` | Whale addresses to follow (EVM format) |
+| `min_size` | `number` | Minimum whale trade size to consider (shares) |
+| `max_size` | `number` | Cap on your mirror trade size (shares) |
+| `mirror_fraction` | `number` | Fraction of whale size to mirror (e.g. 0.01 = 1%) |
+| `daily_cap` | `number` | Max total spend per day (venue-native units) |
+| `venue` | `string` | `sim`, `polymarket`, or `kalshi` |
+| `enabled` | `boolean` | Pause reactor by setting `false` |
+| `price_buffer` | `number` | Fraction added above whale's fill price for your buy order (default 0.02 = 2%). Prevents order failures on thin books. Range 0–0.2. |
 
-### Passive (default)
+Changes take effect within 30 seconds (server-side config cache TTL).
 
-Events buffer in memory and get injected into your agent's context at the start of each cycle:
+## Signal data
 
-```
-Reactor: 3 whale events since last cycle
-- 0xABC... (SharkyBoi) BUY $12K on "Will ETH hit $4K" @ 0.45
-- 0xDEF... BUY $8K on "Trump wins popular vote" @ 0.62
-- 0xABC... (SharkyBoi) SELL $5K on "Fed rate cut June" @ 0.71
-
-Your installed skills can act on these events.
-React or ignore?
-```
-
-Your agent decides what to do — invoke a skill, ask questions, or ignore.
-
-### autoReact
-
-Events trigger skill execution immediately, bypassing the LLM. Fastest response time, but no nuanced reasoning.
-
-Includes a circuit breaker: 3 consecutive skill failures auto-downgrades to passive mode.
-
-## Event data
-
-Each settlement event includes:
+Each pending signal includes:
 
 | Field | Description |
 |-------|-------------|
-| `whale_wallet` | Taker wallet address |
-| `whale_label` | Your label for this wallet (from watchlist) |
-| `side` | BUY or SELL |
-| `size` | Trade size in shares |
-| `price` | Execution price (0.0–1.0) |
+| `tx_hash` | Unique transaction hash (used for dedup + DELETE) |
+| `taker_wallet` | Whale wallet address |
+| `taker_side` | BUY or SELL |
+| `taker_size` | Trade size in shares |
+| `taker_price` | Execution price (0.0–1.0) |
+| `condition_id` | Polymarket condition ID |
+| `market_id` | Pre-resolved Simmer market UUID (trade-ready) |
 | `market_title` | Human-readable market name |
-| `market_slug` | Polymarket URL slug |
-| `market_id` | Condition ID (unique market identifier) |
-| `timestamp` | When the trade was detected (pre-confirmation) |
+| `side` | Mapped side for your mirror trade (yes/no) |
+| `action` | buy or sell |
+| `amount` | Computed mirror amount (USD) |
 
-## Commands
+## Current limitations
 
-| Command | Description |
-|---------|-------------|
-| `/reactor status` | Connection state, event count, dispatch mode, watchlist size |
-| `/reactor pause` | Pause event processing (WS stays connected) |
-| `/reactor resume` | Resume processing (also clears autoReact circuit breaker) |
-| `/reactor events [n]` | Show last n events (default 10) |
+<Warning>
+**Buys only (MVP).** Reactor currently mirrors whale **buys only**. Sell signals are filtered server-side — if a whale exits a position, reactor won't mirror the sell. Sell mirroring is planned for a future release.
+</Warning>
 
-## Config
+## Safety features
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `dispatch_mode` | `passive` | `passive` or `autoReact` |
-| `autoReact_skill` | `polymarket-copytrading` | Skill to invoke in autoReact mode |
-| `autoReact_max_usd` | `50` | Max trade size per autoReact execution |
-| `buffer_max` | `100` | Max events buffered for passive injection |
+- **Circuit breaker** — 5 consecutive trade failures triggers a pause. Signals are skipped until the next success.
+- **Signal TTL** — Unprocessed signals expire after 60 seconds. No stale trades.
+- **Server-side filtering** — Only events matching your watchlist and `min_size` generate signals. Your skill doesn't see noise.
+- **Per-config caps** — `max_size` and `daily_cap` limit exposure.
+
+## Cross-runtime
+
+Reactor works with any agent runtime — OpenClaw, Hermes, Claude Code, or plain Python scripts. The skill polls a standard REST endpoint and trades via `SimmerClient.trade()`, which handles both managed and external wallets.
+
+No daemon, no WebSocket client, no special runtime requirements. If your agent can run a Python script, it can use reactor.
 
 ## Requirements
 
 - **Simmer Pro** plan
-- **OpenClaw** agent runtime
-- Watchlist configured in the Simmer dashboard reactor tab
+- `SIMMER_API_KEY` environment variable
+- `simmer-sdk` Python package (`pip install simmer-sdk`)
