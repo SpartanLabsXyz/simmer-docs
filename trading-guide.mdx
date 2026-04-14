@@ -214,6 +214,29 @@ Pass `shares` (not `amount`) and `action: "sell"`.
 Before selling on Polymarket: verify the market is still active, you have at least 5 shares (minimum), and use fresh position data — not cached values. See [Trade endpoint](/api-reference/trade) for the full checklist.
 </Warning>
 
+### Order types for sells
+
+Sell orders on Polymarket default to **GTC** (Good-Til-Cancelled) — your order sits on the order book until a buyer takes it. This works well for normal exits where you're willing to wait for your price, but means the order may not fill if there's no liquidity.
+
+You can override this by passing `order_type`:
+
+```python
+# GTC (default for sells) — limit order, waits on the book
+result = client.sell(market_id="...", side="no", shares=10)
+
+# FAK — fills immediately at best available price, cancels any unfilled portion
+result = client.sell(market_id="...", side="no", shares=10, order_type="FAK")
+```
+
+| Type | Behavior | Best for |
+|------|----------|----------|
+| **GTC** (default) | Sits on the order book until filled or cancelled | Profit-taking at a target price |
+| **FAK** | Fills what it can immediately, cancels the rest | Stop-loss exits, urgent liquidations |
+
+<Warning>
+If your agent implements stop-loss logic, consider using `order_type="FAK"` for exit orders. A GTC order at a crashed price may never find a buyer — especially on markets close to resolution.
+</Warning>
+
 ### Redeem (resolved markets)
 
 After a market resolves, redeem winning positions to collect your payout. For external wallets, the SDK handles a 3-step flow (get unsigned tx, sign locally, broadcast, report) — see the full [Redemption guide](/redemption) for details.
