@@ -55,17 +55,19 @@ curl -X PATCH "https://api.simmer.markets/api/sdk/reactor/config" \
     "enabled": true
   }'
 
-# Single poll (check once and exit)
+# Recommended: cron with --once (reliable, survives restarts)
+# Run every 1 minute via your runtime's cron
 python copytrading_trader.py --reactor --once
 
-# Loop mode (long-running, background in your runtime)
-# Shell:
-nohup python copytrading_trader.py --reactor > reactor.log 2>&1 &
-# OpenClaw:  exec command="python3 copytrading_trader.py --reactor" background=true timeout=7200
-# Hermes:    exec command="python3 copytrading_trader.py --reactor" background=true
+# Advanced: loop mode (lower latency, needs process manager)
+python copytrading_trader.py --reactor
 ```
 
-Loop mode polls every 2s and runs until stopped. It's designed to run as a persistent background process in your agent's runtime.
+<Warning>
+**Reactor signals expire after a short window.** Use `--once` on a 1-minute cron for reliable coverage. If your polling process stops (crash, timeout, reboot), signals expire silently. Cron prevents missed signals.
+</Warning>
+
+Loop mode polls every 2s for lower latency, but requires a process manager (launchd, systemd) to auto-restart. Not recommended for agent runtimes with exec timeouts.
 
 The same skill also has a polling mode (free tier) for portfolio-style copying. See the [skill's SKILL.md](https://github.com/SpartanLabsXyz/simmer-sdk/tree/main/skills/polymarket-copytrading) for the full comparison.
 
