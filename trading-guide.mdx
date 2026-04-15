@@ -135,13 +135,63 @@ Include `reasoning` (displayed publicly on the market page) and `source` (enable
 </Tabs>
 
 **What to check in the response:**
-- `success` — `true` if the order filled
+- `fill_status` — the authoritative fill signal (see below)
 - `warnings` — partial fills, liquidity issues
 - `shares_bought` vs `shares_requested` — detect partial fills
 
 <Note>
 The `source` tag groups trades for P&L tracking and prevents accidental re-buys on markets you already hold. Use a consistent prefix like `sdk:strategy-name`.
 </Note>
+
+### Fill status
+
+`success=true` means the exchange accepted your order, not that it has filled. The `fill_status` field tells you the actual state:
+
+| `fill_status` | Meaning | What to do |
+|---|---|---|
+| `"filled"` | Order matched and confirmed on-chain | Use `shares_bought` and `cost` directly |
+| `"submitted"` | GTC order placed on the book, waiting for a counterparty | Monitor via `get_positions()`, or cancel |
+| `"unconfirmed"` | Order sent, fill data confirming (~5-15 seconds) | Poll `get_positions()` or wait briefly |
+| `"failed"` | Order failed to execute | Check `result.error` for details |
+
+<Warning>
+Don't use `success` alone to confirm a fill. A GTC order returns `success=true` with `cost=0` and `fill_status="submitted"` — that's correct behavior, not a false positive. The order is on the book, waiting for a match.
+</Warning>
+
+**Deterministic verification flow:**
+
+```python
+result = client.trade(
+    market_id="uuid",
+    side="yes",
+    amount=10.0,
+    venue="polymarket"
+)
+
+if result.fill_status == "filled":
+    # Confirmed — shares_bought and cost are final
+    print(f"Filled: {result.shares_bought} shares @ ${result.cost:.2f}")
+
+elif result.fill_status == "submitted":
+    # GTC order on the book — hasn't filled yet
+    # Check back later or cancel with client.cancel_order(result.trade_id)
+    print(f"Order live on book, waiting for match")
+
+elif result.fill_status == "unconfirmed":
+    # Fill happened but exact data is still settling (~5-15s)
+    # Poll positions for the confirmed state
+    import time
+    time.sleep(15)
+    positions = client.get_positions()
+    # Check for your position in the response
+
+elif result.fill_status == "failed":
+    print(f"Failed: {result.error}")
+```
+
+<Tip>
+For agents that need guaranteed fill confirmation: check `fill_status` immediately, then fall back to polling `get_positions()` for `"submitted"` or `"unconfirmed"` states. Most fills confirm within seconds.
+</Tip>
 
 ## 5. Monitor positions
 

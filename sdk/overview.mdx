@@ -66,16 +66,20 @@ market.resolves_at           # Resolution date
 ### TradeResult
 
 ```python
-result.success          # Boolean
+result.success          # Boolean — order accepted (not necessarily filled, see fill_status)
 result.trade_id         # UUID
 result.shares_bought    # Shares bought (0 for sells)
 result.shares_sold      # Shares sold (0 for buys)
+result.shares_requested # Shares requested (compare with shares_bought for partial fills)
 result.cost             # Actual cost
 result.new_price        # Post-trade price
-result.fully_filled     # Boolean
+result.fully_filled     # Boolean — shares_bought >= shares_requested
+result.fill_status      # "filled", "submitted", "unconfirmed", or "failed" (see Trading Guide)
+result.order_status     # Polymarket order status: "matched", "live", "delayed"
 result.error            # Error message if failed
 result.hint             # Resolution hint if failed
 result.warnings         # List of warnings
+result.skip_reason      # Why trade was skipped (e.g. "conflicts skipped")
 ```
 
 ### Position
