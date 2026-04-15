@@ -10,6 +10,17 @@ icon: flask
 
 Autoresearch lets your agent optimize its own trading skills. It runs experiments — changing config values, measuring results over real trading cycles, and keeping changes that improve performance. Think of it as automated A/B testing for your trading strategy.
 
+## Prerequisites
+
+- **Simmer Pro plan** with a valid `SIMMER_API_KEY`
+- **simmer-sdk** installed with at least one trading skill running on sim venue
+- **Node.js** 18+ (for the MCP server)
+- **Git** initialized in your skill workspace (autoresearch uses git for commit/revert)
+
+<Warning>
+**Start with sim venue.** Always run autoresearch against the simulated venue first. Autoresearch mutates your skill's code and config — running against a real-money venue risks unexpected losses from untested changes.
+</Warning>
+
 ## How it works
 
 ```
@@ -75,6 +86,14 @@ Then add the MCP server to your agent's config:
 
 </CodeGroup>
 
+Then install the behavioral skill (tells your agent how to run the experiment loop):
+
+```bash
+npx simmer-autoresearch install-skill
+```
+
+This auto-detects your runtime (OpenClaw, Hermes) and copies the skill instructions to the right directory. For Claude Code, add the skill content to your project's `CLAUDE.md`.
+
 ## Config
 
 Configure autoresearch via environment variables:
@@ -84,6 +103,42 @@ Configure autoresearch via environment variables:
 | `SIMMER_API_KEY` | — | **Required.** Your Simmer API key. |
 | `SIMMER_API_URL` | `https://api.simmer.markets` | API base URL. Override for self-hosted. |
 | `AUTORESEARCH_MAX_EXPERIMENTS` | `50` | Max experiments per session. Prevents runaway loops. `0` = unlimited. |
+
+## Running Autoresearch
+
+### Setup (once per optimization target)
+
+1. **Pick a skill** to optimize and a primary metric (usually P&L)
+2. Create a git branch: `git checkout -b autoresearch/<skill>-<date>`
+3. Read the skill source code thoroughly — understand what it does before mutating
+4. Write `autoresearch.md` — a session spec describing the goal, metrics, how to run, and constraints
+5. Write `autoresearch.sh` — a single command that runs the skill for one cycle
+6. Commit both files
+7. Call `init_experiment` → run the baseline with `run_experiment` → `log_experiment` → start looping
+
+### The experiment loop
+
+Each iteration:
+1. **Hypothesize** — what change might improve the metric?
+2. **Mutate** — change the skill's code or config
+3. **Run** — call `run_experiment` to execute the skill
+4. **Log** — call `log_experiment` to record the result (`keep`, `discard`, or `crash`)
+
+`keep` auto-commits to git. `discard` and `crash` auto-revert the working directory.
+
+Use `backtest_experiment` for fast config exploration (seconds) before committing to live runs (minutes).
+
+### Key rules
+
+- **Never skip the baseline run.** The first experiment establishes the reference point for all comparisons.
+- **Always log — even crashes.** Crash data matters for confidence scoring and crash detection.
+- **Check confidence scores.** ≥2× noise floor = improvement is likely real. <1× = within noise. 1-2× = marginal, re-run to confirm.
+- **Code mutations beat config tuning.** Structural changes (new data sources, different models, alternative strategies) find bigger wins than parameter sweaks.
+- **Keep ideas in `autoresearch.ideas.md`.** Promising but deferred optimizations go here.
+
+### When you're done
+
+Review the autoresearch git branch. Experiments that were `keep`-ed are committed with result metadata in the commit message. Merge the branch (or cherry-pick specific experiments) into your main skill branch to lock in the improvements.
 
 ## Tools
 
@@ -174,9 +229,11 @@ Signal data is **private** — only visible to the trade owner via authenticated
 
 ## Session management
 
-v2 uses SKILL.md behavioral instructions instead of CLI commands. Your agent manages its own session state — there is no `/autoresearch` command interface. Include the autoresearch SKILL.md in your agent's context to wire up the research loop behavior.
+Your agent manages its own session state using the SKILL.md behavioral instructions (installed via `npx simmer-autoresearch install-skill`). There is no `/autoresearch` command interface — the agent drives the loop autonomously.
 
-The agent reads its own experiment history on startup (via `get_state`) and resumes where it left off. To reset, call `init_experiment` with a new session name.
+- **Resume:** The agent reads `autoresearch.jsonl` on startup and resumes where it left off.
+- **New session:** Call `init_experiment` with a new name to start a fresh segment (previous results are archived, not deleted).
+- **Context compaction:** If the agent's context resets, it should re-read `autoresearch.md` and `autoresearch.jsonl` to restore state.
 
 ## Safety features
 
