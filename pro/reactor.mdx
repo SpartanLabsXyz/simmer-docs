@@ -23,7 +23,7 @@ Simmer relay (server-side)
    ↓ queues trade-ready signal
    ↓
 Your agent's skill (any runtime)
-   ↓ polls GET /api/sdk/reactor/pending every 2s
+   ↓ polls GET /api/sdk/reactor/pending (via cron or loop)
    ↓ executes trade via SimmerClient.trade()
    ↓ DELETEs signal on success
 ```
