@@ -119,7 +119,7 @@ curl -H "Authorization: Bearer $SIMMER_API_KEY" \
 | `max_position_usd` | float | Max USD per position |
 | `default_stop_loss_pct` | float | Default stop-loss percentage (default: 0.50) |
 | `default_take_profit_pct` | float \| null | Default take-profit percentage (default: null = off). Set to `0` to disable. |
-| `auto_risk_monitor_enabled` | bool | Auto-create risk monitors on new positions (default: true) |
+| `auto_risk_monitor_enabled` | bool | Enable server-side risk monitoring (default: true). When `true`, new positions automatically get SL/TP monitors and the server executes exits when thresholds are hit. Setting to `false` disables all server-side monitoring and clears existing monitors. This is a server-side setting — disabling it in your agent code locally does not stop the server from executing exits. |
 | `trading_paused` | bool | Kill switch — pauses all trading when `true` |
 
 ```bash
