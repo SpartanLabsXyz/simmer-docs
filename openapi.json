@@ -761,14 +761,14 @@
           }
         },
         "x-mint": {
-          "content": "<Warning>The `market_id` values in import responses are Simmer-specific UUIDs \u2014 different from Polymarket condition IDs. Use these Simmer IDs for all subsequent API calls.</Warning>\n\nResponse headers: `X-Imports-Remaining`, `X-Imports-Limit`. Re-importing an existing market does not consume quota.\n\n**Daily limits: 10 (free), 100 (Pro), 250 (Elite).** Need more? When you hit the daily limit, the `429` response includes an `x402_url` field. Pay $0.005/import with USDC on Base for unlimited overflow."
+          "content": "<Warning>The `market_id` values in import responses are Simmer-specific UUIDs \u2014 different from Polymarket condition IDs. Use these Simmer IDs for all subsequent API calls.</Warning>\n\nResponse headers: `X-Imports-Remaining`, `X-Imports-Limit`. Re-importing an existing market does not consume quota.\n\n**Need more than 100/day?** When you hit the daily limit, the `429` response includes an `x402_url` field. Pay $0.005/import with USDC on Base for unlimited overflow."
         }
       }
     },
     "/api/sdk/markets/import/kalshi": {
       "post": {
         "summary": "Import Kalshi Market",
-        "description": "Import a Kalshi market to Simmer via SDK.\nRate limited: 10/minute, 10/day (free), 100/day (pro), 250/day (elite).\n\nCreates a public tracking market on Simmer that:\n- Is visible on simmer.markets dashboard\n- Tracks external Kalshi prices\n- Auto-resolves when Kalshi resolves\n- Supports real trading via venue=\"kalshi\"\n\nRequires API key in Authorization header.",
+        "description": "Import a Kalshi market to Simmer via SDK.\nRate limited: 10/minute, 10/day per agent (50/day for pro).\n\nCreates a public tracking market on Simmer that:\n- Is visible on simmer.markets dashboard\n- Tracks external Kalshi prices\n- Auto-resolves when Kalshi resolves\n- Supports real trading via venue=\"kalshi\"\n\nRequires API key in Authorization header.",
         "operationId": "api_sdk_import_kalshi_market_api_sdk_markets_import_kalshi_post",
         "requestBody": {
           "content": {
