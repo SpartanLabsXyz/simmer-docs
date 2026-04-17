@@ -2223,7 +2223,7 @@
     "/api/sdk/wallet/{wallet_address}/positions": {
       "get": {
         "summary": "Wallet Positions",
-        "description": "Fetch Polymarket positions for any wallet address.\n\nUses shared position fetcher (PolyNode primary, PM Data API fallback).\nPolyNode returns curPrice directly \u2014 no separate CLOB price fetch needed.\n\nRequires API key in Authorization header (rate limited: 60/minute).\nCached for 30s per wallet to prevent heavy pollers from saturating DB/API.",
+        "description": "Fetch Polymarket positions for any wallet address.\n\nRequires API key in Authorization header (rate limited: 60/minute).\nCached for 30s per wallet to prevent heavy pollers from saturating the API.",
         "operationId": "api_sdk_wallet_positions_api_sdk_wallet__wallet_address__positions_get",
         "parameters": [
           {
@@ -2427,6 +2427,24 @@
               "title": "Offset"
             },
             "description": "Offset for pagination"
+          },
+          {
+            "name": "agent_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter trades to a specific SDK agent ID (sim trades only)",
+              "title": "Agent Id"
+            },
+            "description": "Filter trades to a specific SDK agent ID (sim trades only)"
           }
         ],
         "responses": {
@@ -5590,6 +5608,17 @@
               }
             ],
             "title": "Which Side To Close"
+          },
+          "wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wallet Address"
           }
         },
         "type": "object",
@@ -6040,6 +6069,17 @@
               }
             ],
             "title": "Skill Md Body"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
           }
         },
         "type": "object",
