@@ -127,9 +127,19 @@ Each pending signal includes:
 **Buys only (MVP).** Reactor currently mirrors whale **buys only**. Sell signals are filtered server-side — if a whale exits a position, reactor won't mirror the sell. Sell mirroring is planned for a future release.
 </Warning>
 
+## Monitoring
+
+All reactor activity — mirrored trades, skipped signals, and failures with error messages — appears in the **Reactor tab** on your [dashboard](https://simmer.markets/dashboard). This is where you check signal flow, diagnose failures, and manage your watchlist.
+
+You can label wallets in the watchlist for easier identification. Labels show in the Reaction Log so you see "GCR" instead of `0x59a4...`.
+
+<Note>
+Reactor activity appears in the **Reactor tab**, not the Observability tab. Observability tracks executed trades across all skills. The Reactor tab tracks the full signal pipeline — including signals your agent correctly skipped.
+</Note>
+
 ## Safety features
 
-- **Circuit breaker** — 5 consecutive trade failures triggers a pause. Signals are skipped until the next success.
+- **Circuit breaker** — 5 consecutive trade failures triggers a pause. Signals are skipped until the underlying issue is fixed. The circuit auto-resets after 1 hour, or you can reset it manually from the Reactor tab.
 - **Signal expiry** — Unprocessed signals expire automatically. No stale trades.
 - **Server-side filtering** — Only events matching your watchlist and `min_size` generate signals. Your skill doesn't see noise.
 - **Per-config caps** — `max_size` and `daily_cap` limit exposure.
