@@ -144,11 +144,11 @@ No daemon, no WebSocket client, no special runtime requirements. If your agent c
 
 - **Simmer Pro** plan
 - `SIMMER_API_KEY` environment variable
-- `simmer-sdk` Python package, version 0.9.19 or newer:
+- `simmer-sdk` Python package, version 0.9.21 or newer:
   ```bash
-  pip install -U 'simmer-sdk>=0.9.19'
+  pip install -U 'simmer-sdk>=0.9.21'
   ```
-  Older versions lack a `trade()` parameter the reactor skill passes and will fail on every signal.
+  Older versions lack the `signal_data` parameter on `trade()` that the reactor skill requires.
 
 ## What's next
 
