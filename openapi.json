@@ -3314,6 +3314,12 @@
             ],
             "title": "Triggered Risk Alerts"
           },
+          "risk_warnings": {
+            "items": {},
+            "type": "array",
+            "title": "Risk Warnings",
+            "default": []
+          },
           "performance": {
             "additionalProperties": true,
             "type": "object",
