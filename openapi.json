@@ -2167,7 +2167,7 @@
     "/api/sdk/wallet/unlink": {
       "post": {
         "summary": "Wallet Unlink",
-        "description": "Revert from self-custody back to managed wallet.\n\nRestores the user's managed wallet from legacy columns.\nUsers can switch back and forth freely between managed and self-custody.\n\nRate limited: 3 attempts per day per account.",
+        "description": "Revert from self-custody back to managed wallet.\n\nRestores the user's managed wallet from legacy columns.\nUsers can switch back and forth freely between managed and self-custody.\n\nRate limited: 10 attempts per hour (IP-based via slowapi).",
         "operationId": "api_wallet_unlink_api_sdk_wallet_unlink_post",
         "responses": {
           "200": {
@@ -6021,6 +6021,11 @@
             "type": "boolean",
             "title": "Is Official",
             "default": false
+          },
+          "tier": {
+            "type": "string",
+            "title": "Tier",
+            "default": "community"
           },
           "install_count": {
             "type": "integer",
