@@ -55,6 +55,62 @@ client.trade(market_id, "yes", 10.0, venue="polymarket")
 
 See [Wallet Setup](/wallets) for full details.
 
+### Discovering Polymarket markets
+
+Most popular Polymarket markets are already in Simmer's index — `client.list_importable_markets(venue="polymarket", q=...)` returns markets ready to trade. For markets you discover off-Simmer (e.g. via the Polymarket Gamma API by slug), import them once with `import_market` and Simmer creates a tradeable mirror.
+
+<Tabs>
+  <Tab title="curl">
+    ```bash
+    # Browse markets Simmer has surfaced
+    curl -H "Authorization: Bearer \$SIMMER_API_KEY" \
+      "https://api.simmer.markets/api/sdk/markets/importable?venue=polymarket&q=temperature&limit=10"
+
+    # Pre-flight: does Simmer already index this market? (Free, no quota.)
+    curl -H "Authorization: Bearer \$SIMMER_API_KEY" \
+      "https://api.simmer.markets/api/sdk/markets/check?url=https://polymarket.com/event/will-x-happen"
+
+    # Import a Polymarket market (counts toward import quota)
+    curl -X POST https://api.simmer.markets/api/sdk/markets/import \
+      -H "Authorization: Bearer \$SIMMER_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{"polymarket_url": "https://polymarket.com/event/will-x-happen"}'
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    # Browse markets Simmer has surfaced
+    markets = client.list_importable_markets(venue="polymarket", q="temperature", limit=10)
+
+    # Pre-flight: does Simmer already index this market? (Free, no quota.)
+    check = client.check_market_exists(url="https://polymarket.com/event/will-x-happen")
+    if check["exists"]:
+        market_id = check["market_id"]
+    else:
+        result = client.import_market("https://polymarket.com/event/will-x-happen")
+        market_id = result["market_id"]
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+Import limits: 10/day (free), 100/day (Pro), 250/day (Elite). On 429, the response includes `x402_url` for $0.005/import overflow via USDC on Base. Always pre-check with `check_market_exists` before calling `import_market` — that endpoint is free.
+</Note>
+
+### Trading on Polymarket
+
+Once a market is in Simmer's index, the same `market_id` works on both venues:
+
+```python
+# Paper-trade with $SIM (Simmer's tradeable mirror, real Polymarket prices)
+client.trade(market_id, "yes", 10, venue="sim")
+
+# Real USDC orders on Polymarket
+client.trade(market_id, "yes", 10, venue="polymarket")
+```
+
+This means you can dogfood a strategy on `venue="sim"` against real Polymarket prices — full Simmer-side position tracking, virtual currency — and graduate to `venue="polymarket"` only when you're ready to put real USDC at risk.
+
 ## Kalshi (real USD)
 
 Real trading on Kalshi via DFlow on Solana. Popular categories include sports, crypto, and weather.
@@ -121,9 +177,8 @@ Import by Kalshi URL or bare ticker. The endpoint accepts either format.
   </Tab>
   <Tab title="Python">
     ```python
-    result = client.import_market(
-        url="https://kalshi.com/markets/kxweather-26jan25-nyc",
-        source="kalshi"
+    result = client.import_kalshi_market(
+        kalshi_url="https://kalshi.com/markets/kxweather-26jan25-nyc"
     )
     print(f"Imported: {result['market_id']}")
     ```
@@ -131,7 +186,7 @@ Import by Kalshi URL or bare ticker. The endpoint accepts either format.
 </Tabs>
 
 <Note>
-Import limits: 10/day (free), 100/day (Pro). Check before importing with `GET /api/sdk/markets/check?url=...` to avoid wasting quota on already-imported markets.
+Import limits: 10/day (free), 100/day (Pro), 250/day (Elite). On 429, the response includes `x402_url` for $0.005/import overflow via USDC on Base. Pre-check with `check_market_exists(ticker=...)` before calling `import_kalshi_market` — that endpoint is free.
 </Note>
 
 ### Trading on Kalshi
@@ -144,7 +199,7 @@ client = SimmerClient(api_key="sk_live_...", venue="kalshi")
 
 # Discover → Import → Trade
 importable = client.list_importable_markets(venue="kalshi", q="temperature")
-imported = client.import_market(url=importable[0]["url"], source="kalshi")
+imported = client.import_kalshi_market(kalshi_url=importable[0]["url"])
 
 result = client.trade(
     imported["market_id"], "yes", 10.0,

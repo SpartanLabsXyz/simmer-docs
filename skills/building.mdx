@@ -160,6 +160,41 @@ if edge.get("recommendation") == "HOLD":
 
 This isn't a hard rule -- some high-frequency skills skip context checks for speed. But for most strategies, checking context prevents costly mistakes like flip-flopping or trading into illiquid books.
 
+### Discover-then-trade for arbitrary markets
+
+If your skill discovers markets off-Simmer (e.g. via the Polymarket Gamma API by event slug, or by walking external trader portfolios), you can't trade them via `SimmerClient.trade()` until they're in Simmer's index — every trade endpoint, including paper modes, fetches the price from `/api/sdk/context/{market_id}` and 404s for unindexed markets.
+
+The canonical pattern is: **check (free) → import on miss → trade**. Cache the result so subsequent scans skip both calls.
+
+```python
+def ensure_market_indexed(polymarket_url, cache):
+    """Return (simmer_market_id, error). Hits cache, then check (free), then
+    import (consumes quota)."""
+    if polymarket_url in cache:
+        return cache[polymarket_url], None
+
+    # Free pre-flight — does NOT consume import quota
+    check = client.check_market_exists(url=polymarket_url)
+    if check["exists"]:
+        cache[polymarket_url] = check["market_id"]
+        return check["market_id"], None
+
+    # Not indexed — consume one import from the daily quota
+    result = client.import_market(polymarket_url)
+    if result.get("status") in ("imported", "already_exists"):
+        cache[polymarket_url] = result["market_id"]
+        return result["market_id"], None
+    return None, f"import status={result.get('status')}"
+```
+
+**Why this matters:**
+- `check_market_exists` is free and doesn't consume the import quota
+- `import_market` is rate-limited (10/100/250 per day by tier; on 429 the response includes an `x402_url` for $0.005/import overflow via USDC on Base)
+- Most popular markets are already in Simmer's index — the check often returns existing IDs at no cost
+- Persisting the cache across scans means steady-state cost approaches zero
+
+For Kalshi-discovered markets, swap `check_market_exists(url=...)` for `check_market_exists(ticker=...)` and `import_market` for `import_kalshi_market`.
+
 ### Reading state across venues
 
 A Simmer agent can hold positions across three venues at once: **sim** (paper trading with `$SIM`), **polymarket** (real USDC on Polygon), and **kalshi** (real USDC on Solana). They're independent — a single agent can hold a `$SIM` paper position AND a real Polymarket position on the same market simultaneously.
