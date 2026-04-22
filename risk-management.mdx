@@ -1,0 +1,131 @@
+---
+title: Risk Management
+description: Server-side stop-loss and take-profit. You register thresholds; we watch every price tick.
+icon: shield-halved
+---
+
+Simmer has a built-in risk monitor. Every buy gets auto-enrolled with a stop-loss and take-profit. We detect breaches server-side on every price tick — you do not need to poll, subscribe to a WebSocket, or run your own monitoring loop.
+
+<Warning>
+If you are running a background loop that polls `/api/sdk/positions` every N seconds to decide when to sell, you are duplicating work the server already does in real time. Use `set_monitor()` (or rely on the defaults) and delete the loop.
+</Warning>
+
+## How it works
+
+```
+You register a threshold
+    ↓ set_monitor(market_id, side, stop_loss_pct=..., take_profit_pct=...)
+    ↓ stored server-side
+
+Price ticks on Polymarket (real-time WebSocket, server-side)
+    ↓ we compute your live P&L against every registered threshold
+    ↓ if breached → trigger exit:
+
+    ┌─ Managed wallet: we cancel open orders + sell immediately, server-side
+    │
+    └─ External wallet: we write a risk alert; your SDK picks it up on the next
+       get_briefing() or SimmerClient() init and signs the sell locally using
+       your private key (we never hold your external wallet's key)
+```
+
+Detection latency is sub-second. Execution latency depends on wallet type — see below.
+
+## Auto-enrollment (the default)
+
+Every successful buy via the SDK auto-enrolls a monitor for that position. Defaults:
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `stop_loss_pct` | `0.20` | Close when position is down 20% |
+| `take_profit_pct` | `null` | No auto take-profit (prediction markets resolve naturally) |
+| `auto_risk_monitor_enabled` | `true` | Enabled for all users unless turned off |
+
+To change the defaults for all future buys:
+
+```python
+client.update_settings(
+    default_stop_loss_pct=0.15,   # 15% stop-loss
+    default_take_profit_pct=0.50, # 50% take-profit
+)
+```
+
+To disable auto-enroll globally:
+
+```python
+client.update_settings(auto_risk_monitor_enabled=False)
+```
+
+## Per-position thresholds
+
+If you want different thresholds on a specific position, call `set_monitor()` after the trade (or anytime):
+
+```python
+client.set_monitor(
+    market_id="87654321-...",
+    side="yes",
+    stop_loss_pct=0.10,     # 10% stop-loss
+    take_profit_pct=0.95,   # 95% take-profit
+)
+```
+
+This upserts — calling it again with new values overwrites. To remove a monitor entirely:
+
+```python
+client.delete_monitor(market_id="...", side="yes")
+```
+
+List everything you have registered:
+
+```python
+monitors = client.list_monitors()
+```
+
+## External wallets: what you need to do
+
+External wallets (where you keep your own private key and we don't) require **one extra step**: the SDK needs to be able to sign the sell order. Two requirements:
+
+1. **Pass your private key when constructing the client**:
+   ```python
+   client = SimmerClient(
+       api_key="sk_live_...",
+       private_key="0x...",   # EVM private key for Polymarket
+   )
+   ```
+
+2. **Call `get_briefing()` regularly** (every heartbeat — a few times per hour is enough). Briefing responses include any triggered risk alerts, and the SDK auto-executes them before returning. You can also construct a new `SimmerClient` which processes pending alerts on init.
+
+No WebSocket setup is required on your side. Detection happens server-side; your SDK only polls for ready-to-execute alerts.
+
+<Note>
+If your bot never calls `get_briefing()` and never re-instantiates the client, alerts will sit in Redis (1 hour TTL) and eventually expire without being executed. Keep your heartbeat cadence under an hour.
+</Note>
+
+## Managed wallets
+
+If you use a Simmer-managed wallet, the server holds the signing key, so we execute the exit ourselves the moment the threshold is hit. No SDK polling required — the sell is already done by the time you next call the API.
+
+## Choosing thresholds
+
+- **Stop-loss on prediction markets is different from stocks.** Prices here are probabilities between 0 and 1. A position that moves from 0.50 → 0.40 is already a 20% loss. Set tighter stops than you would on equities.
+- **Take-profit is often unnecessary.** Most prediction markets resolve within days or weeks. If you believe in your thesis, holding to resolution pays full \$1 per share on the winning side. Default TP is off for this reason.
+- **"Forced liquidation before settlement" is not needed.** Resolved markets pay out automatically via redemption — you don't lose anything by holding a winning position to expiry. Exit early only if you have a view change, not to beat the clock.
+
+## Common mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Polling `/api/sdk/positions` in a loop to decide when to sell | Use `set_monitor()` instead. The server already watches every tick. |
+| Building a custom risk monitor without registering thresholds | Thresholds must be in `position_risk_settings` for us to watch. External monitors can't trigger our execution path. |
+| Instantiating `SimmerClient` without `private_key` for external wallets | The SDK can't sign sells without it. Alerts will accumulate but never execute. |
+| Never calling `get_briefing()` | Alerts expire after 1 hour if not consumed. Call briefing at least every 30 minutes. |
+| Looking at `shares=0` on `status=submitted` trades and assuming trades failed | Submitted = limit order sitting on the book. `shares` populates only after a fill. Check `status=filled` records for real positions. |
+
+## API reference
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `client.set_monitor()` | `POST /api/sdk/positions/{market_id}/monitor` | Register or update thresholds for one position |
+| `client.list_monitors()` | `GET /api/sdk/positions/monitors` | List all active monitors |
+| `client.delete_monitor()` | `DELETE /api/sdk/positions/{market_id}/monitor` | Remove a monitor |
+| `client.update_settings()` | `PATCH /api/sdk/user/settings` | Change defaults (stop-loss, take-profit, enabled) |
+| `client.get_briefing()` | `GET /api/sdk/briefing` | Heartbeat; auto-processes pending risk alerts |
