@@ -56,7 +56,7 @@ Rules:
   "emoji": "your-emoji",
   "requires": {
     "pip": ["simmer-sdk"],
-    "env": ["SIMMER_API_KEY"]
+    "env": ["SIMMER_API_KEY", "WALLET_PRIVATE_KEY"]
   },
   "cron": "*/15 * * * *",
   "automaton": {
@@ -68,6 +68,22 @@ Rules:
 
 <Warning>
 `simmer-sdk` in `requires.pip` is required. This is what causes the skill to appear in the Simmer registry automatically.
+</Warning>
+
+<Warning>
+**Declare every env var your SKILL.md teaches users to set.** ClawHub's moderation scanner (OpenClaw) flags skills where the `SKILL.md` body references credentials that aren't declared in `clawhub.json` `requires.env` — it treats the mismatch as a "hidden credential" signal and will block non-interactive installs.
+
+Common env vars for Simmer skills:
+
+| Env var | When to declare |
+|---------|-----------------|
+| `SIMMER_API_KEY` | Always — every skill uses it |
+| `WALLET_PRIVATE_KEY` | Declare if your SKILL.md mentions external-wallet trading or self-custody signing |
+| `EVM_PRIVATE_KEY` | Declare if your skill signs EVM transactions directly (e.g. x402 payments) |
+| `SOLANA_PRIVATE_KEY` | Declare if your skill signs Kalshi/Solana transactions |
+| `POLYGON_RPC_URL` | Declare if your skill uses a custom Polygon RPC endpoint |
+
+If you don't use an env var, don't declare it. If you mention it in SKILL.md instructions, you must declare it.
 </Warning>
 
 ### Python script patterns
@@ -318,6 +334,28 @@ Within 6 hours, the Simmer sync job will:
 3. Add it to the registry at [simmer.markets/skills](https://simmer.markets/skills)
 
 No approval process. No submission form.
+
+<Warning>
+**Always pass `--slug` explicitly.** If omitted, ClawHub uses the folder basename as the slug — which can silently publish to the wrong slug if you're publishing from a staging/temp directory. Make the slug explicit every time.
+</Warning>
+
+### After publishing, verify the install path
+
+Trading skills that reference crypto keys and call external APIs will sometimes get flagged by ClawHub's VirusTotal Code Insight scanner — it's a heuristic LLM scan and may return false positives on legitimate trading code. Verify installs work:
+
+```bash
+npx clawhub@latest install your-skill-slug
+```
+
+If you see:
+
+> ⚠️ Warning: "your-skill-slug" is flagged as suspicious by VirusTotal Code Insight.
+> Error: Use --force to install suspicious skills in non-interactive mode
+
+Two fixes:
+
+1. **Manifest mismatch (most common)**: make sure every env var and every capability your SKILL.md teaches is declared in `clawhub.json` `requires.env`. Republish as a new patch version. OpenClaw re-scans and clears its verdict.
+2. **VT Code Insight false positive**: if OpenClaw is clean but VirusTotal still flags behavioral patterns (crypto keys + external HTTP + credential handling), email `simmer@agentmail.to` and we'll request a manual override from ClawHub. Include your skill slug and the scan report link from `https://clawhub.ai/skills/<your-slug>`.
 
 ## Naming conventions
 
