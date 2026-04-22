@@ -143,6 +143,56 @@ Include `reasoning` (displayed publicly on the market page) and `source` (enable
 The `source` tag groups trades for P&L tracking and prevents accidental re-buys on markets you already hold. Use a consistent prefix like `sdk:strategy-name`.
 </Note>
 
+### Order types
+
+Polymarket supports both market and limit orders on buys **and** sells. Pass `order_type` to override the default.
+
+| Type | Behavior | Best for |
+|------|----------|----------|
+| **FAK** (Fill-and-Kill) | Fills what it can at the best available price, cancels any remainder. This is your "market order." | Entering/exiting now at market |
+| **GTC** (Good-Til-Cancelled) | Sits on the order book at your limit price until filled or cancelled. | Buying below market / selling above it |
+| **FOK** (Fill-or-Kill) | Fills the full size immediately or cancels entirely. No partial fills. | All-or-nothing entries |
+| **GTD** (Good-Til-Date) | GTC with an expiry timestamp. | Time-boxed limit orders |
+
+**Defaults when `order_type` is omitted:** `FAK` for buys, `GTC` for sells. The Python SDK's `client.trade()` sends `FAK` explicitly — pass `order_type="GTC"` to get a limit order.
+
+```python
+# Market buy (SDK default) — fills now at the best ask
+client.trade(market_id="...", side="yes", amount=10, venue="polymarket")
+
+# Limit buy — sits on the book until someone sells to you at 0.42
+client.trade(
+    market_id="...", side="yes", amount=10, venue="polymarket",
+    order_type="GTC", price=0.42,
+)
+
+# Limit sell — sits on the book until someone buys from you at 0.70
+client.trade(
+    market_id="...", side="yes", action="sell", shares=10, venue="polymarket",
+    order_type="GTC", price=0.70,
+)
+
+# Market sell — urgent exit, take whatever the book offers
+client.trade(
+    market_id="...", side="yes", action="sell", shares=10, venue="polymarket",
+    order_type="FAK",
+)
+```
+
+<Note>
+`price` is the limit price for your side's token (0.001–0.999 — sub-cent supported for neg_risk markets). For `side="no"`, this is the NO token price directly, **not** `1 - yes_price`. If omitted on a GTC/GTD order, the server falls back to the current market price for that outcome.
+</Note>
+
+<Warning>
+A GTC order returns `fill_status="submitted"` with `cost=0` — that's correct, the order is resting on the book. Monitor via `get_positions()` or cancel with `client.cancel_order(order_id)` using the `order_id` from the trade response. See [Fill status](#fill-status) below.
+</Warning>
+
+<Tip>
+**Stop-loss logic:** use `order_type="FAK"` for exit orders. A GTC sell at a crashed price may never find a buyer — especially on markets close to resolution.
+</Tip>
+
+Order types apply only to Polymarket. Sim and Kalshi venues execute at market automatically.
+
 ### Fill status
 
 `success=true` means the exchange accepted your order, not that it has filled. The `fill_status` field tells you the actual state:
@@ -264,28 +314,7 @@ Pass `shares` (not `amount`) and `action: "sell"`.
 Before selling on Polymarket: verify the market is still active, you have at least 5 shares (minimum), and use fresh position data — not cached values. See [Trade endpoint](/api-reference/trade) for the full checklist.
 </Warning>
 
-### Order types for sells
-
-Sell orders on Polymarket default to **GTC** (Good-Til-Cancelled) — your order sits on the order book until a buyer takes it. This works well for normal exits where you're willing to wait for your price, but means the order may not fill if there's no liquidity.
-
-You can override this by passing `order_type`:
-
-```python
-# GTC (default for sells) — limit order, waits on the book
-result = client.sell(market_id="...", side="no", shares=10)
-
-# FAK — fills immediately at best available price, cancels any unfilled portion
-result = client.sell(market_id="...", side="no", shares=10, order_type="FAK")
-```
-
-| Type | Behavior | Best for |
-|------|----------|----------|
-| **GTC** (default) | Sits on the order book until filled or cancelled | Profit-taking at a target price |
-| **FAK** | Fills what it can immediately, cancels the rest | Stop-loss exits, urgent liquidations |
-
-<Warning>
-If your agent implements stop-loss logic, consider using `order_type="FAK"` for exit orders. A GTC order at a crashed price may never find a buyer — especially on markets close to resolution.
-</Warning>
+Sells default to **GTC** (limit). Pass `order_type="FAK"` for a market sell — see [Order types](#order-types) above.
 
 ### Redeem (resolved markets)
 
