@@ -54,10 +54,23 @@ Rules:
 ```json
 {
   "emoji": "your-emoji",
+  "primaryEnv": "SIMMER_API_KEY",
   "requires": {
     "pip": ["simmer-sdk"],
-    "env": ["SIMMER_API_KEY", "WALLET_PRIVATE_KEY"]
+    "env": ["SIMMER_API_KEY"]
   },
+  "envVars": [
+    {
+      "name": "SIMMER_API_KEY",
+      "required": true,
+      "description": "Your Simmer SDK API key — get from simmer.markets/dashboard"
+    },
+    {
+      "name": "WALLET_PRIVATE_KEY",
+      "required": false,
+      "description": "Only needed for external-wallet self-custody trading."
+    }
+  ],
   "cron": "*/15 * * * *",
   "automaton": {
     "managed": true,
@@ -71,19 +84,32 @@ Rules:
 </Warning>
 
 <Warning>
-**Declare every env var your SKILL.md teaches users to set.** ClawHub's moderation scanner (OpenClaw) flags skills where the `SKILL.md` body references credentials that aren't declared in `clawhub.json` `requires.env` — it treats the mismatch as a "hidden credential" signal and will block non-interactive installs.
+**Declare credentials in all three fields, not just `requires.env`.** ClawHub's moderation scanner reads all of them together; getting this right prevents false-positive "Suspicious" verdicts that block non-interactive installs:
+
+| Field | Meaning | Use for |
+|---|---|---|
+| `requires.env` | **Strictly required** — skill fails without these | Only the minimum credentials needed for the default code path |
+| `primaryEnv` | Names the single main credential | The one key every user will have (usually `SIMMER_API_KEY`) |
+| `envVars[]` | Per-variable declaration with `required` boolean + human description | Full list including optional credentials; explains when each is needed |
+
+**Common anti-patterns that trigger scanner flags:**
+- Listing `WALLET_PRIVATE_KEY` in `requires.env` when your SKILL.md documents managed wallets as an alternative → "disproportionate requirement" verdict
+- Mentioning `WALLET_PRIVATE_KEY` in SKILL.md body but not declaring it anywhere → "hidden credential" verdict
+- Declaring unrelated credentials (e.g. `OPENAI_API_KEY` for a skill that only hits Simmer) → "scope creep" verdict
+
+The fix: put strictly-required vars in `requires.env`, keep the full list (including optional ones marked `required: false`) in `envVars` with plain-language descriptions of when each is needed.
 
 Common env vars for Simmer skills:
 
-| Env var | When to declare |
+| Env var | Typical status |
 |---------|-----------------|
-| `SIMMER_API_KEY` | Always — every skill uses it |
-| `WALLET_PRIVATE_KEY` | Declare if your SKILL.md mentions external-wallet trading or self-custody signing |
-| `EVM_PRIVATE_KEY` | Declare if your skill signs EVM transactions directly (e.g. x402 payments) |
-| `SOLANA_PRIVATE_KEY` | Declare if your skill signs Kalshi/Solana transactions |
-| `POLYGON_RPC_URL` | Declare if your skill uses a custom Polygon RPC endpoint |
+| `SIMMER_API_KEY` | Always required — main credential (also set as `primaryEnv`) |
+| `WALLET_PRIVATE_KEY` | Usually `required: false` — only needed when not using managed wallets |
+| `EVM_PRIVATE_KEY` | Required if your skill signs EVM transactions (e.g. x402 payments) |
+| `SOLANA_PRIVATE_KEY` | Required if your skill signs Kalshi/Solana transactions |
+| `POLYGON_RPC_URL` | `required: false` — only if the user wants a custom RPC endpoint |
 
-If you don't use an env var, don't declare it. If you mention it in SKILL.md instructions, you must declare it.
+If you don't touch an env var, don't declare it. If your SKILL.md mentions one, declare it in `envVars` with the right `required` flag.
 </Warning>
 
 ### Python script patterns
