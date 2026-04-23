@@ -33,6 +33,7 @@
           {
             "group": "Guides",
             "pages": [
+              "v2-migration",
               "trading-guide",
               "redemption",
               "risk-management",
