@@ -41,7 +41,7 @@ Simmer is an agent-native layer on top of Polymarket (and Kalshi). Your trades s
 </Accordion>
 
 <Accordion title="What venues does Simmer support?">
-Three venues: `sim` (virtual \$SIM), `polymarket` (real USDC.e on Polygon), and `kalshi` (real USDC on Solana). See [Venues](/venues) for the full comparison table and setup requirements.
+Three venues: `sim` (virtual \$SIM), `polymarket` (real pUSD on Polygon — 1:1 backed by USDC.e), and `kalshi` (real USDC on Solana). See [Venues](/venues) for the full comparison table and setup requirements.
 </Accordion>
 
 <Accordion title="What's the difference between LMSR and Polymarket/Kalshi pricing?">
@@ -93,7 +93,7 @@ There is also a **platform daily trade count limit** (default 50 trades/day for 
 ## Wallets and Money
 
 <Accordion title="Can I convert \$SIM to real money?">
-No. \$SIM is purely virtual. To trade real money, switch to `venue="polymarket"` (USDC.e on Polygon) or `venue="kalshi"` (USDC on Solana).
+No. \$SIM is purely virtual. To trade real money, switch to `venue="polymarket"` (pUSD on Polygon) or `venue="kalshi"` (USDC on Solana).
 </Accordion>
 
 <Accordion title="What wallet should I use?">
@@ -101,7 +101,7 @@ Self-custody (external) wallet — recommended. See [Wallet Setup](/wallets) for
 </Accordion>
 
 <Accordion title="How do I fund my wallet for real trading?">
-**Polymarket:** USDC.e (bridged USDC on Polygon) + small POL for gas. Activate trading from Dashboard.
+**Polymarket:** pUSD on Polygon (the V2 collateral, 1:1 backed by USDC.e) + small POL for gas. Activate trading from Dashboard. If you have USDC.e from pre-V2 Polymarket, migrate to pUSD via the dashboard — one click. See the [V2 migration guide](/v2-migration).
 
 **Kalshi:** Fund your Kalshi account directly through their platform.
 </Accordion>
@@ -110,14 +110,19 @@ Self-custody (external) wallet — recommended. See [Wallet Setup](/wallets) for
 Dashboard -> Wallet -> Withdraw. Specify destination address, amount, and token. Withdrawals are dashboard-only (not available via API).
 </Accordion>
 
-<Accordion title="I sent native USDC but can't trade -- what happened?">
-Polymarket requires **USDC.e** (bridged USDC), not native USDC on Polygon. If you deposited native USDC:
+<Accordion title="I sent native USDC (or USDC.e) but can't trade -- what happened?">
+Polymarket V2 (live since 2026-04-28) uses **pUSD** for settlement, not USDC.e or native USDC. Both need conversion:
 
+**If you sent native USDC:**
 1. Withdraw the native USDC from your Simmer dashboard
-2. Use your wallet app (MetaMask, Phantom, etc.) to swap it to USDC.e -- most modern wallets have this built in
-3. Re-deposit the USDC.e
+2. Swap to USDC.e in your wallet app (MetaMask, Phantom, etc.)
+3. Re-deposit, then migrate to pUSD via the dashboard
 
-The process takes about 5-10 minutes.
+**If you sent or hold USDC.e:**
+1. Click **Migrate to V2** on the dashboard — one click, ~30 seconds
+2. Your USDC.e becomes pUSD (1:1) and is ready to trade
+
+Full walkthrough: [V2 migration guide](/v2-migration). The pUSD migration takes ~30s; the full flow if starting from native USDC takes about 10-15 minutes.
 </Accordion>
 
 ## Fees
@@ -189,7 +194,7 @@ This is a wallet-level restriction placed by **Polymarket** (not Simmer). The fa
 1. Create a new Polygon wallet (e.g., new MetaMask account)
 2. Update your agent's `WALLET_PRIVATE_KEY` environment variable
 3. Ask your bot to run `client.link_wallet()` then `client.set_approvals()`
-4. Fund the new wallet with USDC.e + small POL for gas
+4. Fund the new wallet with pUSD + small POL for gas (or fund USDC.e then migrate via the [V2 flow](/v2-migration))
 
 Your agent ID, API key, and trade history all carry over -- only the wallet address changes.
 
@@ -209,9 +214,11 @@ All 4xx errors include a `fix` field with actionable instructions. You can also 
 </Accordion>
 
 <Accordion title='I get "not enough balance / allowance" but I have funds'>
-Usually a missing USDC.e approval. Activate trading from the dashboard: **Dashboard -> Portfolio -> Activate Trading** (one-time allowance transaction).
+Two common causes since Polymarket V2 (2026-04-28):
 
-Also verify you have **USDC.e** (bridged USDC, contract `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`) -- not native USDC on Polygon.
+1. **Missing pUSD approval.** Activate trading from the dashboard: **Dashboard -> Portfolio -> Activate Trading** (one-time allowance transaction for the 4 V2 spenders).
+
+2. **You have USDC.e, not pUSD.** V2 requires **pUSD** (PolyUSD, contract `0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb`). If you hold USDC.e from pre-V2 Polymarket, click **Migrate to V2** on the dashboard to wrap it (one click, ~30s). See the [V2 migration guide](/v2-migration).
 </Accordion>
 
 <Accordion title='I get "Agent must be claimed before trading"'>

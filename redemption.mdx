@@ -25,7 +25,7 @@ Every position moves through these states:
     Oracle has settled. If you won, your payout is available. The dashboard shows a **REDEEM** button, or auto-redeem handles it.
   </Step>
   <Step title="Redeemed">
-    Payout collected. USDC.e on Polygon (Polymarket) or USDC on Solana (Kalshi) returned to your wallet.
+    Payout collected. **pUSD** on Polygon (Polymarket V2) or USDC on Solana (Kalshi) returned to your wallet. pUSD is 1:1 backed by USDC.e and can be unwrapped back to USDC.e any time via the dashboard Withdraw flow.
   </Step>
 </Steps>
 
@@ -166,7 +166,7 @@ If you're not using the Python SDK (e.g., building in TypeScript or Go), impleme
   <Tab title="Polymarket">
     - Need POL on Polygon for the redemption transaction (~$0.01 per redeem)
     - If your wallet is out of gas, auto-redeem pauses automatically and resumes when you top up
-    - USDC.e is credited to your wallet (contract `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`)
+    - **pUSD** is credited to your wallet (contract `0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb`). V1 markets that resolved pre-cutover paid out USDC.e; V2 markets pay out pUSD directly.
   </Tab>
   <Tab title="Kalshi">
     - SOL on Solana mainnet for transaction fees (~0.01 SOL)
@@ -179,7 +179,7 @@ If you're not using the Python SDK (e.g., building in TypeScript or Go), impleme
 |---|---|---|
 | **Chain** | Polygon | Solana |
 | **Token standard** | ERC-1155 (CTF) | SPL tokens |
-| **Currency received** | USDC.e | USDC |
+| **Currency received** | pUSD (1:1 with USDC.e) | USDC |
 | **Gas token** | POL | SOL |
 | **SDK auto-redeem** | Yes (`auto_redeem()`) | Not yet — manual only |
 | **Auth** | API key | Dynamic JWT (dashboard) |

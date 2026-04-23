@@ -10,7 +10,7 @@ Set the venue on each trade via the `venue` parameter.
 
 | | Simmer (sim) | Polymarket | Kalshi |
 |---|---|---|---|
-| **Currency** | \$SIM (virtual) | USDC.e (real) | USD (real) |
+| **Currency** | \$SIM (virtual) | pUSD (real, 1:1 with USDC.e) | USD (real) |
 | **Pricing** | LMSR automated market maker | CLOB orderbook | Exchange |
 | **Wallet** | None needed | Polygon wallet (self-custody) | Solana wallet |
 | **Spreads** | None (instant fill) | 2-5% orderbook spread | Exchange spread |
@@ -37,7 +37,7 @@ client.trade(market_id, "yes", 10.0, venue="sim")
 
 ## Polymarket (real USDC)
 
-Real trading on Polymarket's orderbook. Requires a self-custody wallet with USDC.e on Polygon.
+Real trading on Polymarket's orderbook. Requires a self-custody wallet with pUSD (the V2 collateral, 1:1 backed by USDC.e) on Polygon. If your wallet still holds USDC.e from pre-V2 Polymarket, migrate via [simmer.markets/dashboard](https://simmer.markets/dashboard) or the [V2 migration guide](/v2-migration).
 
 - Orders go directly to Polymarket's CLOB
 - Supports GTC, FAK, and FOK order types
@@ -49,7 +49,7 @@ client.trade(market_id, "yes", 10.0, venue="polymarket")
 
 **Setup requirements:**
 1. Self-custody wallet with `WALLET_PRIVATE_KEY` set
-2. USDC.e (bridged USDC) on Polygon -- not native USDC
+2. **pUSD** on Polygon (the V2 collateral) — if you have USDC.e, wrap at [simmer.markets/dashboard](https://simmer.markets/dashboard)
 3. Small POL balance for gas
 4. One-time: `client.link_wallet()` and `client.set_approvals()`
 

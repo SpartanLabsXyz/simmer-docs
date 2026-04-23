@@ -32,8 +32,8 @@ print(f"Set {result['set']} approvals, skipped {result['skipped']}")
 
 ### Requirements
 
-- **USDC.e** (bridged USDC, contract `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`) on Polygon -- not native USDC
-- Small **POL** balance on Polygon for gas (~$0.01 per approval, 9 approvals total)
+- **pUSD** (PolyUSD, contract `0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb`) on Polygon — the V2 collateral, 1:1 backed by USDC.e. If your wallet holds USDC.e, migrate via [simmer.markets/dashboard](https://simmer.markets/dashboard) or see the [V2 migration guide](/v2-migration)
+- Small **POL** balance on Polygon for gas (~$0.01 per approval, 8 approvals on V2)
 
 After setup, trade normally:
 

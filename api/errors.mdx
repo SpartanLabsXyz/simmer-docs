@@ -83,13 +83,16 @@ All 4xx error responses include a `fix` field with actionable instructions. Your
 ```
 
 **Causes:**
-1. Insufficient USDC.e -- Polymarket uses bridged USDC (`0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`), not native USDC
-2. Missing approval
+1. Insufficient **pUSD** -- Polymarket V2 uses pUSD (`0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb`), 1:1 backed by USDC.e
+2. You hold USDC.e from pre-V2 Polymarket and haven't migrated yet
+3. Missing approval for one of the V2 spenders
 
 **Fix:**
-1. Check USDC.e balance on [Polygonscan](https://polygonscan.com)
-2. Set approvals: `client.set_approvals()`
-3. Ensure wallet has POL for gas
+1. If you have USDC.e, migrate to pUSD: click **Migrate to V2** on [simmer.markets/dashboard](https://simmer.markets/dashboard) — one click, ~30s
+2. Check pUSD balance on [Polygonscan](https://polygonscan.com)
+3. Set V2 approvals: `client.set_approvals()`
+4. Ensure wallet has POL for gas
+5. Full guide: [V2 migration](/v2-migration)
 
 ### "Order book query timed out"
 
