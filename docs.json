@@ -214,7 +214,8 @@
             "group": "SDK Reference",
             "pages": [
               "sdk/overview",
-              "sdk/position-sizing"
+              "sdk/position-sizing",
+              "sdk/execution"
             ]
           },
           {
