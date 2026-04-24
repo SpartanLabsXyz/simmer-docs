@@ -2376,6 +2376,23 @@
         }
       }
     },
+    "/api/sdk/skill-leaderboard": {
+      "get": {
+        "summary": "Skill Leaderboard",
+        "description": "Ranked skill leaderboard: install proxies, trade count, volume, and\ncashflow-based realized P&L. Public metrics (no per-user data).\n\nQuery params:\n  limit:   max rows (default 50, capped at 200)\n  sort:    one of volume_usdc_alltime | volume_usdc_7d | trades_alltime |\n           trades_7d | installs_from_trades | realized_pnl_cashflow |\n           profitable_user_pct  (default: volume_usdc_alltime)\n  window:  'alltime' (default) | '7d' | '30d' \u2014 filter to skills with\n           trade activity in that window.\n  min_trades: minimum trade count required (default 0)\n\nP&L here is CASHFLOW (sells - buys) on confirmed/filled trades \u2014 it is\nrealized-only and ignores the value of open positions, so active skills\nunder-report. See migrations/20260424_sdk_skill_analytics_view.sql.",
+        "operationId": "api_sdk_skill_leaderboard_api_sdk_skill_leaderboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sdk/trades": {
       "get": {
         "summary": "Get Trades",
@@ -5879,10 +5896,6 @@
             "type": "string",
             "title": "Signer"
           },
-          "taker": {
-            "type": "string",
-            "title": "Taker"
-          },
           "tokenId": {
             "type": "string",
             "title": "Tokenid"
@@ -5895,18 +5908,6 @@
             "type": "string",
             "title": "Takeramount"
           },
-          "expiration": {
-            "type": "string",
-            "title": "Expiration"
-          },
-          "nonce": {
-            "type": "string",
-            "title": "Nonce"
-          },
-          "feeRateBps": {
-            "type": "string",
-            "title": "Feeratebps"
-          },
           "side": {
             "type": "string",
             "title": "Side"
@@ -5918,6 +5919,83 @@
           "signature": {
             "type": "string",
             "title": "Signature"
+          },
+          "taker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taker"
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nonce"
+          },
+          "feeRateBps": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feeratebps"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "builder": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Builder"
+          },
+          "expiration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiration"
           }
         },
         "type": "object",
@@ -5925,19 +6003,15 @@
           "salt",
           "maker",
           "signer",
-          "taker",
           "tokenId",
           "makerAmount",
           "takerAmount",
-          "expiration",
-          "nonce",
-          "feeRateBps",
           "side",
           "signatureType",
           "signature"
         ],
         "title": "SignedPolymarketOrder",
-        "description": "Pre-signed Polymarket order from external wallet (client-side signing)."
+        "description": "Pre-signed Polymarket order from external wallet (client-side signing).\n\nSupports both V1 and V2 order shapes via optional fields. The frontend\npopulates V1-or-V2 depending on its VITE_POLYMARKET_V2_ENABLED flag;\nthe /polymarket/place-order-external handler routes based on\nexchange_version hint on the parent ExternalWalletOrderRequest (or\ninfers from which fields are present).\n\nV1 uses: taker, expiration, nonce, feeRateBps (in signed hash)\nV2 uses: timestamp, metadata, builder (in signed hash); expiration\n         retained in HTTP body at \"0\" (out of signed hash)"
       },
       "SkillItem": {
         "properties": {

@@ -81,6 +81,7 @@ INCLUDE = [
     "GET /api/sdk/skills",
     "POST /api/sdk/skills",
     "GET /api/sdk/skills/mine",
+    "GET /api/sdk/skill-leaderboard",
     # Trades history
     "GET /api/sdk/trades",
     # Kalshi

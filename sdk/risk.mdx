@@ -74,3 +74,64 @@ Unrealized mark-to-market swings will feed through `update()` too — that's a d
 Only after an operator has investigated the halt. The intent is that a 15% drawdown represents something outside the bot's normal operating envelope — a bad probability model, a stale price feed, an unexpected market regime — and a human should confirm the cause is understood before re-engaging.
 
 A routine bot restart should **not** auto-resume. Persist the halt state alongside your bankroll checkpoint.
+
+## Balance pre-flight — `client.ensure_can_trade()`
+
+A one-call pre-flight that catches underfunded wallets *before* you try to place an order. Every rejected trade round-trips to the backend, logs a failure, and gets retried on the next cron tick — replacing the loop with a single status fetch per run is a pure win for skill reliability and observability.
+
+<Note>
+  Available in `simmer-sdk >= 0.11.1`. Collateral-agnostic — reads pUSD on V2 (post-2026-04-28 cutover), USDC.e on V1, so it keeps working across the migration without any code change on your side.
+</Note>
+
+### Quick start
+
+```python
+from simmer_sdk import SimmerClient
+
+client = SimmerClient()
+preflight = client.ensure_can_trade(min_usd=1.0)
+
+if not preflight["ok"]:
+    # Skip cleanly — harness + automaton reporting distinguish this from "skill broken"
+    print(f"Skip: {preflight['reason']} (balance ${preflight['balance']:.2f} {preflight['collateral']})")
+    return
+
+# Cap your per-run size to leave room for fees + slippage
+order_size = min(MY_MAX_BET, preflight["max_safe_size"])
+```
+
+### Arguments
+
+| Arg | Default | Meaning |
+|---|---|---|
+| `min_usd` | `1.0` | Minimum viable trade size in active collateral. Below this, `ok=False`. |
+| `venue` | client's venue | Only `"polymarket"` runs the check. Other venues short-circuit to `ok=True`. |
+| `safety_buffer` | `0.02` | Fraction of balance kept as fee/slippage buffer. `max_safe_size = balance × (1 − safety_buffer)`. |
+
+### Returns
+
+A dict with the following keys:
+
+| Field | Meaning |
+|---|---|
+| `ok` | `True` if balance ≥ `min_usd` (or non-polymarket venue). |
+| `balance` | Active collateral balance in USD-equivalent units. |
+| `collateral` | `"pUSD"` (V2), `"USDC.e"` (V1), or `""` (non-polymarket). |
+| `exchange_version` | `"v1"` or `"v2"` — matches server-side flag. |
+| `reason` | `"ok"`, `"insufficient_balance"`, `"no_wallet"`, `"balance_unavailable"`, or `"skipped_non_polymarket"`. |
+| `max_safe_size` | `balance × (1 − safety_buffer)`, or `0.0` when `ok=False`. |
+
+### When to call it
+
+Call `ensure_can_trade()` **once per skill run**, before any market discovery or signal generation. Running it at the top of your loop costs one REST call and eliminates every downstream rejected order when the wallet is under-funded.
+
+- **Underfunded** → emit a skip report (`skip_reason="insufficient_balance"`) and `return`. The automaton reporter will surface this cleanly, distinct from "skill broken."
+- **Sized correctly** → clamp your per-run `MAX_BET_USD` (or equivalent) to `max_safe_size` so you leave headroom for fees + price slippage.
+
+### Why not just trust `client.get_portfolio()`?
+
+You can — but `ensure_can_trade()` bundles three things you'd otherwise re-implement in every skill:
+
+1. **Collateral-agnostic balance selection**: reads the correct token for the active `exchange_version` (pUSD on V2, USDC.e on V1).
+2. **Failure-mode distinction**: returns a stable `reason` string across RPC outages, missing wallets, and genuine zero-balance cases.
+3. **Safety buffer math**: the `max_safe_size` return is already clamped for fees and slippage — no off-by-one between skills.
