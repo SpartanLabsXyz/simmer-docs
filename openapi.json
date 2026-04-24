@@ -2376,23 +2376,6 @@
         }
       }
     },
-    "/api/sdk/skill-leaderboard": {
-      "get": {
-        "summary": "Skill Leaderboard",
-        "description": "Ranked skill leaderboard: install proxies, trade count, volume, and\ncashflow-based realized P&L. Public metrics (no per-user data).\n\nQuery params:\n  limit:   max rows (default 50, capped at 200)\n  sort:    one of volume_usdc_alltime | volume_usdc_7d | trades_alltime |\n           trades_7d | installs_from_trades | realized_pnl_cashflow |\n           profitable_user_pct  (default: volume_usdc_alltime)\n  window:  'alltime' (default) | '7d' | '30d' \u2014 filter to skills with\n           trade activity in that window.\n  min_trades: minimum trade count required (default 0)\n\nP&L here is CASHFLOW (sells - buys) on confirmed/filled trades \u2014 it is\nrealized-only and ignores the value of open positions, so active skills\nunder-report. See migrations/20260424_sdk_skill_analytics_view.sql.",
-        "operationId": "api_sdk_skill_leaderboard_api_sdk_skill_leaderboard_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/sdk/trades": {
       "get": {
         "summary": "Get Trades",
