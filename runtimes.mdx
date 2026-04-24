@@ -1,0 +1,68 @@
+---
+title: Runtimes
+description: Install and run Simmer trading skills from any agent runtime that supports the agentskills.io standard.
+icon: arrows-left-right
+---
+
+Simmer skills are **agent-runtime-agnostic**. Every skill is a portable folder with a `SKILL.md` file following the open [agentskills.io](https://agentskills.io) standard — the same format supported by Claude Code, Hermes, Cursor, Codex, and 30+ other clients. Pick whichever runtime fits your workflow; your skill library travels with you.
+
+## Install on your runtime
+
+<Tabs>
+  <Tab title="OpenClaw / ClawHub">
+    ```bash
+    clawhub install polymarket-weather-trader
+    ```
+
+    Installs the skill into OpenClaw's skill library. After install, your agent can invoke it like any other skill. See the [ClawHub CLI docs](https://clawhub.ai) for the full command reference.
+  </Tab>
+  <Tab title="Hermes">
+    ```bash
+    hermes skills install skills-sh/spartanlabsxyz/simmer-sdk/polymarket-weather-trader
+    ```
+
+    Pulls the skill directly from the [skills.sh](https://skills.sh) index into your Hermes skill folder. See the [Hermes skills docs](https://hermes.ai/docs/skills) for configuration options.
+  </Tab>
+</Tabs>
+
+<Note>
+  Replace `polymarket-weather-trader` with any skill slug from [simmer.markets/skills](https://simmer.markets/skills). The install command in the Skill Detail modal on that page is the canonical source — copy-paste it directly.
+</Note>
+
+## Supported runtimes
+
+| Runtime | Status | Install command |
+|---|---|---|
+| **OpenClaw / ClawHub** | ✅ Supported | `clawhub install <slug>` |
+| **Hermes** | ✅ Supported | `hermes skills install skills-sh/spartanlabsxyz/simmer-sdk/<slug>` |
+| **Claude Code** | 🟡 Install syntax pending | Skills are [agentskills.io](https://agentskills.io)-compliant and load correctly once added to a project's skills directory. Official CLI-install flow pending Anthropic's registry rollout. |
+| **Cursor** | 🟡 Install syntax pending | Skills load from a project's skills directory per [Cursor's skills docs](https://cursor.com/docs/context/skills). |
+| **Codex** | 🟡 Install syntax pending | Skills compatible per [OpenAI Codex skills docs](https://developers.openai.com/codex/skills/). |
+| **Cline, Goose, OpenHands, Factory, etc.** | 🟡 Install syntax pending | Most are agentskills.io-standard clients — our skills load as-is from a folder; check each runtime's skills guide. |
+
+We don't publish speculative install commands — if a runtime isn't explicitly confirmed, the syntax above gets added the moment we verify it end-to-end.
+
+## Why portable skills matter
+
+Before agentskills.io, installing a skill in OpenClaw vs Hermes vs Claude Code meant three different formats, three different packaging steps, and no way to move a strategy across runtimes without re-authoring it. The open standard fixed that: `SKILL.md` + frontmatter is universal, and a well-written skill runs anywhere the format is supported.
+
+For Simmer users, this means:
+- **Switch runtimes without losing your setup.** Move from OpenClaw to Hermes and your installed skills come with you.
+- **Community skills inherit cross-runtime support automatically.** When a skill is published on ClawHub or skills.sh, it's instantly available in every supported runtime — no per-runtime port.
+- **Your strategy is the portable asset.** Runtimes are fungible; the skill folder travels.
+
+## Skill format reference
+
+Every Simmer skill is validated against the official [agentskills.io specification](https://agentskills.io/specification) using the reference validator:
+
+```bash
+npx skills-ref validate <skill-directory>
+```
+
+If you're building your own skill, see [Skills → Building your own](/skills/building) for the Simmer-specific patterns on top of the base spec.
+
+## Related
+
+- [Skills](/skills/overview) — Browse and install skills
+- [Skills → Building your own](/skills/building) — Author a skill
+- [Quickstart](/quickstart) — Get an agent trading in under 5 minutes
