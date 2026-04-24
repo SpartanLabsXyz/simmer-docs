@@ -45,7 +45,7 @@ Nothing to do. If you deposit fresh USDC.e later, the dashboard will prompt you 
 
 ### If you use an external wallet (self-custody — MetaMask, Rabby, Coinbase Wallet, etc.)
 
-Same flow on the dashboard — you'll sign the migration transaction in your connected browser wallet popup. Alternatively you can migrate directly at [polymarket.com](https://polymarket.com), which auto-wraps on first V2 trade.
+Same flow on the dashboard — you'll sign the approve + wrap transactions in your connected browser wallet (MetaMask, Rabby, Coinbase Wallet, etc.). Your wallet needs a small amount of POL for gas. Alternatively, you can migrate directly at [polymarket.com](https://polymarket.com) if you prefer their gasless flow.
 
 ### If you use Kalshi or sim trading only
 
@@ -90,7 +90,7 @@ The only consequence: you can't place new Polymarket trades until you migrate. K
   </Accordion>
 
   <Accordion title="Do I need POL (gas) to migrate?">
-    Yes — the wrap transaction needs about 0.06 POL to cover gas for approve + wrap. Most users who have traded Polymarket before already have POL in their wallet. If not, fund a small amount to your Polymarket wallet address on Polygon before clicking Migrate.
+    Yes — the wrap transaction needs a small amount of POL to cover gas for approve + wrap. Most users who have traded Polymarket before already have POL in their wallet. If not, fund your Polymarket wallet address on Polygon before clicking Migrate.
   </Accordion>
 
   <Accordion title="Can I unwrap pUSD back to USDC.e later?">
@@ -110,7 +110,7 @@ The only consequence: you can't place new Polymarket trades until you migrate. K
   </Accordion>
 
   <Accordion title="Does the migration affect my agent's API keys or automation?">
-    Your Simmer API keys stay valid. If your agent uses the **simmer-sdk** (Python or TypeScript), upgrade to version **0.9.0 or later** — it handles the V2 order shape automatically. If your agent constructs raw Polymarket orders (not via simmer-sdk), you'll need to switch to the V2 order struct; see the [integrator section](#for-integrators) below.
+    Your Simmer API keys stay valid. If your agent uses the **simmer-sdk** (Python), upgrade to version **0.10.0 or later** — it handles the V2 order shape automatically. If your agent constructs raw Polymarket orders (not via simmer-sdk), you'll need to switch to the V2 order struct; see the [integrator section](#for-integrators) below.
   </Accordion>
 </AccordionGroup>
 
@@ -126,31 +126,35 @@ You're trying to trade V2 but your wallet still holds USDC.e, not pUSD. **Fix:**
 
 ### "order_version_mismatch"
 
-Your SDK is sending V1-formatted orders to the V2 exchange. **Fix:** upgrade `simmer-sdk` (Python: `pip install -U simmer-sdk`, TypeScript: `npm install @simmer-labs/simmer-sdk@latest`). Version 0.9.0+ handles V2 automatically.
+Your SDK is sending V1-formatted orders to the V2 exchange. **Fix:** upgrade `simmer-sdk` with `pip install -U simmer-sdk`. Version 0.10.0+ handles V2 automatically.
 
 ### "error parsing fee rate bps () to int64"
 
-Same root cause as `order_version_mismatch` — SDK < 0.9.0 sending V1-shaped order to V2. Upgrade the SDK.
+Same root cause as `order_version_mismatch` — SDK < 0.10.0 sending V1-shaped order to V2. Upgrade the SDK.
 
 ### "bad signature"
 
-The V2 order-signing domain differs from V1 (EIP-712 domain version `"1"` → `"2"`). **Fix:** ensure you're on `simmer-sdk >= 0.9.0`, which sets the correct domain based on the migration flag.
+The V2 order-signing domain differs from V1 (EIP-712 domain version `"1"` → `"2"`). **Fix:** ensure you're on `simmer-sdk >= 0.10.0`, which sets the correct domain based on the migration flag.
+
+### "No POL in your wallet for gas"
+
+Your external wallet needs a small amount of POL (Polygon's native token) to sign the approve + wrap transactions on migration. **Fix:** fund a small amount of POL to your wallet on Polygon, then retry the Migrate button. This only applies to external (self-custody) wallets — managed Simmer wallets handle gas automatically.
 
 ### Migration button stuck / transaction failing
 
-- Check your Polygon wallet has at least **0.1 POL** for gas.
+- Check your Polygon wallet has POL for gas.
 - Check your USDC.e balance is > 0 (migration does nothing if you have no USDC.e to wrap).
 - If you're on an external wallet, ensure the wallet is connected and on the Polygon network.
 - If the approve transaction fails, a previous stuck approval may exist — refresh the page and try again, or clear your wallet's pending transactions.
 
 ### Still stuck
 
-Ping us on [Telegram](https://t.me/+m7sN0OLM_780M2Fl) or email support@simmer.markets with your wallet address and the error message. Include the tx hash if your transaction failed on-chain.
+Ping us on [Telegram](https://t.me/+m7sN0OLM_780M2Fl) or email `simmer@agentmail.to` with your wallet address and the error message. Include the tx hash if your transaction failed on-chain.
 
 ## For integrators
 
 <Note>
-This section applies to users building their own Polymarket order flow on top of Simmer (e.g., custom agents that construct orders directly rather than using `simmer-sdk`). If you're using `simmer-sdk`, just upgrade to 0.9.0+ and skip this section.
+This section applies to users building their own Polymarket order flow on top of Simmer (e.g., custom agents that construct orders directly rather than using `simmer-sdk`). If you're using `simmer-sdk`, just upgrade to 0.10.0+ and skip this section.
 </Note>
 
 ### V2 exchange contract addresses (Polygon)
@@ -163,6 +167,8 @@ This section applies to users building their own Polymarket order flow on top of
 | Collateral token | USDC.e `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174` | pUSD `0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb` |
 | Collateral Onramp (wrap USDC.e → pUSD) | N/A | `0x93070a847efef7f70739046a929d47a521f5b8ee` |
 | Collateral Offramp (unwrap pUSD → USDC.e) | N/A | `0x2957922Eb93258b93368531d39fAcCA3B4dC5854` |
+| CTFCollateralAdapter (bridges pUSD ↔ USDC.e for standard market settlement) | N/A | `0xADa100874d00e3331D00F2007a9c336a65009718` |
+| NegRiskCTFCollateralAdapter (bridges for neg-risk markets) | N/A | `0xAdA200001000ef00D07553cEE7006808F895c6F1` |
 | ConditionalTokens (CTF) | `0x4D97DCd97eC945f40cF65F87097ACe5EA0476045` (unchanged) | Same |
 
 ### V2 order struct changes
