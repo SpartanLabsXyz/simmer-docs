@@ -1,81 +1,12 @@
 ---
-title: Risk Controls
-description: Portfolio-level circuit breakers shipped with simmer-sdk.
+title: Balance Pre-flight
+description: Catch underfunded wallets before placing orders.
 icon: shield-halved
 ---
 
-`simmer_sdk.risk` gives skill authors portfolio-level risk primitives — state that lives *between* trades rather than inside a single order. Use these alongside [position sizing](/sdk/position-sizing): sizing decides *how much*, risk controls decide *whether to trade at all*.
+Use `client.ensure_can_trade()` alongside [position sizing](/sdk/position-sizing): sizing decides *how much*, this pre-flight decides *whether to trade at all* given current wallet balance.
 
-<Note>
-  Available in `simmer-sdk >= 0.11.0`.
-</Note>
-
-## DrawdownController
-
-A stateful peak-trough tracker with a **sticky auto-halt**. After every realized PnL event, your bot reports the new bankroll. Before placing a new order, your bot asks whether it's still allowed to trade. When the drawdown from the all-time peak reaches your threshold, the controller latches into a halted state and stays halted — **a bounce back does not auto-un-halt**. That decision is deliberately operator-gated.
-
-### Quick start
-
-```python
-from simmer_sdk import SimmerClient, DrawdownController
-
-client = SimmerClient()
-bankroll = client.get_portfolio()["available_balance"]
-
-dc = DrawdownController(bankroll=bankroll, max_drawdown_pct=0.15)
-
-# After every realized PnL event
-state = dc.update(current_bankroll)
-if state["halted"]:
-    notify_operator(f"Halted at {state['drawdown']:.1%} drawdown")
-
-# Before every new order
-if not dc.can_trade():
-    return  # skip trading this cycle
-
-# Operator-initiated recovery (after you've investigated what went wrong)
-dc.resume()
-```
-
-### API
-
-| Method / property | Description |
-|-------------------|-------------|
-| `DrawdownController(bankroll, max_drawdown_pct=0.15)` | Constructor. `bankroll` seeds the initial peak. `max_drawdown_pct` must be in the open interval `(0, 1)`. |
-| `update(new_bankroll) -> {"drawdown": float, "halted": bool}` | Record the current bankroll. Bumps the peak on new highs. Triggers halt when `drawdown >= max_drawdown_pct`. |
-| `can_trade() -> bool` | `False` while halted, `True` otherwise. Call before every new order. |
-| `resume() -> None` | Explicitly clear the halt flag. Does **not** reset the peak — future drawdowns are still measured against the all-time high. |
-| `peak` | Highest bankroll observed (monotonic). |
-| `current` | Most recent bankroll passed to `update()`. |
-| `drawdown` | Current drawdown fraction from peak, in `[0, 1]`. |
-| `halted` | Whether the controller is currently halted. |
-| `max_drawdown_pct` | The configured halt threshold. |
-
-### Semantics
-
-- **Halt threshold is inclusive**: `drawdown >= max_drawdown_pct` triggers the halt. A 15% drawdown against a 15% threshold halts.
-- **Peak is monotonic**: it only climbs. A recovery to a new high raises the peak; a dip does not lower it.
-- **Halt is sticky**: once halted, even hitting a new all-time high will not clear the flag. Only `resume()` does.
-- **Resume preserves the peak**: next drawdown is measured against the all-time high, not the post-resume bankroll. If you want a fresh start, construct a new controller.
-- **Per-trade vs portfolio-level**: this is a *portfolio-level* circuit breaker. It does not know about individual orders or market conditions. Pair it with per-trade sizing (see [Position Sizing](/sdk/position-sizing)).
-
-### When to call `update()`
-
-Call `update()` after any event that changes your realized bankroll:
-
-- After an order fills, with the post-fill portfolio total
-- After a market resolves, with the post-payout portfolio total
-- Periodically from a heartbeat loop using the latest `get_portfolio()` reading
-
-Unrealized mark-to-market swings will feed through `update()` too — that's a design choice. A deep drawdown in open positions is a signal worth halting on, even if it hasn't settled yet.
-
-### When to call `resume()`
-
-Only after an operator has investigated the halt. The intent is that a 15% drawdown represents something outside the bot's normal operating envelope — a bad probability model, a stale price feed, an unexpected market regime — and a human should confirm the cause is understood before re-engaging.
-
-A routine bot restart should **not** auto-resume. Persist the halt state alongside your bankroll checkpoint.
-
-## Balance pre-flight — `client.ensure_can_trade()`
+## `client.ensure_can_trade()`
 
 A one-call pre-flight that catches underfunded wallets *before* you try to place an order. Every rejected trade round-trips to the backend, logs a failure, and gets retried on the next cron tick — replacing the loop with a single status fetch per run is a pure win for skill reliability and observability.
 

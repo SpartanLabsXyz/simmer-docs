@@ -216,7 +216,6 @@
             "pages": [
               "sdk/overview",
               "sdk/position-sizing",
-              "sdk/execution",
               "sdk/risk"
             ]
           },
