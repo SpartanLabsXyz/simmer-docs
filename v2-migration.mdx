@@ -55,13 +55,13 @@ Nothing changes. Kalshi trading is independent of Polymarket. Sim trading is ind
 
 <Steps>
   <Step title="April 25-27, 2026 — Pre-cutover window">
-    V2 is already live in a test environment. **Dashboard migration banner is active** — you can wrap your USDC.e to pUSD now. Early migration means zero Polymarket trading interruption for you.
+    V1 is still live. The Simmer dashboard "Migrate to V2" banner has not yet appeared — it activates after Simmer enables V2 routing on April 28 (see next step). External-wallet users can optionally pre-migrate via [polymarket.com](https://polymarket.com)'s gasless wrap flow today; managed-wallet users are migrated automatically by Simmer's wrap cron on cutover day. **One thing worth doing now:** if you have open Polymarket V1 limit orders, cancel them. The V1 order book gets wiped at cutover.
   </Step>
   <Step title="April 28, 2026 ~11:00 UTC — Cutover">
     Polymarket flips the switch. V1 is retired. V2 takes over the production URL. Simmer pauses Polymarket order placement briefly during the window (Kalshi and sim trading continue).
   </Step>
   <Step title="April 28, 2026 ~12:05 UTC — V2 trading live on Simmer">
-    Simmer enables V2 order routing. Users who have already migrated trade immediately. Users still holding USDC.e see the dashboard banner and migrate with one click.
+    Simmer enables V2 order routing. The dashboard "Migrate to V2" banner activates for users still holding USDC.e — one click migrates to pUSD. Managed-wallet users are processed automatically by the wrap cron in the same window; external-wallet users sign the approve + wrap transactions in their connected browser wallet.
   </Step>
   <Step title="Ongoing">
     USDC.e can be wrapped to pUSD at any time via the Simmer dashboard or directly via [polymarket.com](https://polymarket.com). No deadline, no expiration.
