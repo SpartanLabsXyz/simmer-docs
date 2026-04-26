@@ -1,0 +1,58 @@
+---
+title: "Changelog"
+sidebarTitle: "Changelog"
+description: "Notable changes to Simmer — platform, SDK, and agent-facing APIs."
+icon: "clock-rotate-left"
+---
+
+{/*
+  CHANGELOG WRITING RULES — read before editing this file.
+
+  WHEN TO ADD AN ENTRY
+  - Always: PyPI publish, breaking API/schema change, public dashboard feature,
+    venue migration, security advisory, anything users will observe.
+  - Usually: bug fix users would have noticed, performance improvement they'd feel.
+  - Skip: internal refactors, log/comment changes, doc-only fixes, agent-runtime
+    changes invisible to users.
+
+  TRANSPARENCY VS SENSITIVITY
+  - UX / correctness bugs → be transparent. Include the error string users saw,
+    the mechanism, the fix. Users already saw the symptom; naming it is empathy.
+  - Security / abuse vectors → generic phrasing only ("addressed an authentication
+    edge case") until adoption is high; never write the exploit path. If naming
+    the bug would teach a new attack, don't.
+  - Internal-only details (thresholds, scoring algorithms, internal agent flows,
+    secrets) → never. Same rule as the rest of docs.simmer.markets.
+
+  STYLE (PolyNode-inspired)
+  - Reverse-chronological. New entries on top.
+  - Heading: `## YYYY-MM-DD — Short title`
+  - Prose, not bullet lists. Explain WHAT changed, WHY users should care, and
+    HOW to upgrade in 1–3 paragraphs.
+  - Inline the "what was broken" — narrative, not a separate header.
+  - Preserve real error strings users would have observed in inline code.
+  - Link out to detailed guides (e.g. /v2-migration) rather than duplicating.
+  - `---` separator between entries.
+*/}
+
+---
+
+## 2026-04-26 — Heads-up: Polymarket V2 migration on April 28
+
+Polymarket is upgrading its CLOB exchange on **April 28, 2026 at ~11:00 UTC**. The new V2 exchange uses **pUSD** (a 1:1-backed wrapper around USDC.e) as the collateral token. Every pUSD is redeemable for one USDC.e, on-chain, with no deadline.
+
+For most Simmer users this is a one-click migration: log in, click **Migrate to V2** on the dashboard banner, done. Your USDC.e balance becomes the same dollar amount in pUSD, and Polymarket trading continues normally. Kalshi, sim, and your already-resolved positions are unaffected.
+
+After cutover, V1 orders are rejected with `order_version_mismatch`. There is **no deadline** to migrate — your USDC.e remains safe and convertible at any time. You only need to migrate before your next Polymarket trade.
+
+Full detail, including the external-wallet path and FAQ, lives in the [V2 Migration guide](/v2-migration).
+
+---
+
+## 2026-04-25 — `simmer-sdk` 0.12.1: OWS unregistered users fix
+
+Released [`simmer-sdk` 0.12.1](https://pypi.org/project/simmer-sdk/0.12.1/) on PyPI. Patch release.
+
+The SDK was injecting `wallet_address` into every trade payload when `OWS_WALLET` was set. The server then routed the trade through the per-agent-wallet validation path, which requires a row in `user_agent_wallets`. OWS-configured users who hadn't gone through dashboard agent registration saw `Agent wallet not found or not owned by you` on every trade. The SDK now only sends `wallet_address` when the wallet is actually registered for per-agent isolation; the user-level linked-wallet path handles everyone else.
+
+`pip install --upgrade simmer-sdk` to pick up the fix.

@@ -229,7 +229,14 @@
       },
       {
         "tab": "Changelog",
-        "href": "https://github.com/SpartanLabsXyz/simmer-sdk/releases"
+        "groups": [
+          {
+            "group": "Changelog",
+            "pages": [
+              "changelog"
+            ]
+          }
+        ]
       }
     ],
     "global": {
