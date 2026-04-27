@@ -55,13 +55,13 @@ Nothing changes. Kalshi trading is independent of Polymarket. Sim trading is ind
 
 <Steps>
   <Step title="April 25-27, 2026 — Pre-cutover window">
-    V1 is still live. The Simmer dashboard "Migrate to V2" banner has not yet appeared — it activates after Simmer enables V2 routing on April 28 (see next step). External-wallet users can optionally pre-migrate via [polymarket.com](https://polymarket.com)'s gasless wrap flow today; managed-wallet users are migrated automatically by Simmer's wrap cron on cutover day. **One thing worth doing now:** if you have open Polymarket V1 limit orders, cancel them. The V1 order book gets wiped at cutover.
+    V1 is still live. The Simmer dashboard "Migrate to V2" banner has not yet appeared — it activates after Simmer enables V2 routing on April 28 (see next step). External-wallet users can optionally pre-migrate via [polymarket.com](https://polymarket.com)'s gasless wrap flow today. **Two things worth doing now:** (1) if you have open Polymarket V1 limit orders, cancel them — the V1 order book gets wiped at cutover; (2) make sure your Polymarket wallet has at least **0.1 POL** for migration gas (applies to both managed and external wallets — see "Do I need POL" FAQ below).
   </Step>
   <Step title="April 28, 2026 ~11:00 UTC — Cutover">
     Polymarket flips the switch. V1 is retired. V2 takes over the production URL. Simmer pauses Polymarket order placement briefly during the window (Kalshi and sim trading continue).
   </Step>
   <Step title="April 28, 2026 ~12:05 UTC — V2 trading live on Simmer">
-    Simmer enables V2 order routing. The dashboard "Migrate to V2" banner activates for users still holding USDC.e — one click migrates to pUSD. Managed-wallet users are processed automatically by the wrap cron in the same window; external-wallet users sign the approve + wrap transactions in their connected browser wallet.
+    Simmer enables V2 order routing. The dashboard "Migrate to V2" banner activates for users still holding USDC.e — one click migrates to pUSD. The wrap is user-triggered (no background cron): managed-wallet users click the banner and Simmer signs the on-chain approve + wrap from their managed key (gas paid from the wallet's POL balance); external-wallet users click the banner and sign the same transactions in their connected browser wallet.
   </Step>
   <Step title="Ongoing">
     USDC.e can be wrapped to pUSD at any time via the Simmer dashboard or directly via [polymarket.com](https://polymarket.com). No deadline, no expiration.
@@ -86,11 +86,11 @@ The only consequence: you can't place new Polymarket trades until you migrate. K
   </Accordion>
 
   <Accordion title="Will I lose any money in the migration?">
-    No. The migration is a 1:1 token swap with no fees beyond the Polygon gas cost for the wrap transaction (~0.02 POL, roughly \$0.01). Simmer and Polymarket take no cut.
+    No. The migration is a 1:1 token swap with no fees beyond the Polygon gas cost for the approve + wrap transactions (~0.06 POL worst case, roughly \$0.02). Simmer and Polymarket take no cut. We recommend keeping at least 0.1 POL in your wallet to cover the migration plus a buffer for any retries.
   </Accordion>
 
   <Accordion title="Do I need POL (gas) to migrate?">
-    Yes — the wrap transaction needs a small amount of POL to cover gas for approve + wrap. Most users who have traded Polymarket before already have POL in their wallet. If not, fund your Polymarket wallet address on Polygon before clicking Migrate.
+    Yes — the wrap requires an approve + wrap transaction pair, both paid in POL on Polygon. **This applies to both managed and external wallets** — Simmer signs the transactions on your behalf for managed wallets, but the gas still comes out of your managed wallet's POL balance. The dashboard pre-flight requires at least **0.1 POL** before letting you click Migrate. If you don't have enough, the dashboard will display your wallet address so you can send POL from an exchange before retrying.
   </Accordion>
 
   <Accordion title="Can I unwrap pUSD back to USDC.e later?">
@@ -110,7 +110,7 @@ The only consequence: you can't place new Polymarket trades until you migrate. K
   </Accordion>
 
   <Accordion title="Does the migration affect my agent's API keys or automation?">
-    Your Simmer API keys stay valid. If your agent uses the **simmer-sdk** (Python), upgrade to version **0.10.0 or later** — it handles the V2 order shape automatically. If your agent constructs raw Polymarket orders (not via simmer-sdk), you'll need to switch to the V2 order struct; see the [integrator section](#for-integrators) below.
+    Your Simmer API keys stay valid. If your agent uses the **simmer-sdk** (Python), upgrade to version **0.12.2 or later** — it auto-flips between V1 and V2 signing at cutover with no further action needed. (Versions 0.10.0–0.12.1 default to V2 unconditionally and produce `order_version_mismatch` errors against the still-active V1 CLOB pre-cutover; 0.12.2 fixes that.) If your agent constructs raw Polymarket orders (not via simmer-sdk), you'll need to switch to the V2 order struct at cutover; see the [integrator section](#for-integrators) below.
   </Accordion>
 </AccordionGroup>
 
@@ -126,19 +126,19 @@ You're trying to trade V2 but your wallet still holds USDC.e, not pUSD. **Fix:**
 
 ### "order_version_mismatch"
 
-Your SDK is sending V1-formatted orders to the V2 exchange. **Fix:** upgrade `simmer-sdk` with `pip install -U simmer-sdk`. Version 0.10.0+ handles V2 automatically.
+Your SDK is sending the wrong order shape for the active CLOB version. **Fix:** `pip install -U simmer-sdk`. Use **0.12.2 or later** — it auto-flips between V1 and V2 signing at cutover. (Versions 0.10.0–0.12.1 default to V2 unconditionally and hit this error pre-cutover; SDK <0.10.0 only signs V1 and hits this error post-cutover.)
 
 ### "error parsing fee rate bps () to int64"
 
-Same root cause as `order_version_mismatch` — SDK < 0.10.0 sending V1-shaped order to V2. Upgrade the SDK.
+Usually the same root cause as `order_version_mismatch` — wrong SDK version for the active CLOB. **Fix:** upgrade to `simmer-sdk >= 0.12.2`. (Can also be a stale V2 CLOB cache after a fresh allowance change — in that case wait ~30s and retry, or call `update_balance_allowance` from the SDK.)
 
 ### "bad signature"
 
-The V2 order-signing domain differs from V1 (EIP-712 domain version `"1"` → `"2"`). **Fix:** ensure you're on `simmer-sdk >= 0.10.0`, which sets the correct domain based on the migration flag.
+The V2 order-signing domain differs from V1 (EIP-712 domain version `"1"` → `"2"`). **Fix:** ensure you're on `simmer-sdk >= 0.12.2`, which sets the correct domain based on the cutover.
 
-### "No POL in your wallet for gas"
+### "Insufficient POL (gas) in your Polymarket wallet"
 
-Your external wallet needs a small amount of POL (Polygon's native token) to sign the approve + wrap transactions on migration. **Fix:** fund a small amount of POL to your wallet on Polygon, then retry the Migrate button. This only applies to external (self-custody) wallets — managed Simmer wallets handle gas automatically.
+Your Polymarket wallet needs at least 0.1 POL to cover the approve + wrap gas for migration. **This applies to both managed and external wallets** — for managed wallets Simmer signs the transactions, but the gas comes from your wallet's POL balance. **Fix:** the dashboard error message displays your wallet address; send a small amount of POL there from an exchange (POL is Polygon's native gas token, available on most major exchanges), then click Migrate again.
 
 ### Migration button stuck / transaction failing
 
