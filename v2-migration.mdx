@@ -31,9 +31,30 @@ V1 orders still resting in the order book at cutover are **cleared** by Polymark
 
 ## What you need to do
 
-### If your Polymarket wallet holds USDC.e (most users)
+The flow depends on your wallet type. Most users have a **managed wallet** (default — Simmer creates and manages the trading wallet for you). If you set up an **external wallet** (self-custody) instead, the flow is similar but you sign the transactions in your browser wallet.
 
-Log in to [simmer.markets](https://simmer.markets) and click **Migrate to V2** on the dashboard banner. Takes ~30 seconds. Your USDC.e balance becomes the same dollar amount in pUSD, and you can trade Polymarket V2 immediately.
+### Managed wallet (default for most users)
+
+This is the path for anyone who hasn't explicitly set up an external wallet on Simmer.
+
+1. **Go to** your Agent dashboard → **Portfolio → Polymarket** tab
+2. **Click** the orange "Migrate to V2" banner at the top of the section
+3. **Wait ~30–60 seconds** — Simmer signs and submits two on-chain transactions (approve + wrap) on your behalf. **No wallet popups, no extra clicks needed.**
+4. **The banner turns green** — "Migrated to V2 — ready to trade"
+5. **Your balance updates** — USDC.e drops to $0, pUSD appears with your migrated amount
+
+Your wallet's POL covers the gas (~0.06 POL for the two transactions). If you don't have at least **0.1 POL** in your Polymarket wallet, the migration won't start — the dashboard shows your wallet address so you can send POL from an exchange first.
+
+### External wallet (self-custody — MetaMask, Rabby, Coinbase Wallet, etc.)
+
+1. **Go to** your Agent dashboard → **Portfolio → Polymarket** tab
+2. **Make sure your trading wallet is the active account** in your browser wallet extension (this may differ from the wallet you used to log in to Simmer)
+3. **Click** the orange "Migrate to V2" banner
+4. **Sign the first transaction** in your wallet — `approve` USDC.e for the wrap contract
+5. **Sign the second transaction** — `wrap` USDC.e to pUSD
+6. **The banner turns green** — "Migrated to V2 — ready to trade"
+
+Your wallet needs at least **0.1 POL** for gas across both transactions. Alternatively, you can migrate directly at [polymarket.com](https://polymarket.com) if you prefer their gasless flow.
 
 <Tip>
 You can migrate **any time** — before cutover, at cutover, or weeks later. No deadline. Your USDC.e is safe regardless.
@@ -42,10 +63,6 @@ You can migrate **any time** — before cutover, at cutover, or weeks later. No 
 ### If your Polymarket wallet holds no USDC.e
 
 Nothing to do. If you deposit fresh USDC.e later, the dashboard will prompt you to migrate when you try to trade.
-
-### If you use an external wallet (self-custody — MetaMask, Rabby, Coinbase Wallet, etc.)
-
-Same flow on the dashboard — you'll sign the approve + wrap transactions in your connected browser wallet (MetaMask, Rabby, Coinbase Wallet, etc.). Your wallet needs a small amount of POL for gas. Alternatively, you can migrate directly at [polymarket.com](https://polymarket.com) if you prefer their gasless flow.
 
 ### If you use Kalshi or sim trading only
 
