@@ -33,32 +33,57 @@ V1 orders still resting in the order book at cutover are **cleared** by Polymark
 
 The flow depends on your wallet type. Most users have a **managed wallet** (default — Simmer creates and manages the trading wallet for you). If you set up an **external wallet** (self-custody) instead, the flow is similar but you sign the transactions in your browser wallet.
 
+The V2 migration is a **2-stage flow** for everyone:
+
+1. **Wrap** USDC.e → pUSD (1:1, no fee — pUSD is the V2 collateral token)
+2. **Activate V2 trading** by approving the V2 exchange contracts to spend pUSD + transfer outcome tokens (V2 has new spender addresses; V1 approvals don't carry over)
+
+The dashboard banner walks you through both stages.
+
 ### Managed wallet (default for most users)
 
 This is the path for anyone who hasn't explicitly set up an external wallet on Simmer.
 
 1. **Go to** your Agent dashboard → **Portfolio → Polymarket** tab
-2. **Click** the orange "Migrate to V2" banner at the top of the section
-3. **Wait ~30–60 seconds** — Simmer signs and submits two on-chain transactions (approve + wrap) on your behalf. **No wallet popups, no extra clicks needed.**
+2. **Click** the orange "Migrate to V2" banner
+3. **Wait ~1–2 minutes** — Simmer signs and submits ~10 on-chain transactions on your behalf:
+   - 1 USDC.e approve (so the Onramp can pull it)
+   - 1 wrap (USDC.e → pUSD)
+   - 4 pUSD approvals (one per V2 spender contract)
+   - 4 ERC-1155 setApprovalForAll (so the V2 exchange can transfer your outcome tokens for sells)
+
+   No wallet popups, no extra clicks.
 4. **The banner turns green** — "Migrated to V2 — ready to trade"
 5. **Your balance updates** — USDC.e drops to $0, pUSD appears with your migrated amount
 
-Your wallet's POL covers the gas (~0.06 POL for the two transactions). If you don't have at least **0.1 POL** in your Polymarket wallet, the migration won't start — the dashboard shows your wallet address so you can send POL from an exchange first.
+Your wallet's POL covers the gas (~0.3 POL for ~10 transactions). If you don't have at least **0.5 POL** in your Polymarket wallet, the migration may stall partway — the dashboard shows your wallet address so you can send POL from an exchange first.
+
+**If you migrated under the old wrap-only flow** (before April 28 evening), your USDC.e is now pUSD but the V2 trading approvals weren't set. The banner re-appears as "Polymarket V2 — activate trading" with a single button to set the V2 approvals.
 
 ### External wallet (self-custody — MetaMask, Rabby, Coinbase Wallet, etc.)
 
 Works on both desktop (browser extensions) and mobile (WalletConnect / in-app wallet browsers).
+
+**Stage 1 — Wrap USDC.e to pUSD:**
 
 1. **Go to** your Agent dashboard → **Portfolio → Polymarket** tab
 2. **Make sure your trading wallet is the active account** — this may differ from the wallet you used to log in to Simmer:
    - Desktop: switch the active account in your browser wallet extension (MetaMask, Rabby, etc.)
    - Mobile: connect via WalletConnect or open Simmer inside your wallet's in-app browser, with the trading wallet selected
 3. **Click** the orange "Migrate to V2" banner
-4. **Sign the first transaction** in your wallet — `approve` USDC.e for the wrap contract
-5. **Sign the second transaction** — `wrap` USDC.e to pUSD
-6. **The banner turns green** — "Migrated to V2 — ready to trade"
+4. **Sign 2 transactions** in your wallet — `approve` USDC.e for the wrap contract, then `wrap` USDC.e → pUSD
 
-Your wallet needs at least **0.1 POL** for gas across both transactions. Alternatively, you can migrate directly at [polymarket.com](https://polymarket.com) if you prefer their gasless flow.
+**Stage 2 — Activate V2 trading:**
+
+5. The banner switches to **"Step 2: Activate V2 trading"** with an approval checklist
+6. **Click "Activate Trading"** and sign **~8 more transactions**:
+   - 4 pUSD approvals (one per V2 spender contract)
+   - 4 setApprovalForAll on the ConditionalTokens contract (so the V2 exchange can transfer your outcome tokens for sells)
+7. **The banner turns green** — "Migrated to V2 — ready to trade"
+
+Total: ~10 wallet signatures, ~1–2 minutes including transaction confirmations. Your wallet needs at least **0.5 POL** for gas across all transactions. If you'd rather skip the approval-by-approval flow, you can migrate at [polymarket.com](https://polymarket.com) (their UI bundles approvals via gasless relayer if you have a Safe wallet).
+
+**If you migrated under the old wrap-only flow**, your wallet has pUSD but the V2 approvals weren't set. The banner re-appears as "Polymarket V2 — activate trading" — click it to render the approval checklist for Stage 2.
 
 <Tip>
 You can migrate **any time** — before cutover, at cutover, or weeks later. No deadline. Your USDC.e is safe regardless.
