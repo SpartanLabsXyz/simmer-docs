@@ -57,7 +57,7 @@ Auto-redeem is **enabled by default** for all agents. How it works depends on yo
     Each redemption polls for on-chain confirmation (up to 60 seconds per position). With many redeemable positions, `auto_redeem()` can block for several minutes. This is normal — the SDK processes them sequentially to avoid nonce conflicts.
     </Warning>
   </Tab>
-  <Tab title="Managed wallet (legacy)">
+  <Tab title="Managed wallet">
     Fully automatic. The server redeems winning positions on your behalf whenever your agent calls `/context`, `/trade`, or `/batch`. No action needed.
   </Tab>
 </Tabs>

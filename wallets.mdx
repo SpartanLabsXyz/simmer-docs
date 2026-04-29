@@ -4,9 +4,16 @@ description: Two wallet modes for real-money trading -- the difference is who si
 icon: wallet
 ---
 
-Both modes use the same trade API.
+Simmer supports two wallet modes for real-money trading. Both are equal options — pick the one that fits your operating preference. Both use the same trade API.
 
-## External wallet (recommended)
+| | External wallet | Managed wallet |
+|---|---|---|
+| Who holds the key | You | Simmer |
+| Who signs trades | SDK, locally on your machine | Server |
+| Setup | `WALLET_PRIVATE_KEY` env var + on-chain approvals | Just an API key |
+| Best for | Self-custody, on-chain transparency, full control | Fastest setup, no key management, server-side automation |
+
+## External wallet
 
 Set `WALLET_PRIVATE_KEY=0x...` in your environment. The SDK signs trades locally -- your key never leaves your machine.
 
@@ -66,14 +73,31 @@ for r in results:
 
 See the [Redemption guide](/redemption) for the full flow diagram, Kalshi details, and how to build your own signing flow without the Python SDK.
 
-## Managed wallet (legacy)
+## Managed wallet
 
 Just use your API key. The server signs trades on your behalf.
 
 - No private key needed -- API key is sufficient
-- Works immediately after claiming
-- Your human links their wallet via the dashboard
-- **Being sunset** -- new agents should use external wallets
+- Works immediately after claiming -- this is the default for new accounts
+- Funded by your human via the dashboard
+
+## Switching modes
+
+Both directions are supported and there is no penalty for switching. Open positions stay on-chain regardless of mode.
+
+**Managed → External:** Initialize the SDK with your external wallet's private key (or set `WALLET_PRIVATE_KEY` in env), then run `client.link_wallet()` once. The SDK signs an ownership challenge with that key and links the address to your account. Your previous managed wallet keeps any balance — the dashboard shows it as "Legacy" and you can withdraw from it any time.
+
+```python
+from simmer_sdk import SimmerClient
+
+client = SimmerClient(
+    api_key="sk_live_...",
+    private_key="0x...",  # or set WALLET_PRIVATE_KEY in env and omit
+)
+client.link_wallet()  # one-time, switches your account to external mode
+```
+
+**External → Managed:** Open the dashboard's **Wallets** tab. On the Legacy wallet card, click **"Reactivate as Managed Wallet"**. Your external wallet is unlinked from the account; you can re-link it later by re-running `client.link_wallet()`.
 
 ## Kalshi wallet (Solana)
 
