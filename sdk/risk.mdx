@@ -66,3 +66,32 @@ You can — but `ensure_can_trade()` bundles three things you'd otherwise re-imp
 1. **Collateral-agnostic balance selection**: reads the correct token for the active `exchange_version` (pUSD on V2, USDC.e on V1).
 2. **Failure-mode distinction**: returns a stable `reason` string across RPC outages, missing wallets, and genuine zero-balance cases.
 3. **Safety buffer math**: the `max_safe_size` return is already clamped for fees and slippage — no off-by-one between skills.
+
+## Sell pre-flight pattern
+
+`ensure_can_trade()` covers buys (do I have collateral?). For sells, the equivalent pre-flight is "re-fetch positions immediately before each attempt." This catches the most common sell-side bug: a stop-loss / take-profit loop that fires every N seconds with a cached shares value, then submits stale orders after a previous sell already filled. Polymarket rejects the second attempt with [`Insufficient shares to sell`](/api/errors#insufficient-shares-to-sell).
+
+### Pattern
+
+```python
+def safe_sell(client, market_id, side, max_shares=None):
+    positions = client.get_positions(venue="polymarket")
+    pos = next((p for p in positions if p.market_id == market_id), None)
+    if not pos:
+        return None  # position cleared (sold / redeemed / resolved)
+    fresh_shares = pos.shares_yes if side == "yes" else pos.shares_no
+    if fresh_shares < 5.0:  # Polymarket's 5-share minimum
+        return None
+    sell_size = min(fresh_shares, max_shares) if max_shares else fresh_shares
+    return client.trade(market_id=market_id, side=side, action="sell", shares=sell_size)
+```
+
+The reference `polymarket-weather-trader` skill uses this pattern in its exit logic.
+
+### Server-side backstop
+
+If a stale sell slips through, Simmer's server pre-checks the on-chain position before submitting and fails fast with a diagnostic message instead of round-tripping to Polymarket. This is a backstop, not a substitute: refreshing positions in your loop avoids the network round-trip entirely and lets your skill skip cleanly without writing a failure row.
+
+### When to call it
+
+For passive monitors / GTC strategies — at the top of every monitor cycle. For active traders — once per cycle is plenty; positions don't change between sell decisions within the same run unless your skill is multi-threaded.

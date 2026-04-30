@@ -91,6 +91,40 @@ All 4xx error responses include a `fix` field with actionable instructions. Your
 2. Set approvals: `client.set_approvals()`
 3. Ensure wallet has POL for gas
 
+### "Insufficient shares to sell"
+
+```json
+{"error": "Insufficient shares to sell on Polymarket — order rejected. Attempted: 8.69 NO shares. Available: 0.00. Common causes: ..."}
+```
+
+The wallet's on-chain conditional-token balance is below the requested sell size.
+
+**Causes (in frequency order):**
+
+1. **Stale shares cache** — your loop fired a sell with a cached `shares` value after a previous sell already filled. The shares cleared on-chain but your loop didn't re-fetch positions before the next attempt.
+2. **Market resolved** — once a market resolves, conditional tokens can no longer trade through CLOB. They must be redeemed instead.
+3. **Wrong side** — selling the side you don't hold (e.g. attempting to sell YES when your position is on NO).
+
+**Fix:**
+
+```python
+# Before each sell, refresh positions and use the fresh shares value
+positions = client.get_positions(venue="polymarket")
+pos = next((p for p in positions if p.market_id == market_id), None)
+if not pos:
+    return  # position cleared (sold / redeemed / resolved)
+fresh_shares = pos.shares_yes if side == "yes" else pos.shares_no
+if fresh_shares < 5.0:  # Polymarket's 5-share minimum
+    return
+client.trade(market_id=market_id, side=side, action="sell", shares=fresh_shares, ...)
+```
+
+For resolved markets, use `client.redeem_position(market_id)` instead of `trade(action="sell")`.
+
+<Tip>
+See [Sell pre-flight pattern](/sdk/risk#sell-pre-flight-pattern) for a reusable wrapper.
+</Tip>
+
 ### "Order book query timed out"
 
 **Fix:** Retry the request. Increase timeout to 30s for trades. Check [Polymarket status](https://status.polymarket.com).
