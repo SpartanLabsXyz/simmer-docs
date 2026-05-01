@@ -1780,7 +1780,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SDKSettingsResponse"
+                }
               }
             }
           }
@@ -2276,6 +2278,43 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/wallet/credentials/derive-via-proxy": {
+      "post": {
+        "summary": "Wallet Derive Credentials Via Proxy",
+        "description": "Forward locally-signed Polymarket L1 auth headers from Railway.\n\nFor external-wallet users whose IP is Cloudflare-blocked from\nPOST https://clob.polymarket.com/auth/api-key (commonly residential AU /\nSE Asia ranges). The SDK builds the four L1 headers locally with the\nuser's private key (key stays on user's machine), POSTs them here, we\nforward to Polymarket from a non-blocked IP, encrypt and store the\nresulting creds.\n\nAuth: SDK API key (caller must own `poly_address`).\nRate limit: 3/minute (slowapi, IP-keyed) \u2014 Polymarket's own derive routes\nare throttled and the encrypted column is per-user, not per-call.",
+        "operationId": "api_wallet_derive_credentials_via_proxy_api_sdk_wallet_credentials_derive_via_proxy_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletCredentialsDeriveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -5697,6 +5736,121 @@
         "title": "SDKRiskSettingsResponse",
         "description": "Response from risk settings endpoints."
       },
+      "SDKSettingsResponse": {
+        "properties": {
+          "sdk_real_trading_enabled": {
+            "type": "boolean",
+            "title": "Sdk Real Trading Enabled"
+          },
+          "wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wallet Address"
+          },
+          "wallet_ownership": {
+            "type": "string",
+            "title": "Wallet Ownership",
+            "default": "native"
+          },
+          "has_legacy_wallet": {
+            "type": "boolean",
+            "title": "Has Legacy Wallet",
+            "default": false
+          },
+          "polymarket_usdc_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Usdc Balance"
+          },
+          "polymarket_allowances_set": {
+            "type": "boolean",
+            "title": "Polymarket Allowances Set",
+            "default": false
+          },
+          "sdk_max_trade_amount": {
+            "type": "number",
+            "title": "Sdk Max Trade Amount",
+            "default": 100.0
+          },
+          "sdk_daily_limit": {
+            "type": "number",
+            "title": "Sdk Daily Limit",
+            "default": 500.0
+          },
+          "sdk_daily_spent": {
+            "type": "number",
+            "title": "Sdk Daily Spent",
+            "default": 0.0
+          },
+          "trading_paused": {
+            "type": "boolean",
+            "title": "Trading Paused",
+            "default": true
+          },
+          "solana_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Solana Wallet Address"
+          },
+          "kalshi_usdc_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kalshi Usdc Balance"
+          },
+          "last_sdk_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sdk Version"
+          },
+          "last_sdk_version_seen_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sdk Version Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sdk_real_trading_enabled"
+        ],
+        "title": "SDKSettingsResponse",
+        "description": "Response shape for GET /api/sdk/settings."
+      },
       "SDKSettingsUpdate": {
         "properties": {
           "user_email": {
@@ -6769,6 +6923,43 @@
         ],
         "title": "VenueLeaderboardResponse",
         "description": "Response for venue-specific leaderboard."
+      },
+      "WalletCredentialsDeriveRequest": {
+        "properties": {
+          "poly_address": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "title": "Poly Address",
+            "description": "EOA address \u2014 must match the authenticated user's wallet_address"
+          },
+          "poly_signature": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{130}$",
+            "title": "Poly Signature",
+            "description": "L1 auth signature: 0x + 130 hex chars (65 bytes: r,s,v)"
+          },
+          "poly_timestamp": {
+            "type": "string",
+            "pattern": "^\\d{10}$",
+            "title": "Poly Timestamp",
+            "description": "Unix timestamp in seconds (10 digits) used in the signature"
+          },
+          "poly_nonce": {
+            "type": "string",
+            "pattern": "^\\d{1,20}$",
+            "title": "Poly Nonce",
+            "description": "Nonce used in the signature (decimal digits, default 0)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "poly_address",
+          "poly_signature",
+          "poly_timestamp",
+          "poly_nonce"
+        ],
+        "title": "WalletCredentialsDeriveRequest",
+        "description": "Pre-signed Polymarket L1 auth headers for proxy-derive of CLOB creds.\n\nExternal-wallet users on residential / Cloudflare-blocked IPs cannot reach\nPolymarket's POST /auth/api-key endpoint directly. The SDK signs the L1\nchallenge locally with the EOA private key (the key never leaves the user's\nmachine) and POSTs only the resulting four headers here. The backend\nforwards them to Polymarket from a non-blocked IP, encrypts and stores the\nreturned creds. The signature is bound to address + timestamp + nonce, so\nit cannot be replayed as a transaction."
       },
       "WalletLinkChallengeResponse": {
         "properties": {
