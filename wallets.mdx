@@ -26,8 +26,11 @@ export WALLET_PRIVATE_KEY="0x..."
 ```python
 from simmer_sdk import SimmerClient
 
-client = SimmerClient(api_key="sk_live_...")
-# WALLET_PRIVATE_KEY is auto-detected from env
+# from_env() reads SIMMER_API_KEY and auto-detects WALLET_PRIVATE_KEY (SDK 0.13.0+)
+client = SimmerClient.from_env()
+
+# Or pass api_key explicitly:
+# client = SimmerClient(api_key="sk_live_...")  # WALLET_PRIVATE_KEY still auto-detected
 
 # Step 1: Link wallet to your Simmer account
 client.link_wallet()
@@ -73,6 +76,24 @@ for r in results:
 
 See the [Redemption guide](/redemption) for the full flow diagram, Kalshi details, and how to build your own signing flow without the Python SDK.
 
+## OWS wallet (per-agent self-custody)
+
+OWS ([Open Wallet Standard](https://openwallet.sh)) is a third option for self-custody — instead of holding `WALLET_PRIVATE_KEY` in your environment, an OWS daemon manages keys in a local vault and signs orders on the SDK's behalf. Each agent can have its own OWS wallet, which is useful when one process runs multiple agents.
+
+```python
+from simmer_sdk import SimmerClient
+
+# SDK 0.13.0+ — explicit OWS wallet routing
+client = SimmerClient.with_ows_wallet("my-agent-wallet")
+
+# Or via env var (OWS_WALLET=my-agent-wallet)
+client = SimmerClient.from_env()
+```
+
+Setup is covered by the `simmer-wallet-setup` skill on [ClawHub](https://clawhub.ai/skills/simmer-wallet-setup) — install the skill in your agent and follow its OWS path. The skill walks through OWS daemon installation, wallet creation, and `client.register_agent_wallet()` (Elite-tier gated).
+
+Once registered, the SDK signs all orders through OWS. `WALLET_PRIVATE_KEY` is not used.
+
 ## Managed wallet
 
 Just use your API key. The server signs trades on your behalf.
@@ -104,7 +125,7 @@ client.link_wallet()  # one-time, switches your account to external mode
 Kalshi trading uses a Solana wallet. Set `SOLANA_PRIVATE_KEY` in your environment (base58-encoded secret key).
 
 ```python
-client = SimmerClient(api_key="sk_live_...", venue="kalshi")
+client = SimmerClient.from_env(venue="kalshi")
 # SOLANA_PRIVATE_KEY is auto-detected
 
 # The SDK auto-registers your Solana wallet on first trade
