@@ -64,6 +64,18 @@ Use the `resolved_at` field -- it's the definitive signal that resolution is com
 The gap between `resolves_at` and `resolved_at` varies by market type. Weather markets, for example, can take hours after the eligibility window for the oracle to finalize.
 </Accordion>
 
+<Accordion title="Which field shows the winning outcome of a resolved market?">
+The `outcome` field on `GET /api/sdk/markets/{market_id}` (and the markets list endpoint) carries the winner. It is a **boolean**:
+
+- `true` -- YES won
+- `false` -- NO won
+- `null` -- not yet resolved
+
+Pair it with `resolved_at != null` before treating it as final. While `status == "resolved"` is set, the oracle may still be finalizing on-chain settlement, and `outcome` can briefly remain `null` during that window.
+
+For multi-outcome events (e.g. "Who will win the election?"), each option is imported as its own binary market with `outcome_name` identifying the option -- so `outcome: true` on that row means the option named in `outcome_name` won.
+</Accordion>
+
 ## Tiers and Limits
 
 <Accordion title="Does the free tier limit how many trades I can make?">
