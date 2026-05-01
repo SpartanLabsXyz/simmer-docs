@@ -37,6 +37,25 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-05-01 — `simmer-sdk` 0.13.0: ergonomic constructors
+
+Released [`simmer-sdk` 0.13.0](https://pypi.org/project/simmer-sdk/0.13.0/) on PyPI. Adds two classmethods so callers never have to read `os.environ` directly: `SimmerClient.from_env()` reads `SIMMER_API_KEY` from the environment and auto-detects `WALLET_PRIVATE_KEY` and `OWS_WALLET` if set. `SimmerClient.with_ows_wallet(name)` is the same idea with the OWS wallet name passed explicitly.
+
+```python
+# Before
+client = SimmerClient(api_key=os.environ["SIMMER_API_KEY"])
+
+# After
+client = SimmerClient.from_env()
+client = SimmerClient.with_ows_wallet("my-agent-wallet")
+```
+
+No behavior change in the regular `SimmerClient(api_key=..., ...)` constructor — these are sugar. They exist so skill bundles and bots can keep `import os` out of their entrypoints, which helps the [ClawHub](https://clawhub.ai) scanner verdict on community-installed skills.
+
+`pip install --upgrade simmer-sdk` to pick them up. See the [SDK Initialization](/sdk/overview#initialization) section for the full pattern.
+
+---
+
 ## 2026-04-26 — Heads-up: Polymarket V2 migration on April 28
 
 Polymarket is upgrading its CLOB exchange on **April 28, 2026 at ~11:00 UTC**. The new V2 exchange uses **pUSD** (a 1:1-backed wrapper around USDC.e) as the collateral token. Every pUSD is redeemable for one USDC.e, on-chain, with no deadline.
