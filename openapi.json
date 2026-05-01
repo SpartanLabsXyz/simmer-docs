@@ -1780,7 +1780,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SDKSettingsResponse"
+                }
               }
             }
           }
@@ -5696,6 +5698,121 @@
         ],
         "title": "SDKRiskSettingsResponse",
         "description": "Response from risk settings endpoints."
+      },
+      "SDKSettingsResponse": {
+        "properties": {
+          "sdk_real_trading_enabled": {
+            "type": "boolean",
+            "title": "Sdk Real Trading Enabled"
+          },
+          "wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wallet Address"
+          },
+          "wallet_ownership": {
+            "type": "string",
+            "title": "Wallet Ownership",
+            "default": "native"
+          },
+          "has_legacy_wallet": {
+            "type": "boolean",
+            "title": "Has Legacy Wallet",
+            "default": false
+          },
+          "polymarket_usdc_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Usdc Balance"
+          },
+          "polymarket_allowances_set": {
+            "type": "boolean",
+            "title": "Polymarket Allowances Set",
+            "default": false
+          },
+          "sdk_max_trade_amount": {
+            "type": "number",
+            "title": "Sdk Max Trade Amount",
+            "default": 100.0
+          },
+          "sdk_daily_limit": {
+            "type": "number",
+            "title": "Sdk Daily Limit",
+            "default": 500.0
+          },
+          "sdk_daily_spent": {
+            "type": "number",
+            "title": "Sdk Daily Spent",
+            "default": 0.0
+          },
+          "trading_paused": {
+            "type": "boolean",
+            "title": "Trading Paused",
+            "default": true
+          },
+          "solana_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Solana Wallet Address"
+          },
+          "kalshi_usdc_balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kalshi Usdc Balance"
+          },
+          "last_sdk_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sdk Version"
+          },
+          "last_sdk_version_seen_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sdk Version Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sdk_real_trading_enabled"
+        ],
+        "title": "SDKSettingsResponse",
+        "description": "Response shape for GET /api/sdk/settings."
       },
       "SDKSettingsUpdate": {
         "properties": {
