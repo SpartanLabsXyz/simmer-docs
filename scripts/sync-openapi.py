@@ -77,6 +77,7 @@ INCLUDE = [
     "POST /api/sdk/wallet/broadcast-tx",
     "GET /api/sdk/wallet/{wallet_address}/positions",
     "GET /api/sdk/wallet/credentials/check",
+    "POST /api/sdk/wallet/credentials/derive-via-proxy",
     # Skills
     "GET /api/sdk/skills",
     "POST /api/sdk/skills",
