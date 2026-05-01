@@ -362,7 +362,7 @@
           }
         },
         "x-mint": {
-          "content": "<Tip>Need `time_to_resolution`, slippage, or flip-flop detection? Use the [context endpoint](/api/context) \u2014 those fields are not on `/markets`.</Tip>\n\n**Limit:** Max 500 results per request (default 50). When results are truncated, the response includes `\"truncated\": true` and a `total` field showing how many matched. Use `tags`, `q`, or `venue` filters to narrow large result sets."
+          "content": "<Tip>Need `time_to_resolution`, slippage, or flip-flop detection? Use the [context endpoint](/api/context) \u2014 those fields are not on `/markets`.</Tip>\n\n**Limit:** Max 500 results per request (default 50). When results are truncated, the response includes `\"truncated\": true` and a `total` field showing how many matched. Use `tags`, `q`, or `venue` filters to narrow large result sets.\n\n## Response fields\n\nEach entry in `markets[]` has the same shape as [`GET /api/sdk/markets/{market_id}`](/api-reference/get-market). See that page for the full field reference, including resolution fields (`status`, `resolved_at`, `outcome`)."
         }
       }
     },
@@ -401,6 +401,9 @@
               }
             }
           }
+        },
+        "x-mint": {
+          "content": "## Response fields\n\nThe `market` object includes:\n\n**Identity & status**\n- `id` \u2014 Simmer market UUID. Use this for all subsequent API calls.\n- `question` \u2014 the market question.\n- `status` \u2014 `active`, `resolved`, or `closed`.\n- `url` \u2014 canonical Simmer URL for the market.\n\n**Pricing**\n- `current_probability` / `current_price` \u2014 current YES probability (0\u20131).\n- `external_price_yes` \u2014 last YES price seen on the underlying venue (Polymarket / Kalshi). `null` for `sim`-only markets.\n- `divergence`, `opportunity_score`, `volume_24h` \u2014 ranking signals.\n\n**Resolution**\n- `resolves_at` \u2014 when the market becomes *eligible* to resolve.\n- `outcome` \u2014 the winner once resolved. **Boolean**: `true` = YES won, `false` = NO won, `null` = not yet resolved.\n- For multi-outcome events, each option is its own binary market \u2014 `outcome_name` identifies the option, and `outcome: true` means that named option won. `event_id` / `event_name` / `event_ref` group sibling options.\n\n<Note>Use `resolved_at != null` (not `status == \"resolved\"`) as the definitive signal that resolution is final. See the [resolution FAQ](/faq#how-do-i-know-when-a-market-is-truly-resolved) for the timing nuance.</Note>\n\n**Polymarket-specific**\n- `polymarket_token_id`, `polymarket_no_token_id` \u2014 ERC-1155 token IDs for YES/NO shares.\n- `polymarket_neg_risk` \u2014 whether this is a negative-risk market (different exchange contract).\n- `tick_size`, `fee_rate_bps` \u2014 venue-specific trading parameters.\n\n**Tags & flags**\n- `tags`, `is_sdk_only`, `is_paid`, `import_source`."
         }
       }
     },
@@ -808,7 +811,7 @@
     "/api/sdk/fast-markets": {
       "get": {
         "summary": "Fast Markets",
-        "description": "List fast-resolving markets, optionally filtered by asset and time window.\n\nParameters:\n- asset: Crypto ticker to filter by (BTC, ETH, SOL, XRP, DOGE, ...).\n         Maps to a title search \u2014 e.g. asset=BTC searches for \"Bitcoin\".\n- window: Duration bucket (5m, 15m, 1h, 4h, daily). Matches Polymarket's\n          standard crypto speed-trading tiers.\n- venue: Filter by venue ('polymarket', 'kalshi', 'sim').\n- limit: Max markets to return (default 50).\n- sort: 'volume' to sort by 24h volume, 'resolves_at' for pure chronological.\n- market_status: 'live' (trading now), 'upcoming' (not yet live), or omit for all.\n          With 'upcoming', results are sorted by resolves_at ASC (no live-first priority).\n\nEquivalent to GET /api/sdk/markets?tags=fast[,fast-<window>]&q=<asset_name>",
+        "description": "List fast-resolving markets, optionally filtered by asset and time window.\n\nParameters:\n- asset: Crypto ticker to filter by (BTC, ETH, SOL, XRP, DOGE, ...).\n         Maps to a title search \u2014 e.g. asset=BTC searches for \"Bitcoin\".\n- window: Duration bucket (5m, 15m, 1h, 4h, daily). Matches Polymarket's\n          standard crypto speed-trading tiers.\n- venue: Filter by venue ('polymarket', 'kalshi', 'sim').\n- limit: Max markets to return (default 50).\n- sort: 'volume' to sort by 24h volume, 'resolves_at' for pure chronological.\n- market_status: 'live' (in settlement window now) or 'upcoming' (not yet in\n          settlement window). Omit for all. Note: this filters by the strict\n          `is_live_now` semantic below \u2014 for \"currently tradable on Polymarket\"\n          use `is_orderbook_open` instead.\n\nField semantics (frequently confused):\n- `is_orderbook_open` (bool): the market is accepting orders on Polymarket\n  right now. True for every market in this response \u2014 the `status='active'`\n  filter implies it. Equivalent to Gamma's `active && !closed`.\n- `is_live_now` (bool): the market is inside its final settlement window \u2014\n  the last `<window>` minutes before `resolves_at`. For a fast-5m market,\n  true only in the 5 minutes before resolution. This is stricter than\n  Gamma's \"active\" flag. Use this if you only want to act on markets in\n  their immediate price-discovery window. If you want all tradable markets,\n  use `is_orderbook_open` (or just consume the full list).\n\nEquivalent to GET /api/sdk/markets?tags=fast[,fast-<window>]&q=<asset_name>",
         "operationId": "api_sdk_fast_markets_api_sdk_fast_markets_get",
         "parameters": [
           {
@@ -927,7 +930,7 @@
     "/api/sdk/trade": {
       "post": {
         "summary": "Trade",
-        "description": "Execute a trade via SDK.\n\nVenues:\n- venue=\"sim\" (default): Execute on Simmer's LMSR market with $SIM\n- venue=\"polymarket\": Execute real trade on Polymarket via Dome API\n  (requires wallet setup with allowances)\n- venue=\"kalshi\": Execute real trade on Kalshi via DFlow\n  (requires Solana wallet setup with SOL + USDC)\n\nOptions:\n- dry_run=True: Validate and calculate without executing. Returns estimated\n  shares, price, and cost. Useful for testing without spending real money.\n  Note: dry_run only applies to real-money venues (polymarket, kalshi).\n\nDeprecated: venue=\"sandbox\"/\"simmer\" are deprecated, use venue=\"sim\" instead.\n\nRequires API key in Authorization header (rate limited: 120/minute).",
+        "description": "Execute a trade via SDK.\n\nVenues:\n- venue=\"sim\" (default): Execute on Simmer's LMSR market with $SIM\n- venue=\"polymarket\": Execute real trade on Polymarket via Dome API\n  (requires wallet setup with allowances)\n- venue=\"kalshi\": Execute real trade on Kalshi via DFlow\n  (requires Solana wallet setup with SOL + USDC)\n\nOptions:\n- dry_run=True: Validate and calculate without executing. Returns the exact\n  shares, projected price, and cost the live path would settle for.\n  Supported on all venues: polymarket, kalshi, and sim (LMSR \u2014 closed-form\n  cost-inversion guarantees dry_run.cost == live.cost within float\n  precision). Useful for sizing budgets without committing the trade.\n\nDeprecated: venue=\"sandbox\"/\"simmer\" are deprecated, use venue=\"sim\" instead.\n\nRequires API key in Authorization header (rate limited: 120/minute).",
         "operationId": "api_sdk_trade_api_sdk_trade_post",
         "requestBody": {
           "content": {
@@ -6148,6 +6151,40 @@
               }
             ],
             "title": "Content Hash"
+          },
+          "last_verified_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Verified At"
+          },
+          "last_verified_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Verified Status"
+          },
+          "last_verified_detail": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Verified Detail"
           }
         },
         "type": "object",
