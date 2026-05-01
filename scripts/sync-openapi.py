@@ -129,28 +129,8 @@ CONTENT_INJECTIONS = {
     },
     "/api/sdk/markets/{market_id}": {
         "get": (
-            "## Response fields\n\n"
-            "The `market` object includes:\n\n"
-            "**Identity & status**\n"
-            "- `id` \u2014 Simmer market UUID. Use this for all subsequent API calls.\n"
-            "- `question` \u2014 the market question.\n"
-            "- `status` \u2014 `active`, `resolved`, or `closed`.\n"
-            "- `url` \u2014 canonical Simmer URL for the market.\n\n"
-            "**Pricing**\n"
-            "- `current_probability` / `current_price` \u2014 current YES probability (0\u20131).\n"
-            "- `external_price_yes` \u2014 last YES price seen on the underlying venue (Polymarket / Kalshi). `null` for `sim`-only markets.\n"
-            "- `divergence`, `opportunity_score`, `volume_24h` \u2014 ranking signals.\n\n"
-            "**Resolution**\n"
-            "- `resolves_at` \u2014 when the market becomes *eligible* to resolve.\n"
-            "- `outcome` \u2014 the winner once resolved. **Boolean**: `true` = YES won, `false` = NO won, `null` = not yet resolved.\n"
-            "- For multi-outcome events, each option is its own binary market \u2014 `outcome_name` identifies the option, and `outcome: true` means that named option won. `event_id` / `event_name` / `event_ref` group sibling options.\n\n"
             "<Note>Use `resolved_at != null` (not `status == \"resolved\"`) as the definitive signal that resolution is final. See the [resolution FAQ](/faq#how-do-i-know-when-a-market-is-truly-resolved) for the timing nuance.</Note>\n\n"
-            "**Polymarket-specific**\n"
-            "- `polymarket_token_id`, `polymarket_no_token_id` \u2014 ERC-1155 token IDs for YES/NO shares.\n"
-            "- `polymarket_neg_risk` \u2014 whether this is a negative-risk market (different exchange contract).\n"
-            "- `tick_size`, `fee_rate_bps` \u2014 venue-specific trading parameters.\n\n"
-            "**Tags & flags**\n"
-            "- `tags`, `is_sdk_only`, `is_paid`, `import_source`."
+            "For multi-outcome events (e.g. \"Who will win the election?\"), each option is its own binary market \u2014 `outcome_name` identifies the option, and `outcome: true` means that named option won. `event_id` / `event_name` / `event_ref` group sibling options."
         ),
     },
     "/api/sdk/markets/import": {

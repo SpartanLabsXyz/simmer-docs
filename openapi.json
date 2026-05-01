@@ -387,7 +387,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SDKMarketDetailResponse"
+                }
               }
             }
           },
@@ -403,7 +405,7 @@
           }
         },
         "x-mint": {
-          "content": "## Response fields\n\nThe `market` object includes:\n\n**Identity & status**\n- `id` \u2014 Simmer market UUID. Use this for all subsequent API calls.\n- `question` \u2014 the market question.\n- `status` \u2014 `active`, `resolved`, or `closed`.\n- `url` \u2014 canonical Simmer URL for the market.\n\n**Pricing**\n- `current_probability` / `current_price` \u2014 current YES probability (0\u20131).\n- `external_price_yes` \u2014 last YES price seen on the underlying venue (Polymarket / Kalshi). `null` for `sim`-only markets.\n- `divergence`, `opportunity_score`, `volume_24h` \u2014 ranking signals.\n\n**Resolution**\n- `resolves_at` \u2014 when the market becomes *eligible* to resolve.\n- `outcome` \u2014 the winner once resolved. **Boolean**: `true` = YES won, `false` = NO won, `null` = not yet resolved.\n- For multi-outcome events, each option is its own binary market \u2014 `outcome_name` identifies the option, and `outcome: true` means that named option won. `event_id` / `event_name` / `event_ref` group sibling options.\n\n<Note>Use `resolved_at != null` (not `status == \"resolved\"`) as the definitive signal that resolution is final. See the [resolution FAQ](/faq#how-do-i-know-when-a-market-is-truly-resolved) for the timing nuance.</Note>\n\n**Polymarket-specific**\n- `polymarket_token_id`, `polymarket_no_token_id` \u2014 ERC-1155 token IDs for YES/NO shares.\n- `polymarket_neg_risk` \u2014 whether this is a negative-risk market (different exchange contract).\n- `tick_size`, `fee_rate_bps` \u2014 venue-specific trading parameters.\n\n**Tags & flags**\n- `tags`, `is_sdk_only`, `is_paid`, `import_source`."
+          "content": "<Note>Use `resolved_at != null` (not `status == \"resolved\"`) as the definitive signal that resolution is final. See the [resolution FAQ](/faq#how-do-i-know-when-a-market-is-truly-resolved) for the timing nuance.</Note>\n\nFor multi-outcome events (e.g. \"Who will win the election?\"), each option is its own binary market \u2014 `outcome_name` identifies the option, and `outcome: true` means that named option won. `event_id` / `event_name` / `event_ref` group sibling options."
         }
       }
     },
@@ -4863,6 +4865,306 @@
           "kalshi_url"
         ],
         "title": "SDKKalshiImportRequest"
+      },
+      "SDKMarketDetailResponse": {
+        "properties": {
+          "market": {
+            "$ref": "#/components/schemas/SDKMarketResponse"
+          },
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id",
+            "description": "The agent ID derived from the API key making the request."
+          }
+        },
+        "type": "object",
+        "required": [
+          "market",
+          "agent_id"
+        ],
+        "title": "SDKMarketDetailResponse",
+        "description": "Response wrapper for `GET /api/sdk/markets/{market_id}`."
+      },
+      "SDKMarketResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Simmer market UUID. Use this for all subsequent API calls."
+          },
+          "question": {
+            "type": "string",
+            "title": "Question",
+            "description": "The market question."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`active`, `resolved`, or `closed`."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "Canonical Simmer URL for the market."
+          },
+          "current_probability": {
+            "type": "number",
+            "title": "Current Probability",
+            "description": "Current YES probability (0\u20131)."
+          },
+          "current_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Price",
+            "description": "Alias for `current_probability` (consistent with context/positions endpoints)."
+          },
+          "external_price_yes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Price Yes",
+            "description": "Last YES price seen on the underlying venue (Polymarket / Kalshi). Null for `sim`-only markets."
+          },
+          "divergence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Divergence",
+            "description": "Difference between Simmer's `current_probability` and `external_price_yes`. Detail endpoint only."
+          },
+          "opportunity_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opportunity Score",
+            "description": "Composite ranking signal combining divergence, volume, and time-to-resolution. Detail endpoint only."
+          },
+          "volume_24h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume 24H",
+            "description": "24-hour trading volume on the underlying venue."
+          },
+          "resolves_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolves At",
+            "description": "ISO-8601 UTC timestamp for when the market becomes *eligible* to resolve. Not the same as actual resolution."
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome",
+            "description": "Winning outcome once resolved. `true` = YES won, `false` = NO won, `null` = not yet resolved. For multi-outcome events, `outcome: true` means the option named in `outcome_name` won."
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id",
+            "description": "ID grouping sibling markets for a multi-outcome event (e.g. \"Who will win the election?\")."
+          },
+          "event_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Name",
+            "description": "Human-readable event title."
+          },
+          "outcome_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Name",
+            "description": "Which option this market represents within a multi-outcome event."
+          },
+          "event_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Ref",
+            "description": "Stable cross-venue reference for the parent event."
+          },
+          "polymarket_token_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Token Id",
+            "description": "ERC-1155 token ID for YES shares. Used to query the Polymarket CLOB order book."
+          },
+          "polymarket_no_token_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket No Token Id",
+            "description": "ERC-1155 token ID for NO shares."
+          },
+          "polymarket_neg_risk": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Neg Risk",
+            "description": "Whether this is a negative-risk market \u2014 uses a different exchange contract on Polymarket."
+          },
+          "fee_rate_bps": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fee Rate Bps",
+            "description": "Trading fee in basis points (Polymarket). Detail endpoint only."
+          },
+          "tick_size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tick Size",
+            "description": "Minimum price increment on the venue (Polymarket). Detail endpoint only."
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Market tags (e.g. `fast`, `politics`, `crypto`)."
+          },
+          "is_sdk_only": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Sdk Only",
+            "description": "True if the market is only tradeable via the SDK (not visible on the public dashboard)."
+          },
+          "is_paid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Paid",
+            "description": "True if the market was created via paid import (deterministic 24h cycle)."
+          },
+          "import_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import Source",
+            "description": "Where the market was imported from (`polymarket`, `kalshi`, `sim`, etc.)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "question",
+          "status",
+          "current_probability"
+        ],
+        "title": "SDKMarketResponse",
+        "description": "A single market as returned by the SDK markets endpoints."
       },
       "SDKPortfolioConcentration": {
         "properties": {
