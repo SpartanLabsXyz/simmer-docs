@@ -178,7 +178,7 @@
     "/api/sdk/markets": {
       "get": {
         "summary": "List Markets",
-        "description": "List markets available for SDK trading.\n\nBy default, excludes tracking markets (no AI counterparty for simmer trading).\nSet include_analytics_only=true to include them (for real trading only).\n\nParameters:\n- status: Filter by status ('active', 'resolved', etc.). Omit to get all statuses when using ids.\n- venue: Filter by venue ('polymarket', 'sim'). Alias for import_source.\n        Deprecated: 'sandbox'/'simmer' are accepted but deprecated, use 'sim' instead.\n- import_source: Same as venue (kept for backwards compatibility).\n- q: Text search for market questions (min 2 chars, case-insensitive)\n- ids: Comma-separated market IDs to fetch (max 50). When provided, status filter is optional.\n- tags: Comma-separated tags to filter by (e.g., 'weather' or 'weather,crypto'). Returns markets with ALL specified tags.\n- sort: 'volume' (by 24h volume), 'created' (by created_at), or None (default by created_at)\n\nUnknown params will trigger a warning in the response (helps debug typos).\nRequires API key in Authorization header.",
+        "description": "List markets available for SDK trading.\n\nBy default, excludes tracking markets (no AI counterparty for simmer trading).\nSet include_analytics_only=true to include them (for real trading only).\n\nParameters:\n- status: Filter by status ('active', 'resolved', etc.). Omit to get all statuses when using ids.\n- venue: Filter by venue ('polymarket', 'sim'). Alias for import_source.\n        Deprecated: 'sandbox'/'simmer' are accepted but deprecated, use 'sim' instead.\n- import_source: Same as venue (kept for backwards compatibility).\n- q: Text search for market questions (min 2 chars, case-insensitive)\n- ids: Comma-separated market IDs to fetch (max 50). When provided, status filter is optional.\n- tags: Comma-separated tags to filter by (e.g., 'weather' or 'weather,crypto'). Returns markets with ALL specified tags.\n- sort: 'volume' (by 24h volume), 'created' (by created_at), or None (default by created_at)\n- include: Comma-separated optional fields to include on each market. Currently\n           supported: 'resolution_criteria' (the human-readable resolution rules\n           text \u2014 useful for weather/data-source-sensitive bots that need to\n           verify which oracle a market reads). Default omits these to keep\n           list payloads small.\n\nUnknown params will trigger a warning in the response (helps debug typos).\nRequires API key in Authorization header.",
         "operationId": "api_sdk_list_markets_api_sdk_markets_get",
         "parameters": [
           {
@@ -338,6 +338,22 @@
                 }
               ],
               "title": "Max Hours To Resolution"
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Include"
             }
           }
         ],
@@ -5193,6 +5209,18 @@
             ],
             "title": "Import Source",
             "description": "Where the market was imported from (`polymarket`, `kalshi`, `sim`, etc.)."
+          },
+          "resolution_criteria": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Criteria",
+            "description": "Human-readable text describing how the market resolves. For weather markets this names the specific airport / weather station Polymarket reads (e.g. 'recorded at the Chicago O'Hare Intl Airport Station'). Use this to verify your bot's data source matches the market's resolution oracle. Detail endpoint always; list endpoint requires `?include=resolution_criteria`."
           }
         },
         "type": "object",
