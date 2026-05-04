@@ -8,6 +8,10 @@
     "dark": "#1a1b26"
   },
   "favicon": "/favicon.svg",
+  "banner": {
+    "content": "**Polymarket V2 is live.** Existing users need to activate V2 allowances to keep trading. [See migration guide →](/v2-migration)",
+    "dismissible": true
+  },
   "navigation": {
     "tabs": [
       {
