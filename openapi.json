@@ -485,6 +485,78 @@
         }
       }
     },
+    "/api/sdk/markets/{market_id}/executable-price": {
+      "get": {
+        "summary": "Executable Price",
+        "description": "Live executable price for a Polymarket market+side+action.\n\nFor BUY: best ask of the side's CLOB token (lowest price someone is selling at).\nFor SELL: best bid of the side's CLOB token (highest price someone is buying at).\n\nThe SDK calls this whenever a caller does `client.trade(..., price=None)` for a\nPolymarket trade. Replaces the V1 binary identity `price = 1 - external_price_yes`,\nwhich is wrong on V2 neg-risk markets where YES and NO are independent CLOB tokens\nwith independent orderbooks. SIM-1560.",
+        "operationId": "api_sdk_executable_price_api_sdk_markets__market_id__executable_price_get",
+        "parameters": [
+          {
+            "name": "market_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Market Id"
+            }
+          },
+          {
+            "name": "side",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Outcome side: 'yes' or 'no'",
+              "title": "Side"
+            },
+            "description": "Outcome side: 'yes' or 'no'"
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Trade action: 'buy' or 'sell'",
+              "title": "Action"
+            },
+            "description": "Trade action: 'buy' or 'sell'"
+          },
+          {
+            "name": "apply_buffer",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Apply one-tick buffer to ensure crossing the spread",
+              "default": true,
+              "title": "Apply Buffer"
+            },
+            "description": "Apply one-tick buffer to ensure crossing the spread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sdk/markets/opportunities": {
       "get": {
         "summary": "Opportunities",
@@ -5870,6 +5942,22 @@
               }
             ],
             "title": "Last Sdk Version Seen At"
+          },
+          "wallet_uses_deposit_wallet": {
+            "type": "boolean",
+            "title": "Wallet Uses Deposit Wallet",
+            "default": false
+          },
+          "deposit_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Wallet Address"
           }
         },
         "type": "object",

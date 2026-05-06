@@ -27,6 +27,7 @@ INCLUDE = [
     "GET /api/sdk/markets",
     "GET /api/sdk/markets/{market_id}",
     "GET /api/sdk/markets/{market_id}/history",
+    "GET /api/sdk/markets/{market_id}/executable-price",
     "GET /api/sdk/markets/opportunities",
     "GET /api/sdk/markets/check",
     "GET /api/sdk/markets/importable",
