@@ -9,11 +9,11 @@ icon: arrow-right-arrow-left
 </Info>
 
 <Warning>
-**Polymarket's deposit wallet is a smart contract on Polygon.** Do not deposit funds from other chains, or other assets on Polygon except for USDC.e or pUSD — they will be unrecoverable.
+**Your Trading Contract (Polymarket Deposit Wallet) is a smart contract on Polygon.** Do not deposit funds from other chains, or other assets on Polygon except for USDC.e or pUSD — they will be unrecoverable.
 
-This includes native POL: do **not** send POL to your deposit wallet. V2 trades are gasless via Polymarket's relayer, so the deposit wallet doesn't need POL — and POL sent to it cannot be moved out.
+This includes native POL: do **not** send POL to your Trading Contract. V2 trades are gasless via Polymarket's relayer, so the Trading Contract doesn't need POL — and POL sent to it cannot be moved out.
 
-If you need POL for gas (one-time, for the V1 → V2 wrap), send it to your **owner wallet** — the EOA address you signed in with — not your deposit wallet.
+If you need POL for gas (one-time, for the V1 → V2 wrap), send it to your **agent wallet** — the EOA Simmer signs trades from — not your Trading Contract.
 </Warning>
 
 ## TL;DR
@@ -64,7 +64,7 @@ This is the path for anyone who hasn't explicitly set up an external wallet on S
 4. **The banner turns green** — "Migrated to V2 — ready to trade"
 5. **Your balance updates** — USDC.e drops to $0, pUSD appears with your migrated amount
 
-The migration's approve + wrap + V2 approvals are gas-paid from your **owner wallet** (the EOA you signed in with — **not** your deposit wallet). Plan for ~0.5 POL on the owner wallet before you click Migrate. The dashboard shows the owner wallet address for top-up. **Do not send POL to your deposit wallet — it will be permanently stuck.**
+The migration's approve + wrap + V2 approvals are gas-paid from your **agent wallet** (the EOA Simmer signs trades from — **not** your Trading Contract). Plan for ~0.5 POL on the agent wallet before you click Migrate. The dashboard shows the agent wallet address for top-up. **Do not send POL to your Trading Contract — it will be permanently stuck.**
 
 **If you migrated under the old wrap-only flow** (before April 28 evening), your USDC.e is now pUSD but the V2 trading approvals weren't set. The banner re-appears as "Polymarket V2 — activate trading" with a single button to set the V2 approvals.
 
@@ -89,7 +89,7 @@ Works on both desktop (browser extensions) and mobile (WalletConnect / in-app wa
    - 4 setApprovalForAll on the ConditionalTokens contract (so the V2 exchange can transfer your outcome tokens for sells)
 7. **The banner turns green** — "Migrated to V2 — ready to trade"
 
-Total: ~10 wallet signatures, ~1–2 minutes including transaction confirmations. Your **owner wallet** (the EOA — not the deposit wallet) needs at least **0.5 POL** for gas across all transactions. If you'd rather skip the approval-by-approval flow, you can migrate at [polymarket.com](https://polymarket.com) (their UI bundles approvals via gasless relayer if you have a Safe wallet).
+Total: ~10 wallet signatures, ~1–2 minutes including transaction confirmations. Your **agent wallet** (the EOA — not the Trading Contract) needs at least **0.5 POL** for gas across all transactions.
 
 **If you migrated under the old wrap-only flow**, your wallet has pUSD but the V2 approvals weren't set. The banner re-appears as "Polymarket V2 — activate trading" — click it to render the approval checklist for Stage 2.
 
@@ -144,15 +144,15 @@ The only consequence: you can't place new Polymarket trades until you migrate. K
   </Accordion>
 
   <Accordion title="Do I need POL (gas) to migrate?">
-    Yes — the wrap requires an approve + wrap transaction pair, both paid in POL on Polygon. **This applies to both managed and external wallets** — Simmer signs the transactions on your behalf for managed wallets, but the gas still comes out of your **owner wallet's** POL balance (the EOA you signed in with — **not** the deposit wallet). The dashboard pre-flight requires at least **0.1 POL** before letting you click Migrate. If you don't have enough, the dashboard will display your owner wallet address so you can send POL from an exchange before retrying.
+    Yes — the wrap requires an approve + wrap transaction pair, both paid in POL on Polygon. **This applies to both managed and external wallets** — Simmer signs the transactions on your behalf for managed wallets, but the gas still comes out of your **agent wallet's** POL balance (the EOA Simmer signs trades from — **not** your Trading Contract). The dashboard pre-flight requires at least **0.1 POL** before letting you click Migrate. If you don't have enough, the dashboard will display your agent wallet address so you can send POL from an exchange before retrying.
 
-    **Important: do not send POL to your deposit wallet.** Polymarket's deposit wallet is a smart contract that has no native-asset withdrawal path — POL sent there cannot be moved out. POL only belongs on the owner wallet (EOA) for one-time migration gas. After migration, V2 trades are gasless via Polymarket's relayer.
+    **Important: do not send POL to your Trading Contract.** The Trading Contract has no native-asset withdrawal path — POL sent there cannot be moved out. POL only belongs on the agent wallet (EOA) for one-time migration gas. After migration, V2 trades are gasless via Polymarket's relayer.
   </Accordion>
 
-  <Accordion title="What happens if I send funds to my deposit wallet on the wrong network or in the wrong asset?">
-    The deposit wallet is a smart contract that only exists on Polygon. The same address on Base, Ethereum, Arbitrum, or any other chain is empty space, not your wallet — funds sent there cannot be recovered.
+  <Accordion title="What happens if I send funds to my Trading Contract on the wrong network or in the wrong asset?">
+    Your Trading Contract is a smart contract that only exists on Polygon. The same address on Base, Ethereum, Arbitrum, or any other chain is empty space, not your wallet — funds sent there cannot be recovered.
 
-    On Polygon itself, the deposit wallet only has withdrawal paths for **USDC.e** and **pUSD**. Native POL, ETH, or arbitrary tokens sent to it cannot be moved out by you or by Simmer.
+    On Polygon itself, the Trading Contract only has withdrawal paths for **USDC.e** and **pUSD**. Native POL, ETH, or arbitrary tokens sent to it cannot be moved out by you or by Simmer.
 
     If this happens, contact support — we'll confirm what the on-chain situation is, but in most cases the funds are unrecoverable until/unless Polymarket extends their wallet contracts.
   </Accordion>
