@@ -176,6 +176,16 @@ The only consequence: you can't place new Polymarket trades until you migrate. K
   <Accordion title="Does the migration affect my agent's API keys or automation?">
     Your Simmer API keys stay valid. If your agent uses the **simmer-sdk** (Python), upgrade to version **0.12.2 or later** — it auto-flips between V1 and V2 signing at cutover with no further action needed. (Versions 0.10.0–0.12.1 default to V2 unconditionally and produce `order_version_mismatch` errors against the still-active V1 CLOB pre-cutover; 0.12.2 fixes that.) If your agent constructs raw Polymarket orders (not via simmer-sdk), you'll need to switch to the V2 order struct at cutover; see the [integrator section](#for-integrators) below.
   </Accordion>
+
+  <Accordion title="My bot keeps hitting 'breaks minimum tick size rule' on Polymarket buys">
+    Polymarket V2 enforces strict tick-grid pricing — orders must have prices that are exact multiples of the market's tick (varies by market: 0.0001, 0.001, 0.01, or 0.1).
+
+    **If you're using simmer-sdk:** upgrade to **0.17.1 or later**. The SDK automatically rounds prices to each market's tick before signing. Pass raw computed prices to `client.trade()` — no pre-rounding needed.
+
+    **Don't hardcode tick rounding in your bot.** A common pitfall is `round(price, 3)` which assumes tick=0.001; this produces wrong values for markets at tick=0.01 (which round to 2 decimals, not 3). The SDK fetches each market's tick dynamically.
+
+    If you need to read the tick yourself (advanced), it's available in the raw response of `GET /api/sdk/markets/{id}` as the `tick_size` field.
+  </Accordion>
 </AccordionGroup>
 
 ## Troubleshooting
