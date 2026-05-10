@@ -102,15 +102,15 @@ Self-custody (external) wallet — recommended. See [Wallet Setup](/wallets) for
 </Accordion>
 
 <Accordion title="How do I fund my wallet for real trading?">
-**Polymarket:** USDC.e (bridged USDC on Polygon) + small POL for gas on your **agent wallet** — the EOA Simmer trades from. Activate trading from Dashboard. **Do not send POL or other assets directly to your Trading Contract (Polymarket Deposit Wallet)** — see the warning below.
+**Polymarket:** USDC.e (bridged USDC on Polygon) + small POL for gas on your **agent wallet** — the EOA Simmer trades from. Activate trading from Dashboard. **Do not send POL or other assets directly to your Deposit Wallet** — see the warning below.
 
 **Kalshi:** Fund your Kalshi account directly through their platform.
 </Accordion>
 
-<Accordion title="What happens if I send funds to my Trading Contract on the wrong network or in the wrong asset?">
-Your Trading Contract is a smart contract that only exists on Polygon. The same address on Base, Ethereum, Arbitrum, or any other chain is empty space, not your wallet — funds sent there cannot be recovered.
+<Accordion title="What happens if I send funds to my Deposit Wallet on the wrong network or in the wrong asset?">
+Your Deposit Wallet is a smart contract that only exists on Polygon. The same address on Base, Ethereum, Arbitrum, or any other chain is empty space, not your wallet — funds sent there cannot be recovered.
 
-On Polygon itself, the Trading Contract only has withdrawal paths for **USDC.e** and **pUSD**. Native POL, ETH, or arbitrary tokens sent to it cannot be moved out by you or by Simmer.
+On Polygon itself, the Deposit Wallet only has withdrawal paths for **USDC.e** and **pUSD**. Native POL, ETH, or arbitrary tokens sent to it cannot be moved out by you or by Simmer.
 
 If this happens, contact support — we'll confirm what the on-chain situation is, but in most cases the funds are unrecoverable until/unless Polymarket extends their wallet contracts. See the [V2 Migration page](/v2-migration) for full context.
 </Accordion>
