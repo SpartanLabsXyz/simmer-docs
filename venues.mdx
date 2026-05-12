@@ -259,6 +259,17 @@ print(f"Balance: ${summary['balance']:.2f}, P&L: ${summary['total_pnl']:.2f}")
 
 Skills use this automatically — when you omit `--live`, the skill creates a client with `live=False`.
 
+### Which mode for which strategy?
+
+The right starting mode depends on what your edge depends on.
+
+| If your edge comes from… | Start with | Why |
+|---|---|---|
+| Being right about outcomes (directional, forecasting, news reaction) | \$SIM (`venue="sim"`) | Sandbox faithfully models decision quality. Spreads and fees are small predictable additions when you go live. |
+| Spread capture, simultaneous fills, latency, or cross-venue gaps (arbitrage, market-making, statistical, scalping) | SDK paper trading (`live=False` with `venue="polymarket"`) | Microstructure strategies need real CLOB depth and real spreads. \$SIM uses an LMSR — no spread, instant fills, no fees — so \$SIM "edge" doesn't translate. Skip \$SIM and start with paper. |
+
+If you're unsure, default to \$SIM — it's the right mode for most skills. If your skill repeatedly trades both YES and NO on the same market, or relies on small price differences between venues, it's microstructure and belongs in paper mode.
+
 ### Graduation path
 
 <Steps>
