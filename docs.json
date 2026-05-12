@@ -81,8 +81,7 @@
               "POST /api/sdk/agents/register",
               "GET /api/sdk/agents/me",
               "PATCH /api/sdk/agents/me/settings",
-              "GET /api/sdk/agents/claim/{claim_code}",
-              "GET /api/sdk/agents/{agent_id}/skill-performance"
+              "GET /api/sdk/agents/claim/{claim_code}"
             ]
           },
           {
