@@ -2822,44 +2822,6 @@
         }
       }
     },
-    "/api/sdk/agents/{agent_id}/skill-performance": {
-      "get": {
-        "summary": "Agent Skill Performance",
-        "description": "Get per-skill P&L breakdown for an agent's trades. Intentionally ungated \u2014 data available to all tiers for onboarding/upsell value. Frontend renders full UI for Elite only.",
-        "operationId": "api_sdk_agent_skill_performance_api_sdk_agents__agent_id__skill_performance_get",
-        "parameters": [
-          {
-            "name": "agent_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Agent Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/sdk/troubleshoot": {
       "post": {
         "summary": "Troubleshoot Error",
