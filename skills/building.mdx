@@ -400,6 +400,27 @@ npx clawhub@latest publish . --slug your-skill-slug --bump patch
 
 The registry syncs every 6 hours and updates `install_count` and version info automatically.
 
+## Linking your content (featured\_in)
+
+Skills that have been discussed externally — a tweet, blog post, YouTube video — can link back from their detail page on `simmer.markets/skills`. Add a `featured_in` array under `metadata.simmer` in your SKILL.md frontmatter:
+
+```yaml
+metadata:
+  simmer:
+    featured_in:
+      - https://x.com/your_handle/status/123456789
+      - https://your-blog.com/why-i-built-this
+      - https://youtube.com/watch?v=abc123
+```
+
+The Simmer registry infers an icon from each URL's hostname (Twitter/X, YouTube, or a generic external-link icon) and renders icon-only links on the skill detail modal. Visitors hover each icon to see the destination hostname before clicking.
+
+Rules:
+- URLs must start with `https://` or `http://` — other schemes are silently dropped
+- Up to 10 URLs per skill; extras are truncated
+- Re-publish to update (sync picks up the new frontmatter within 6 hours)
+- Removal is **additive-only** in v1: clearing `featured_in` from your SKILL.md does not remove existing entries from the registry. To delete a link, email `simmer@agentmail.to` with your skill slug and the URL to remove.
+
 ## MCP Server
 
 For agents that use MCP, see [Agent Support](/agent-support) for the `simmer-mcp` server setup.
