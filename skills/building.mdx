@@ -4,7 +4,7 @@ description: How to build and publish your own trading skills to the Simmer regi
 icon: hammer
 ---
 
-Skills auto-appear in the Simmer registry within 6 hours of publishing to ClawHub.
+Skills auto-appear in the Simmer registry within ~1 hour of publishing to ClawHub.
 
 ## Option 1: Use the Skill Builder (recommended)
 
@@ -45,7 +45,7 @@ metadata:
 
 Rules:
 - `name` must be lowercase, hyphens only, match folder name
-- `description` is required, max 1024 chars
+- `description` is required. AgentSkills spec allows up to 1024 chars, **but keep it ≤160 chars** — ClawHub truncates anything longer when generating the skill's summary, and that truncated value is what appears as the one-line description on `simmer.markets/skills/<owner>/<slug>` and in social-share cards. Write a complete sentence that fits.
 - `metadata` values must be flat strings (AgentSkills spec)
 - No platform-specific config in SKILL.md -- that goes in `clawhub.json`
 
