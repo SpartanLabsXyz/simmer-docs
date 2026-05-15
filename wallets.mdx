@@ -115,7 +115,11 @@ For Polymarket trading, every user has a **Deposit Wallet** in addition to their
 | Signs | Trades via your key (external) or Simmer's server key (managed) | Owned + signed for by the agent wallet |
 | Chain | Polygon | Polygon — same address on Base/Ethereum/other chains is empty space |
 
-**Funding:** Send USDC.e to your **agent wallet** address (visible in the dashboard **Wallets** tab). The atomic "Move to trading" flow wraps it to pUSD and transfers it to your Deposit Wallet in one batched transaction. **Do not send funds directly to the Deposit Wallet address** — its only withdrawal paths are USDC.e and pUSD, so any other asset (POL, ETH, native USDC, wrong-chain) sent there cannot be moved out. See the [V2 Migration page](/v2-migration) for the full funding warning + recovery rules.
+**Funding (recommended):** Open your agent's **Wallet** tab in the dashboard and click **Fund & activate trading**. The wizard opens a multi-chain bridge that accepts USDC, USDT, or USDC.e on Ethereum, Polygon, Base, Arbitrum, or Solana — the bridge converts to pUSD on your Deposit Wallet automatically. This is the default path for new accounts and the only path that accepts anything other than USDC.e on Polygon. V2 trades are gasless, so no POL is needed for normal trading.
+
+**Funding (direct USDC.e):** If you already hold **USDC.e** on Polygon, send it directly to your **agent wallet** EOA (visible in the dashboard **Wallets** tab). The atomic "Move to trading" flow wraps it to pUSD and transfers it to your Deposit Wallet in one batched transaction. **This path only accepts USDC.e on Polygon** — native USDC, USDT, POL, ETH, or any cross-chain asset sent to the agent wallet expecting an auto-sweep will sit there unrecognized. Use the bridge wizard above for anything else.
+
+**Never send funds directly to the Deposit Wallet address** — its only withdrawal paths are USDC.e and pUSD, so any other asset (POL, ETH, native USDC, wrong-chain) sent there cannot be moved out. See the [V2 Migration page](/v2-migration) for the full funding warning + recovery rules.
 
 **External vs managed:** Both modes have a Deposit Wallet on Polymarket. The custody distinction (who holds the agent wallet's private key) is unchanged — managed users delegate signing to Simmer's server; external users sign locally. The Deposit Wallet is owned by the agent wallet either way.
 
