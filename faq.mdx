@@ -102,7 +102,9 @@ Self-custody (external) wallet — recommended. See [Wallet Setup](/wallets) for
 </Accordion>
 
 <Accordion title="How do I fund my wallet for real trading?">
-**Polymarket:** USDC.e (bridged USDC on Polygon) + small POL for gas on your **agent wallet** — the EOA Simmer trades from. Activate trading from Dashboard. **Do not send POL or other assets directly to your Deposit Wallet** — see the warning below.
+**Polymarket (recommended):** Open your agent's **Wallet** tab in the dashboard and click **Fund & activate trading**. The bridge wizard accepts USDC, USDT, or USDC.e on Ethereum, Polygon, Base, Arbitrum, or Solana — funds arrive as pUSD on your Polymarket Deposit Wallet. V2 trades are gasless, no POL needed for normal trading.
+
+**Polymarket (direct USDC.e):** If you already hold **USDC.e** (bridged USDC, not native USDC) on Polygon, you can send it directly to your **agent wallet** EOA and use the **Move to trading** flow to wrap it to pUSD. This path only accepts USDC.e — for any other token use the bridge wizard above. **Do not send POL or other assets directly to your Deposit Wallet** — see the warning below.
 
 **Kalshi:** Fund your Kalshi account directly through their platform.
 </Accordion>
