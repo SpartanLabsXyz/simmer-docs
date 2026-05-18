@@ -3419,9 +3419,7 @@
       "BriefingResponse": {
         "properties": {
           "venues": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Venues"
+            "$ref": "#/components/schemas/VenuesBlock"
           },
           "opportunities": {
             "additionalProperties": true,
@@ -3453,9 +3451,7 @@
             "default": []
           },
           "performance": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Performance"
+            "$ref": "#/components/schemas/PerformanceBlock"
           },
           "checked_at": {
             "type": "string",
@@ -3859,6 +3855,25 @@
         ],
         "title": "KalshiSubmitRequest",
         "description": "Request to submit pre-signed Kalshi transaction."
+      },
+      "PerformanceBlock": {
+        "properties": {
+          "total_pnl": {
+            "type": "number",
+            "title": "Total Pnl",
+            "description": "Deprecated: $SIM venue only. Use venues.sim.pnl instead. Will be removed in a future release.",
+            "default": 0.0
+          },
+          "pnl_percent": {
+            "type": "number",
+            "title": "Pnl Percent",
+            "description": "Deprecated: $SIM venue only. Use venues.sim.pnl / 10000 * 100 instead. Will be removed in a future release.",
+            "default": 0.0
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "PerformanceBlock"
       },
       "SDKBatchTradeItem": {
         "properties": {
@@ -6976,6 +6991,76 @@
         ],
         "title": "ValidationError"
       },
+      "VenueBlock": {
+        "properties": {
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "balance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance"
+          },
+          "pnl": {
+            "type": "number",
+            "title": "Pnl",
+            "default": 0.0
+          },
+          "realized_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Realized Pnl"
+          },
+          "unrealized_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unrealized Pnl"
+          },
+          "positions_count": {
+            "type": "integer",
+            "title": "Positions Count",
+            "default": 0
+          },
+          "positions_needing_attention": {
+            "items": {},
+            "type": "array",
+            "title": "Positions Needing Attention",
+            "default": []
+          },
+          "actions": {
+            "items": {},
+            "type": "array",
+            "title": "Actions",
+            "default": []
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "currency"
+        ],
+        "title": "VenueBlock",
+        "description": "Performance and position summary for a single trading venue."
+      },
       "VenueLeaderboardEntry": {
         "properties": {
           "trader_id": {
@@ -7073,6 +7158,42 @@
         ],
         "title": "VenueLeaderboardResponse",
         "description": "Response for venue-specific leaderboard."
+      },
+      "VenuesBlock": {
+        "properties": {
+          "sim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VenueBlock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "polymarket": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VenueBlock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kalshi": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VenueBlock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "VenuesBlock"
       },
       "WalletCredentialsDeriveRequest": {
         "properties": {
