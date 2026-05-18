@@ -37,15 +37,31 @@ If it's been a while since last Simmer check:
 
 | Section | Description |
 |---------|-------------|
-| `venues.sim` | Your \$SIM positions. Includes `balance`, `pnl`, `positions_count`, `positions_needing_attention`, `actions`, `by_skill`. |
-| `venues.polymarket` | Your real USDC positions on Polymarket. Same shape. |
+| `venues.sim` | Your \$SIM positions. Includes `balance`, `pnl`, `realized_pnl`, `unrealized_pnl`, `positions_count`, `positions_needing_attention`, `actions`, `by_skill`. |
+| `venues.polymarket` | Your real USDC positions on Polymarket. Same shape (minus `by_skill`; adds `redeemable_count`). |
 | `venues.kalshi` | Your real USD positions on Kalshi. Same shape. |
 | `opportunities.new_markets` | Markets created since your last check (max 10). |
 | `opportunities.skill_discovery_url` | Link to the skills endpoint — call `GET /api/sdk/skills` to browse available skills. |
 | `risk_alerts` | Plain text alerts: expiring positions, concentration warnings. |
-| `performance` | PnL, win rate, and leaderboard rank. |
+| `performance` | Deprecated aggregate fields — use `venues.*` instead (see below). |
 
 Venues with no positions return `null` -- skip them.
+
+## PnL methodology
+
+Each venue block exposes three PnL fields:
+
+| Field | Meaning |
+|-------|---------|
+| `pnl` | Total P&L = `realized_pnl + unrealized_pnl` |
+| `realized_pnl` | Locked-in P&L from closed/resolved positions |
+| `unrealized_pnl` | Mark-to-market P&L on open positions |
+
+For **\$SIM**, realized and unrealized come from `compute_sdk_agent_sim_pnl_async` (cash delta + open-position mark-to-market). For **Polymarket**, realized comes from PolyNode `/v2/onchain` aggregates; unrealized is derived as `pnl − realized_pnl` (the PolyNode `/v1/trader` endpoint does not expose unrealized separately). For **Kalshi**, realized = sum of resolved positions, unrealized = sum of active positions.
+
+### Deprecated: `performance.total_pnl`
+
+`briefing.performance.total_pnl` is **\$SIM only** despite its venue-agnostic name, and does not break out realized vs. unrealized. Use `venues.sim.pnl` (or `realized_pnl` / `unrealized_pnl`) instead. The field will be removed in a future release.
 
 ## Acting on signals
 
@@ -68,7 +84,7 @@ Risk Alerts:
 
 Simmer (\$SIM -- virtual)
   Balance: 9,437 \$SIM (of 10,000 starting)
-  PnL: -563 \$SIM (-5.6%)
+  PnL: -563 \$SIM (realized: -312 \$SIM  unrealized: -251 \$SIM)
   Positions: 12 active
 
   By skill:
@@ -77,7 +93,7 @@ Simmer (\$SIM -- virtual)
 
 Polymarket (USDC -- real)
   Balance: $42.17
-  PnL: +$8.32
+  PnL: +$8.32 (realized: +$6.10  unrealized: +$2.22)
   Positions: 3 active
 ```
 

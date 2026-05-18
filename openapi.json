@@ -3148,6 +3148,33 @@
               }
             ],
             "title": "Wallet Address"
+          },
+          "wallet_ownership": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wallet Ownership"
+          },
+          "wallet_uses_deposit_wallet": {
+            "type": "boolean",
+            "title": "Wallet Uses Deposit Wallet",
+            "default": false
+          },
+          "deposit_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Wallet Address"
           }
         },
         "type": "object",
@@ -3278,6 +3305,17 @@
               }
             ],
             "title": "Auto Redeem Enabled"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
           }
         },
         "type": "object",
@@ -6719,6 +6757,40 @@
               }
             ],
             "title": "Last Verified Detail"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Links"
           }
         },
         "type": "object",
@@ -7090,6 +7162,18 @@
             "title": "Signature Type",
             "description": "0=EOA, 1=Polymarket proxy, 2=Gnosis Safe",
             "default": 0
+          },
+          "confirm_replace_managed": {
+            "type": "boolean",
+            "title": "Confirm Replace Managed",
+            "description": "Required (true) when this link would replace an existing managed wallet with a different external wallet. Default false so SDK auto-relink paths (`_ensure_wallet_linked`) cannot silently overwrite a managed account when a stale `WALLET_PRIVATE_KEY` is left in the bot env. Explicit user calls to `client.link_wallet()` from simmer-sdk >= 0.16 pass this true. SIM-1574.",
+            "default": false
+          },
+          "confirm_orphan_deposit_wallet": {
+            "type": "boolean",
+            "title": "Confirm Orphan Deposit Wallet",
+            "description": "Required (true) when the user has an active Polymarket deposit wallet (`wallet_uses_deposit_wallet=true`) and the linking address differs from the current `wallet_address`. The DW is owned on-chain by the CURRENT EOA via CREATE2; relinking to a new address would orphan the DW (the new key can't sign WALLET batches against it \u2014 funds and positions get stuck). Default false so silent orphaning is impossible. SIM-1611. Surfaced after the 2026-05-07 audit found 3 already-orphaned DWs from prior relinks (da2185e0, ydir.tomas@, raynojam@). See `_dev/active/_polymarket-dw-phase-2/`.",
+            "default": false
           }
         },
         "type": "object",
