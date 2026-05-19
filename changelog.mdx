@@ -37,6 +37,16 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-05-19 — Aligned auto risk monitor defaults to documented behavior
+
+The `sdk_user_settings` table shipped in April with `default_stop_loss_pct = 0.20` and `default_take_profit_pct = 0.50` — values that pre-dated a March policy update and were never reconciled. For approximately six weeks, the auto risk monitor (`auto_risk_monitor_enabled = true`) was attaching stop-loss at -20% and take-profit at +50% to new positions, while the [Settings reference](/api/overview#settings) said SL=50% and TP=off (prediction markets resolve naturally).
+
+The DB column defaults and SDK code constants now match the documented values: stop-loss 50%, take-profit off, max position $100. **Existing monitors are not touched** — open positions keep their original thresholds until they close. **Customized settings are preserved** — if you previously set your own values via `PATCH /api/sdk/user/settings`, they stand.
+
+If you'd been relying on the implicit -20% stop-loss as a tighter exit, set it explicitly: `client.update_user_settings(default_stop_loss_pct=0.20, default_take_profit_pct=0.50)`. See the [Settings reference](/api/overview#settings) for the full schema.
+
+---
+
 ## 2026-05-01 — `simmer-sdk` 0.13.0: ergonomic constructors
 
 Released [`simmer-sdk` 0.13.0](https://pypi.org/project/simmer-sdk/0.13.0/) on PyPI. Adds two classmethods so callers never have to read `os.environ` directly: `SimmerClient.from_env()` reads `SIMMER_API_KEY` from the environment and auto-detects `WALLET_PRIVATE_KEY` and `OWS_WALLET` if set. `SimmerClient.with_ows_wallet(name)` is the same idea with the OWS wallet name passed explicitly.
