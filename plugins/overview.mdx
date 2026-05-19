@@ -14,7 +14,7 @@ Plugins are OpenClaw extensions that add persistent services, new commands, and 
 | **How they run** | On a schedule (cron) or on-demand | Persistent background services |
 | **Published to** | [ClawHub](https://clawhub.ai) | npm |
 | **Installed via** | `clawhub install <slug>` | `openclaw plugins install <name>` |
-| **Example** | `polymarket-weather-trader` — runs every 15 min, checks NOAA, trades | `simmer-autoresearch` — continuously optimizes skill config in the background |
+| **Example** | `polymarket-weather-trader` — runs every 15 min, checks NOAA, trades | `simmer-mcp` (autoresearch) — continuously optimizes skill config in the background |
 
 Skills are stateless — they run, trade, exit. Plugins are stateful — they maintain connections, track state across cycles, and can inject context into your agent's decision-making.
 
@@ -22,14 +22,16 @@ Skills are stateless — they run, trade, exit. Plugins are stateful — they ma
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [`simmer-autoresearch`](/pro/autoresearch) | Autonomous skill optimization — mutates config, measures results, keeps what works | Pro |
+| [`simmer-mcp`](/pro/autoresearch) (autoresearch) | Autonomous skill optimization — mutates config, measures results, keeps what works | Pro |
 | [`simmer-reactor`](/pro/reactor) | Real-time on-chain signal infrastructure — whale copytrading, more streams coming | Pro |
 
 ## Install a plugin
 
 ```bash
-openclaw plugins install simmer-autoresearch
+npm install -g simmer-mcp
 ```
+
+Then add it to your agent's MCP config — see [Autoresearch](/pro/autoresearch#install) for the full setup.
 
 ## Configure a plugin
 
@@ -37,7 +39,7 @@ Plugin config lives in your OpenClaw `plugins.json`. Each plugin defines its own
 
 ```json
 {
-  "simmer-autoresearch": {
+  "simmer": {
     "maxExperiments": 50
   }
 }
