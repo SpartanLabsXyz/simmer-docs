@@ -8,6 +8,10 @@ icon: flask
 **Pro feature.** Autoresearch requires a [Simmer Pro](https://simmer.markets) plan. Free users get a 403 when calling autoresearch API endpoints.
 </Note>
 
+<Note>
+**Package renamed.** `simmer-autoresearch` (npm) has been renamed to `simmer-mcp`. Update your install command and MCP config — see [Install](#install) below. The v1 OpenClaw plugin (`openclaw plugins install simmer-autoresearch`) is unaffected and documented in the [Legacy](#legacy-v1-plugin) section.
+</Note>
+
 Autoresearch lets your agent optimize its own trading skills. It runs experiments — changing config values, measuring results over real trading cycles, and keeping changes that improve performance. Think of it as automated A/B testing for your trading strategy.
 
 ## Prerequisites
@@ -38,7 +42,7 @@ Your agent drives the loop — autoresearch provides the tools, your agent provi
 ## Install
 
 ```bash
-npm install -g simmer-autoresearch
+npm install -g simmer-mcp
 ```
 
 Then add the MCP server to your agent's config:
@@ -48,8 +52,9 @@ Then add the MCP server to your agent's config:
 ```json OpenClaw
 {
   "mcpServers": {
-    "simmer-autoresearch": {
-      "command": "simmer-autoresearch",
+    "simmer": {
+      "command": "npx",
+      "args": ["-y", "simmer-mcp"],
       "env": {
         "SIMMER_API_KEY": "your-api-key"
       }
@@ -61,8 +66,9 @@ Then add the MCP server to your agent's config:
 ```json Hermes
 {
   "mcpServers": {
-    "simmer-autoresearch": {
-      "command": "simmer-autoresearch",
+    "simmer": {
+      "command": "npx",
+      "args": ["-y", "simmer-mcp"],
       "env": {
         "SIMMER_API_KEY": "your-api-key"
       }
@@ -74,8 +80,9 @@ Then add the MCP server to your agent's config:
 ```json Claude Code
 {
   "mcpServers": {
-    "simmer-autoresearch": {
-      "command": "simmer-autoresearch",
+    "simmer": {
+      "command": "npx",
+      "args": ["-y", "simmer-mcp"],
       "env": {
         "SIMMER_API_KEY": "your-api-key"
       }
@@ -89,7 +96,7 @@ Then add the MCP server to your agent's config:
 Then install the behavioral skill (tells your agent how to run the experiment loop):
 
 ```bash
-npx simmer-autoresearch install-skill
+npx simmer-mcp install-skill
 ```
 
 This auto-detects your runtime (OpenClaw, Hermes) and copies the skill instructions to the right directory. For Claude Code, add the skill content to your project's `CLAUDE.md`.
@@ -229,7 +236,7 @@ Signal data is **private** — only visible to the trade owner via authenticated
 
 ## Session management
 
-Your agent manages its own session state using the SKILL.md behavioral instructions (installed via `npx simmer-autoresearch install-skill`). There is no `/autoresearch` command interface — the agent drives the loop autonomously.
+Your agent manages its own session state using the SKILL.md behavioral instructions (installed via `npx simmer-mcp install-skill`). There is no `/autoresearch` command interface — the agent drives the loop autonomously.
 
 - **Resume:** The agent reads `autoresearch.jsonl` on startup and resumes where it left off.
 - **New session:** Call `init_experiment` with a new name to start a fresh segment (previous results are archived, not deleted).
@@ -304,6 +311,6 @@ v1 supports the `/autoresearch` command interface:
 | `/autoresearch status` | Current skill, experiment count, keep rate, budget remaining, pause state |
 | `/autoresearch reset` | Clear state and start fresh (clears pause if paused) |
 
-**Upgrade to v2** — Install `simmer-autoresearch` via npm and switch to the MCP config above. v2 works with OpenClaw, Hermes, and Claude Code.
+**Upgrade to v2** — Install `simmer-mcp` via npm (`npm install -g simmer-mcp`) and switch to the MCP config above. v2 works with OpenClaw, Hermes, and Claude Code.
 
 </Accordion>
