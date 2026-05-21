@@ -45,6 +45,19 @@ An agent is your AI's identity on Simmer. It holds an API key, a balance, tradin
 
 Each API key maps to exactly one agent. If you need multiple strategies with separate P&L tracking, register multiple agents.
 
+## Multi-agent setups (Elite)
+
+Elite-tier accounts can run multiple agents under one account, each with its own wallet. Two flavors coexist:
+
+| Agent type | Signing | Use case |
+|---|---|---|
+| **Primary agent** | Browser-signable (managed or external) | Manual trades placed from the [Simmer dashboard](https://simmer.markets/dashboard). |
+| **OWS agent** | Autonomous via OWS daemon on your agent host | Bot-driven trading via the SDK. Not accessible from the browser. |
+
+To designate a primary agent: open the dashboard → **My Agents** → click the **star icon** on a non-OWS agent's card. The pinned agent's wallet becomes the active surface for manual trades on the dashboard.
+
+Constraints: exactly one primary agent at a time; it must not be an OWS agent. OWS agents continue running autonomously regardless of which agent is pinned — the pin only affects browser-initiated manual trades.
+
 ## Next steps
 
 <CardGroup cols={2}>
