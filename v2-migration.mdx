@@ -41,12 +41,12 @@ V1 orders still resting in the order book at cutover are **cleared** by Polymark
 
 The flow depends on your wallet type. Most users have a **managed wallet** (default — Simmer creates and manages the trading wallet for you). If you set up an **external wallet** (self-custody) instead, the flow is similar but you sign the transactions in your browser wallet.
 
-The V2 migration is a **2-stage flow** for everyone:
+The dashboard walks you through the applicable steps. For most users it's a **2-step flow**:
 
 1. **Wrap** USDC.e → pUSD (1:1, no fee — pUSD is the V2 collateral token)
 2. **Activate V2 trading** by approving the V2 exchange contracts to spend pUSD + transfer outcome tokens (V2 has new spender addresses; V1 approvals don't carry over)
 
-The dashboard banner walks you through both stages.
+**Some accounts need a third step — Deposit Wallet upgrade.** Polymarket V2 routes all trades through a **Deposit Wallet** — a per-user smart contract that holds your collateral and signs trade batches. Accounts predating this requirement may receive `maker address not allowed` rejections from the Polymarket CLOB until they upgrade. The dashboard detects this automatically: when your EOA is blocked, an **"Upgrade to deposit wallet"** step appears between wrap and approvals. The upgrade deploys the smart contract on your behalf (managed wallet) or prompts a browser signature (external wallet). No funds leave your control during the upgrade.
 
 ### Managed wallet (default for most users)
 
@@ -61,8 +61,9 @@ This is the path for anyone who hasn't explicitly set up an external wallet on S
    - 4 ERC-1155 setApprovalForAll (so the V2 exchange can transfer your outcome tokens for sells)
 
    No wallet popups, no extra clicks.
-4. **The banner turns green** — "Migrated to V2 — ready to trade"
-5. **Your balance updates** — USDC.e drops to $0, pUSD appears with your migrated amount
+4. **Deposit Wallet upgrade (if shown).** If the banner shows an **"Upgrade to deposit wallet"** step, click it — Simmer deploys the Deposit Wallet smart contract on your behalf. This is a one-time step for older accounts that Polymarket's V2 CLOB has flagged with `maker address not allowed`. Once deployed, the Deposit Wallet becomes your V2 trading address; funds move there automatically and V2 approvals apply to it.
+5. **The banner turns green** — "Migrated to V2 — ready to trade"
+6. **Your balance updates** — USDC.e drops to $0, pUSD appears with your migrated amount
 
 The migration's approve + wrap + V2 approvals are gas-paid from your **agent wallet** (the EOA Simmer signs trades from — **not** your Deposit Wallet). Plan for ~0.5 POL on the agent wallet before you click Migrate. The dashboard shows the agent wallet address for top-up. **Do not send POL to your Deposit Wallet — it will be permanently stuck.**
 
@@ -81,17 +82,21 @@ Works on both desktop (browser extensions) and mobile (WalletConnect / in-app wa
 3. **Click** the orange "Migrate to V2" banner
 4. **Sign 2 transactions** in your wallet — `approve` USDC.e for the wrap contract, then `wrap` USDC.e → pUSD
 
-**Stage 2 — Activate V2 trading:**
+**Stage 2 — Deposit Wallet upgrade (if shown):**
 
-5. The banner switches to **"Step 2: Activate V2 trading"** with an approval checklist
-6. **Click "Activate Trading"** and sign **~8 more transactions**:
+5. If the banner shows an **"Upgrade to deposit wallet"** step, your EOA has been flagged by Polymarket's V2 CLOB (`maker address not allowed`). Click **"Upgrade"** and sign the deploy transaction in your wallet. This deploys your personal Deposit Wallet smart contract on Polygon. The upgrade is a one-time step; once deployed, all V2 trades route through your Deposit Wallet.
+
+**Stage 3 — Activate V2 trading:**
+
+6. The banner switches to **"Activate V2 trading"** with an approval checklist
+7. **Click "Activate Trading"** and sign **~8 more transactions**:
    - 4 pUSD approvals (one per V2 spender contract)
    - 4 setApprovalForAll on the ConditionalTokens contract (so the V2 exchange can transfer your outcome tokens for sells)
-7. **The banner turns green** — "Migrated to V2 — ready to trade"
+8. **The banner turns green** — "Migrated to V2 — ready to trade"
 
-Total: ~10 wallet signatures, ~1–2 minutes including transaction confirmations. Your **agent wallet** (the EOA — not the Deposit Wallet) needs at least **0.5 POL** for gas across all transactions.
+Total: ~10–11 wallet signatures (plus 1 more if the Deposit Wallet upgrade applies), ~1–2 minutes including transaction confirmations. Your **agent wallet** (the EOA — not the Deposit Wallet) needs at least **0.5 POL** for gas across all transactions.
 
-**If you migrated under the old wrap-only flow**, your wallet has pUSD but the V2 approvals weren't set. The banner re-appears as "Polymarket V2 — activate trading" — click it to render the approval checklist for Stage 2.
+**If you migrated under the old wrap-only flow**, your wallet has pUSD but the V2 approvals weren't set. The banner re-appears as "Polymarket V2 — activate trading" — click it to render the approval checklist for Stage 3.
 
 <Tip>
 You can migrate **any time** — before cutover, at cutover, or weeks later. No deadline. Your USDC.e is safe regardless.
@@ -187,6 +192,12 @@ Expected during the cutover window (~11:00–12:05 UTC on April 28). Kalshi and 
 ### "Insufficient balance" when placing a V2 trade
 
 You're trying to trade V2 but your wallet still holds USDC.e, not pUSD. **Fix:** click **Migrate to V2** on the dashboard banner. After the migration completes, your order should succeed.
+
+### "maker address not allowed"
+
+Your EOA (the address Simmer signs trades from) has been blocked by Polymarket's V2 CLOB. Polymarket requires a **Deposit Wallet** for all V2 order placement and has selectively enabled this requirement for older accounts. Wrap + approvals on your EOA alone are no longer sufficient.
+
+**Fix:** Go to your dashboard **Wallets** tab or look for the "Upgrade to deposit wallet" step in the migration banner. Click **Upgrade** — Simmer will deploy your personal Deposit Wallet smart contract. This is a one-time step. After the upgrade completes, re-set your V2 approvals (the banner will prompt you) and your next trade should go through.
 
 ### "order_version_mismatch"
 
