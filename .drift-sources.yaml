@@ -1,0 +1,54 @@
+# .drift-sources.yaml
+# Maps each docs.simmer.markets page to its canonical source(s) in the codebase.
+# Read by Trinity's docs-drift-scan routine (simmer-labs/skills/docs-drift-scan)
+# to detect conceptual drift between published docs and current code reality.
+#
+# Add an entry when a new doc page is created OR when an existing page's
+# canonical source becomes clear during docs-update work. The map grows
+# naturally as part of the existing workflow — no separate annotation chore.
+#
+# Path conventions:
+#   simmer/...      → ~/Documents/code/active/simmer/...
+#   simmer-docs/... → ~/Documents/code/active/simmer-docs/...
+#   simmer-labs/... → ~/simmer-labs/...   (Trinity's cwd, separate clone)
+#
+# See simmer/_dev/active/_docs-drift-scan/spec.md for context.
+
+wallets.mdx:
+  canonical_sources:
+    - simmer/_dev/reference/wallet-architecture.md
+  notes: |
+    Cohort DW (deposit wallet + pUSD) is the default funding flow as of 2026-05-06.
+    Cohort A (direct EOA + USDC.e + POL) is legacy — only describe with "legacy" label.
+    The cohort matrix in section 2 of wallet-architecture.md is authoritative.
+
+v2-migration.mdx:
+  canonical_sources:
+    - simmer/_dev/active/_polymarket-dw-phase-2/
+    - simmer/_dev/reference/wallet-architecture.md
+  notes: |
+    DW Phase 2 migration state — drift risk is high because the migration is ongoing.
+    Section "Operations matrix" in wallet-architecture.md shows current operation set per cohort.
+
+quickstart.mdx:
+  canonical_sources:
+    - simmer/website/public/skill.md
+    - simmer/website/src/pages/StartPage.jsx
+  notes: |
+    Curl install command + flow. Highest blast radius if wrong — it's the agent onboarding path.
+
+agents.mdx:
+  canonical_sources:
+    - simmer/_dev/reference/wallet-architecture.md
+    - simmer-labs/COMPANY.md
+  notes: |
+    Primary-agent + OWS Elite multi-agent setups shipped 2026-05-21 (SIM-2255/2256).
+    Multi-agent setups section is the most-recent addition — drift risk high.
+
+heartbeat.mdx:
+  canonical_sources:
+    - simmer/scripts/local_dev_server.py
+    - simmer/_dev/reference/wallet-architecture.md
+  notes: |
+    Briefing API shape was migrated 2026-05-21 (SIM-1965 deprecated `performance.total_pnl`).
+    Authoritative source: the actual `/api/sdk/briefing` endpoint code at local_dev_server.py.
