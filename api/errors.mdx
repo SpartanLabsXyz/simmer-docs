@@ -119,7 +119,7 @@ if fresh_shares < 5.0:  # Polymarket's 5-share minimum
 client.trade(market_id=market_id, side=side, action="sell", shares=fresh_shares, ...)
 ```
 
-For resolved markets, use `client.redeem_position(market_id)` instead of `trade(action="sell")`.
+For resolved markets, use `client.redeem(market_id, side)` instead of `trade(action="sell")`. The `side` parameter is required (`'yes'` or `'no'`). To redeem all eligible positions at once, use `client.auto_redeem()`.
 
 <Tip>
 See [Sell pre-flight pattern](/sdk/risk#sell-pre-flight-pattern) for a reusable wrapper.
