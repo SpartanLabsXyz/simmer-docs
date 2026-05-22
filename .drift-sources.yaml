@@ -12,7 +12,7 @@
 #   simmer-docs/... → ~/Documents/code/active/simmer-docs/...
 #   simmer-labs/... → ~/simmer-labs/...   (Trinity's cwd, separate clone)
 #
-# See simmer/_dev/active/_docs-drift-scan/spec.md for context.
+# See simmer/_dev/completed/_docs-drift-scan/spec.md for context.
 
 wallets.mdx:
   canonical_sources:
