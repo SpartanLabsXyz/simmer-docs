@@ -274,9 +274,9 @@ curl -H "Authorization: Bearer sk_live_xxx" \
 Example — using it to route a weather skill to the correct station:
 
 ```python
-markets = client.list_markets(status="active", include="resolution_criteria")
+markets = client.get_markets(status="active", include="resolution_criteria")
 for m in markets:
-    criteria = m.get("resolution_criteria") or ""
+    criteria = m.resolution_criteria or ""
     # Polymarket weather markets name the station inline, e.g.
     # "...recorded at the Chicago O'Hare Intl Airport Station"
     if "O'Hare" in criteria:
