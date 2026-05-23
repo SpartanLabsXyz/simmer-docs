@@ -145,9 +145,8 @@ Always check context before trading, have a thesis, and include reasoning.
   </Tab>
   <Tab title="Python">
     ```python
-    data = client.get_positions()
-    for pos in data["positions"]:
-        print(f"{pos['question'][:50]}: {pos['pnl']:+.2f} {pos['currency']}")
+    for pos in client.get_positions():
+        print(f"{pos.question[:50]}: {pos.pnl:+.2f} ({pos.venue})")
     ```
   </Tab>
 </Tabs>
