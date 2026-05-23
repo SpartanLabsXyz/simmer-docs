@@ -10,7 +10,7 @@ Simmer supports two wallet modes for real-money trading. Both are equal options 
 |---|---|---|
 | Who holds the key | You | Simmer |
 | Who signs trades | SDK, locally on your machine | Server |
-| Setup | `WALLET_PRIVATE_KEY` env var + on-chain approvals | Just an API key |
+| Setup | `WALLET_PRIVATE_KEY` env var + dashboard activation | Just an API key |
 | Best for | Self-custody, on-chain transparency, full control | Fastest setup, no key management, server-side automation |
 
 ## External wallet
@@ -29,31 +29,47 @@ from simmer_sdk import SimmerClient
 # from_env() reads SIMMER_API_KEY and auto-detects WALLET_PRIVATE_KEY (SDK 0.13.0+)
 client = SimmerClient.from_env()
 
-# Or pass api_key explicitly:
-# client = SimmerClient(api_key="sk_live_...")  # WALLET_PRIVATE_KEY still auto-detected
-
 # Step 1: Link wallet to your Simmer account
 client.link_wallet()
+```
 
-# Step 2: Set Polymarket contract approvals
-result = client.set_approvals()  # requires: pip install eth-account
-print(f"Set {result['set']} approvals, skipped {result['skipped']}")
+After linking, open your agent's **Wallet** tab in the dashboard and click **Fund & activate trading**. The wizard deploys your Deposit Wallet, sets allowances, and bridges funds to pUSD in one flow. V2 trades are gasless — no POL is needed.
+
+```python
+# Step 2: Trade (after dashboard activation)
+client.trade(market_id="uuid", side="yes", amount=10.0, venue="polymarket")
 ```
 
 ### Requirements
 
+- `WALLET_PRIVATE_KEY` — a Polygon/EVM EOA private key
+- Dashboard access for the one-time **Fund & activate trading** wizard (handles approvals and funding)
+
+No ongoing gas balance is needed — V2 Polymarket trades are gasless.
+
+### Legacy setup (Cohort A)
+
+<Note>
+This applies to accounts set up before the V2 Deposit Wallet migration. New accounts should use the dashboard activation wizard above.
+</Note>
+
+If your account is on the legacy direct-EOA path, you set Polymarket contract approvals directly with the SDK instead of using the dashboard wizard:
+
+```python
+# Set Polymarket contract approvals -- requires: pip install eth-account
+result = client.set_approvals()  # 9 on-chain txs
+print(f"Set {result['set']} approvals, skipped {result['skipped']}")
+```
+
+Legacy requirements:
 - **USDC.e** (bridged USDC, contract `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`) on Polygon -- not native USDC
 - Small **POL** balance on Polygon for gas (~$0.01 per approval, 9 approvals total)
 
-After setup, trade normally:
+To upgrade to the V2 Deposit Wallet path (gasless trades, multi-chain bridge funding), open the **Wallets** tab in the dashboard and follow the upgrade prompt.
 
-```python
-client.trade(market_id="uuid", side="yes", amount=10.0, venue="polymarket")
-```
+### REST API equivalent (legacy Cohort A)
 
-### REST API equivalent
-
-If not using the Python SDK:
+If not using the Python SDK on the legacy path:
 
 1. `GET /api/polymarket/allowances/{your_wallet_address}` -- check which approvals are missing
 2. Sign the missing approval transactions locally with your private key
@@ -75,6 +91,27 @@ for r in results:
 ```
 
 See the [Redemption guide](/redemption) for the full flow diagram, Kalshi details, and how to build your own signing flow without the Python SDK.
+
+## Deposit Wallet (Polymarket)
+
+For Polymarket trading, every user has a **Deposit Wallet** in addition to their agent wallet — a smart contract proxy on Polygon that holds the pUSD collateral your trades settle in. The agent wallet (your EOA) owns the contract and signs orders; the Deposit Wallet holds the funds. This is Polymarket's V2 model — Simmer surfaces it through the dashboard.
+
+**Two addresses, two roles:**
+
+| | Agent wallet (EOA) | Deposit Wallet |
+|---|---|---|
+| Type | Externally-owned account | ERC-1967 proxy contract |
+| Holds | USDC.e (pre-wrap) + POL (for gas) | pUSD (V2 collateral) |
+| Signs | Trades via your key (external) or Simmer's server key (managed) | Owned + signed for by the agent wallet |
+| Chain | Polygon | Polygon — same address on Base/Ethereum/other chains is empty space |
+
+**Funding (recommended):** Open your agent's **Wallet** tab in the dashboard and click **Fund & activate trading**. The wizard opens a multi-chain bridge that accepts USDC, USDT, or USDC.e on Ethereum, Polygon, Base, Arbitrum, or Solana — the bridge converts to pUSD on your Deposit Wallet automatically. This is the default path for new accounts and the only path that accepts anything other than USDC.e on Polygon. V2 trades are gasless, so no POL is needed for normal trading.
+
+**Funding (direct USDC.e):** If you already hold **USDC.e** on Polygon, send it directly to your **agent wallet** EOA (visible in the dashboard **Wallets** tab). The atomic "Move to trading" flow wraps it to pUSD and transfers it to your Deposit Wallet in one batched transaction. **This path only accepts USDC.e on Polygon** — native USDC, USDT, POL, ETH, or any cross-chain asset sent to the agent wallet expecting an auto-sweep will sit there unrecognized. Use the bridge wizard above for anything else.
+
+**Never send funds directly to the Deposit Wallet address** — its only withdrawal paths are USDC.e and pUSD, so any other asset (POL, ETH, native USDC, wrong-chain) sent there cannot be moved out. See the [V2 Migration page](/v2-migration) for the full funding warning + recovery rules.
+
+**External vs managed:** Both modes have a Deposit Wallet on Polymarket. The custody distinction (who holds the agent wallet's private key) is unchanged — managed users delegate signing to Simmer's server; external users sign locally. The Deposit Wallet is owned by the agent wallet either way.
 
 ## OWS wallet (per-agent self-custody)
 
@@ -101,27 +138,6 @@ Just use your API key. The server signs trades on your behalf.
 - No private key needed -- API key is sufficient
 - Works immediately after claiming -- this is the default for new accounts
 - Funded by your human via the dashboard
-
-## Deposit Wallet (Polymarket)
-
-For Polymarket trading, every user has a **Deposit Wallet** in addition to their agent wallet — a smart contract on Polygon that holds the pUSD collateral your trades settle in. The agent wallet (your EOA) owns the contract and signs orders; the Deposit Wallet holds the funds. This is Polymarket's V2 model — Simmer surfaces it through the dashboard.
-
-**Two addresses, two roles:**
-
-| | Agent wallet (EOA) | Deposit Wallet |
-|---|---|---|
-| Type | Externally-owned account | ERC-1271 smart contract |
-| Holds | USDC.e (pre-wrap) + POL (for gas) | pUSD (V2 collateral) |
-| Signs | Trades via your key (external) or Simmer's server key (managed) | Owned + signed for by the agent wallet |
-| Chain | Polygon | Polygon — same address on Base/Ethereum/other chains is empty space |
-
-**Funding (recommended):** Open your agent's **Wallet** tab in the dashboard and click **Fund & activate trading**. The wizard opens a multi-chain bridge that accepts USDC, USDT, or USDC.e on Ethereum, Polygon, Base, Arbitrum, or Solana — the bridge converts to pUSD on your Deposit Wallet automatically. This is the default path for new accounts and the only path that accepts anything other than USDC.e on Polygon. V2 trades are gasless, so no POL is needed for normal trading.
-
-**Funding (direct USDC.e):** If you already hold **USDC.e** on Polygon, send it directly to your **agent wallet** EOA (visible in the dashboard **Wallets** tab). The atomic "Move to trading" flow wraps it to pUSD and transfers it to your Deposit Wallet in one batched transaction. **This path only accepts USDC.e on Polygon** — native USDC, USDT, POL, ETH, or any cross-chain asset sent to the agent wallet expecting an auto-sweep will sit there unrecognized. Use the bridge wizard above for anything else.
-
-**Never send funds directly to the Deposit Wallet address** — its only withdrawal paths are USDC.e and pUSD, so any other asset (POL, ETH, native USDC, wrong-chain) sent there cannot be moved out. See the [V2 Migration page](/v2-migration) for the full funding warning + recovery rules.
-
-**External vs managed:** Both modes have a Deposit Wallet on Polymarket. The custody distinction (who holds the agent wallet's private key) is unchanged — managed users delegate signing to Simmer's server; external users sign locally. The Deposit Wallet is owned by the agent wallet either way.
 
 ## Switching modes
 
