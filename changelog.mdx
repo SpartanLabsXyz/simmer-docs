@@ -43,7 +43,7 @@ The `sdk_user_settings` table shipped in April with `default_stop_loss_pct = 0.2
 
 The DB column defaults and SDK code constants now match the documented values: stop-loss 50%, take-profit off, max position $100. **Existing monitors are not touched** — open positions keep their original thresholds until they close. **Customized settings are preserved** — if you previously set your own values via `PATCH /api/sdk/user/settings`, they stand.
 
-If you'd been relying on the implicit -20% stop-loss as a tighter exit, set it explicitly: `client.update_user_settings(default_stop_loss_pct=0.20, default_take_profit_pct=0.50)`. See the [Settings reference](/api/overview#settings) for the full schema.
+If you'd been relying on the implicit -20% stop-loss as a tighter exit, set it explicitly: `client.update_settings(default_stop_loss_pct=0.20, default_take_profit_pct=0.50)`. See the [Settings reference](/api/overview#settings) for the full schema.
 
 ---
 
