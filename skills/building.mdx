@@ -347,6 +347,20 @@ if amount > 0:
 
 Expose sizing as user-tunable config by merging `SIZING_CONFIG_SCHEMA` into your skill's `CONFIG_SCHEMA` — users get `SIMMER_POSITION_SIZING`, `SIMMER_KELLY_MULTIPLIER`, and `SIMMER_MIN_EV` env vars for free.
 
+### Top holders — `client.get_top_holders()`
+
+See who else holds positions in a market before you trade. Calls the public Polymarket data API (free, no auth).
+
+```python
+market = client.get_market_by_id(market_id)
+if market.polymarket_condition_id:
+    holders = client.get_top_holders(market.polymarket_condition_id, limit=10)
+    for h in holders:
+        print(f"{h['display_name']}: {h['amount']:.0f} shares ({h['outcome']})")
+```
+
+Returns `address`, `display_name`, `amount`, `outcome`, and `profile_url` per holder. Use `market.polymarket_condition_id` (0x hex) — not the Simmer UUID or CLOB token ID.
+
 ### External market data
 
 The SDK doesn't bundle third-party API clients. If your skill needs Polymarket metadata beyond what `SimmerClient.get_markets()` exposes — categories, descriptions, full event groupings, raw volume and liquidity — call [Polymarket's Gamma API](https://gamma-api.polymarket.com/) directly from the skill. It's free, no auth, well-documented. Keep the helper next to the skill so the SDK stays scoped to Simmer's surface area plus universal primitives.
