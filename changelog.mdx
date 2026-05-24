@@ -37,6 +37,12 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-05-24 — `simmer-mcp` listed on the official MCP Registry
+
+`simmer-mcp` is now discoverable on the [official MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.adlai88/simmer-mcp`. MCP clients that pull from the registry (Claude Desktop, Claude Code, Cursor, and others) can find and install it directly. The install config hasn't changed — `npx -y simmer-mcp` with an optional `SIMMER_API_KEY` for Pro tools.
+
+---
+
 ## 2026-05-19 — Aligned auto risk monitor defaults to documented behavior
 
 The `sdk_user_settings` table shipped in April with `default_stop_loss_pct = 0.20` and `default_take_profit_pct = 0.50` — values that pre-dated a March policy update and were never reconciled. For approximately six weeks, the auto risk monitor (`auto_risk_monitor_enabled = true`) was attaching stop-loss at -20% and take-profit at +50% to new positions, while the [Settings reference](/api/overview#settings) said SL=50% and TP=off (prediction markets resolve naturally).
