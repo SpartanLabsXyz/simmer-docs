@@ -23,6 +23,16 @@ INCLUDE = [
     "GET /api/sdk/agents/me",
     "PATCH /api/sdk/agents/me/settings",
     "GET /api/sdk/agents/claim/{claim_code}",
+    "GET /api/sdk/agents",
+    "POST /api/sdk/agents/claim",
+    "POST /api/sdk/agents/{agent_id}/reactivate",
+    "POST /api/sdk/agents/{agent_id}/release",
+    "PATCH /api/sdk/agents/{agent_id}/settings",
+    "GET /api/sdk/agents/{agent_id}/cooldowns",
+    # Agent Wallets
+    "POST /api/sdk/agent-wallet/register",
+    "GET /api/sdk/agent-wallets",
+    "GET /api/sdk/agent-wallet/{agent_id}/pnl",
     # Markets
     "GET /api/sdk/markets",
     "GET /api/sdk/markets/{market_id}",
@@ -44,6 +54,16 @@ INCLUDE = [
     "GET /api/sdk/positions",
     "GET /api/sdk/positions/expiring",
     "GET /api/sdk/portfolio",
+    # User Settings & Sim Portfolio
+    "GET /api/sdk/user/settings",
+    "PATCH /api/sdk/user/settings",
+    "GET /api/sdk/user/sim-positions",
+    "GET /api/sdk/user/sim-trades",
+    "GET /api/sdk/user/sim-resolved",
+    # Per-Agent Sim Portfolio
+    "GET /api/sdk/agents/{agent_id}/sim-positions",
+    "GET /api/sdk/agents/{agent_id}/sim-trades",
+    "GET /api/sdk/agents/{agent_id}/sim-resolved",
     # Orders
     "GET /api/sdk/orders/open",
     "DELETE /api/sdk/orders/{order_id}",
@@ -71,6 +91,11 @@ INCLUDE = [
     "GET /api/sdk/webhooks",
     "DELETE /api/sdk/webhooks/{webhook_id}",
     "POST /api/sdk/webhooks/test",
+    # DW Redeem
+    "POST /api/sdk/dw-redeem/prepare",
+    "POST /api/sdk/dw-redeem/submit",
+    # Fleet
+    "GET /api/sdk/fleet/summary",
     # Wallet
     "GET /api/sdk/wallet/link/challenge",
     "POST /api/sdk/wallet/link",
@@ -83,6 +108,13 @@ INCLUDE = [
     "GET /api/sdk/skills",
     "POST /api/sdk/skills",
     "GET /api/sdk/skills/mine",
+    "GET /api/sdk/skills/featured",
+    "GET /api/sdk/skills/{slug}",
+    "GET /api/sdk/skills/mine/metrics",
+    "GET /api/sdk/skills/mine/metrics/{slug}/trend",
+    "GET /api/sdk/skills/mine/metrics/{slug}/insights",
+    "GET /api/sdk/skill-leaderboard",
+    "GET /api/sdk/skill-rewards",
     # Trades history
     "GET /api/sdk/trades",
     # Kalshi
@@ -95,6 +127,7 @@ INCLUDE = [
     # Utilities
     "POST /api/sdk/troubleshoot",
     "GET /api/sdk/health",
+    "GET /api/sdk/version-check",
 ]
 
 # Custom tips/warnings injected into auto-generated pages

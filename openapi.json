@@ -175,10 +175,322 @@
         }
       }
     },
+    "/api/sdk/agents": {
+      "get": {
+        "summary": "Get User Sdk Agents",
+        "description": "Get all SDK agents owned by the current user.\n\nReturns list of agents with stats (balance, P&L, trades, etc.)\nRequires JWT authentication \u2014 identity derived from token claims.",
+        "operationId": "api_get_user_sdk_agents_api_sdk_agents_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agents/claim": {
+      "post": {
+        "summary": "Claim Agent",
+        "description": "Claim an agent (requires user authentication via JWT).\n\nThis links the agent to the user's account and enables real trading.\nUser identity is verified server-side from the JWT Authorization header.\n\nRate limited: 10 claims per minute per IP.",
+        "operationId": "api_claim_agent_api_sdk_agents_claim_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentClaimRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentClaimResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agents/{agent_id}/reactivate": {
+      "post": {
+        "summary": "Reactivate Agent",
+        "description": "Reactivate a previously suspended (soft-deleted) agent.\n\nInverse of /release. Enforces the user's tier-based agent limit and returns\n409 with error_code='tier_limit_reached' when the user is already at the\ncap; the frontend uses this to render the \"free a slot first\" message.",
+        "operationId": "api_reactivate_agent_api_sdk_agents__agent_id__reactivate_post",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agents/{agent_id}/release": {
+      "post": {
+        "summary": "Release Agent",
+        "description": "Release (suspend) an agent, freeing the user's agent slot.\n\nThe agent keeps its leaderboard history but stops trading and no longer\ncounts toward the per-user agent limit.",
+        "operationId": "api_release_agent_api_sdk_agents__agent_id__release_post",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agents/{agent_id}/settings": {
+      "patch": {
+        "summary": "Agent Settings Update By Id",
+        "description": "Update settings for a specific agent (JWT auth \u2014 for dashboard UI).\n\nVerifies the agent belongs to the requesting user before updating.",
+        "operationId": "api_sdk_agent_settings_update_by_id_api_sdk_agents__agent_id__settings_patch",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentSettingsUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agents/{agent_id}/cooldowns": {
+      "get": {
+        "summary": "Get Sdk Agent Cooldowns",
+        "description": "Get active cooldowns for an SDK agent (rate-limit + failure).",
+        "operationId": "api_get_sdk_agent_cooldowns_api_sdk_agents__agent_id__cooldowns_get",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agent-wallet/register": {
+      "post": {
+        "summary": "Register Agent Wallet",
+        "description": "Register an OWS wallet for an agent. Elite-only.\n\nAuth: either an SDK API key (`sk_live_*`) \u2014 the original SDK path, where\n`agent_id` can be inferred from an agent-specific key \u2014 OR a Dynamic JWT\nfrom the dashboard, where `agent_id` MUST be passed in the body (the\ndashboard wizard knows it from route context). Phase 5 of\n_wallet-experience-overhaul opens this to the dashboard so non-SDK Elite\nusers can register agent wallets without spinning up Python.",
+        "operationId": "api_sdk_register_agent_wallet_api_sdk_agent_wallet_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentWalletRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentWalletResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agent-wallets": {
+      "get": {
+        "summary": "List Agent Wallets",
+        "description": "List all agent wallets for the authenticated user.",
+        "operationId": "api_sdk_list_agent_wallets_api_sdk_agent_wallets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agent-wallet/{agent_id}/pnl": {
+      "get": {
+        "summary": "Agent Wallet Pnl",
+        "description": "Get P&L for an agent from real_trades (works for all tiers, not just Elite).",
+        "operationId": "api_sdk_agent_wallet_pnl_api_sdk_agent_wallet__agent_id__pnl_get",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sdk/markets": {
       "get": {
         "summary": "List Markets",
-        "description": "List markets available for SDK trading.\n\nBy default, excludes tracking markets (no AI counterparty for simmer trading).\nSet include_analytics_only=true to include them (for real trading only).\n\nParameters:\n- status: Filter by status ('active', 'resolved', etc.). Omit to get all statuses when using ids.\n- venue: Filter by venue ('polymarket', 'sim'). Alias for import_source.\n        Deprecated: 'sandbox'/'simmer' are accepted but deprecated, use 'sim' instead.\n- import_source: Same as venue (kept for backwards compatibility).\n- q: Text search for market questions (min 2 chars, case-insensitive)\n- ids: Comma-separated market IDs to fetch (max 50). When provided, status filter is optional.\n- tags: Comma-separated tags to filter by (e.g., 'weather' or 'weather,crypto'). Returns markets with ALL specified tags.\n- sort: 'volume' (by 24h volume), 'created' (by created_at), or None (default by created_at)\n- include: Comma-separated optional fields to include on each market. Currently\n           supported: 'resolution_criteria' (the human-readable resolution rules\n           text \u2014 useful for weather/data-source-sensitive bots that need to\n           verify which oracle a market reads). Default omits these to keep\n           list payloads small.\n\nUnknown params will trigger a warning in the response (helps debug typos).\nRequires API key in Authorization header.",
+        "description": "List markets available for SDK trading.\n\nBy default, excludes tracking markets (no AI counterparty for simmer trading).\nSet include_analytics_only=true to include them (for real trading only).\n\nParameters:\n- status: Filter by status ('active', 'resolved', etc.). Omit to get all statuses when using ids.\n- venue: Filter by venue ('polymarket', 'sim'). Alias for import_source.\n        Deprecated: 'sandbox'/'simmer' are accepted but deprecated, use 'sim' instead.\n- import_source: Same as venue (kept for backwards compatibility).\n- q: Text search for market questions (min 2 chars, case-insensitive)\n- ids: Comma-separated market IDs to fetch (max 50). When provided, status filter is optional.\n- tags: Comma-separated tags to filter by (e.g., 'weather' or 'weather,crypto'). Returns markets with ALL specified tags.\n- sort: 'volume' (by 24h volume), 'created' (by created_at), or None (default by created_at)\n- include: Comma-separated optional response fields. `resolution_criteria` is\n           returned by default for active-market source verification; the\n           include value remains accepted for older SDK callers.\n\nUnknown params will trigger a warning in the response (helps debug typos).\nRequires API key in Authorization header.",
         "operationId": "api_sdk_list_markets_api_sdk_markets_get",
         "parameters": [
           {
@@ -354,6 +666,16 @@
                 }
               ],
               "title": "Include"
+            }
+          },
+          {
+            "name": "tradeable_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Tradeable Only"
             }
           }
         ],
@@ -1399,6 +1721,367 @@
         }
       }
     },
+    "/api/sdk/user/settings": {
+      "get": {
+        "summary": "User Settings Get",
+        "description": "Get user's SDK settings (Clawdbot webhook config, trading limits).\nRequires API key or Dynamic JWT authentication.",
+        "operationId": "api_sdk_user_settings_get_api_sdk_user_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SDKUserSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "User Settings Update",
+        "description": "Update user's SDK settings (Clawdbot webhook config, trading limits).\nRequires API key or Dynamic JWT authentication.\n\nClawdbot webhook fields:\n- clawdbot_webhook_url: Your Clawdbot's public URL + /hooks/agent\n- clawdbot_hooks_token: Token for Authorization header (from hooks.token config)\n- clawdbot_chat_id: Your Telegram/Discord chat ID for notifications\n- clawdbot_channel: Notification channel (telegram, discord, whatsapp, etc.)\n\nTrading limit fields:\n- max_trades_per_day: Maximum trades per day (default: 50 Free / 500 Pro / unlimited Elite)\n- max_position_usd: Maximum position size in USD (default: 100)\n- default_stop_loss_pct: Default stop-loss percentage (default: 0.50 = 50%)\n- default_take_profit_pct: Default take-profit percentage (default: null = off; pass 0 to disable explicitly)",
+        "operationId": "api_sdk_user_settings_update_api_sdk_user_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SDKUserSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SDKUserSettingsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/user/sim-positions": {
+      "get": {
+        "summary": "Get Sdk User Sim Positions",
+        "description": "Get $SIM positions pooled across all of the caller's claimed agents.\nUsed by Free/Pro tier where multiple agents share one wallet (so positions\nare presented as a single wallet-level portfolio rather than per-agent).\nEach row carries `agent_id` + `agent_name` so the UI can attribute origin.",
+        "operationId": "api_get_sdk_user_sim_positions_api_sdk_user_sim_positions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentPositionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/user/sim-trades": {
+      "get": {
+        "summary": "Get Sdk User Sim Trades",
+        "description": "Get $SIM trade history pooled across all of the caller's claimed agents.\nEach row carries `agent_id` + `agent_name` for attribution.",
+        "operationId": "api_get_sdk_user_sim_trades_api_sdk_user_sim_trades_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/user/sim-resolved": {
+      "get": {
+        "summary": "Get Sdk User Sim Resolved",
+        "description": "Get resolved $SIM markets pooled across all of the caller's claimed agents.\nAggregated per (agent, market) \u2014 same market traded by two agents shows as\ntwo cards so attribution stays clean.",
+        "operationId": "api_get_sdk_user_sim_resolved_api_sdk_user_sim_resolved_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agents/{agent_id}/sim-positions": {
+      "get": {
+        "summary": "Get Sdk Agent Sim Positions",
+        "description": "Get $SIM positions for an SDK agent.\nRequires JWT authentication \u2014 ownership verified from token claims.",
+        "operationId": "api_get_sdk_agent_sim_positions_api_sdk_agents__agent_id__sim_positions_get",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentPositionsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agents/{agent_id}/sim-trades": {
+      "get": {
+        "summary": "Get Sdk Agent Sim Trades",
+        "description": "Get $SIM trade history for an SDK agent.\nRequires JWT authentication \u2014 ownership verified from token claims.",
+        "operationId": "api_get_sdk_agent_sim_trades_api_sdk_agents__agent_id__sim_trades_get",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/agents/{agent_id}/sim-resolved": {
+      "get": {
+        "summary": "Get Sdk Agent Sim Resolved",
+        "description": "Get resolved $SIM markets for an SDK agent, with pagination.\nReturns aggregated trade data per resolved market.\nRequires JWT authentication \u2014 ownership verified from token claims.",
+        "operationId": "api_get_sdk_agent_sim_resolved_api_sdk_agents__agent_id__sim_resolved_get",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sdk/orders/open": {
       "get": {
         "summary": "Get Open Orders",
@@ -2180,6 +2863,119 @@
         }
       }
     },
+    "/api/sdk/dw-redeem/prepare": {
+      "post": {
+        "summary": "Dw Redeem Prepare",
+        "description": "Build the EIP-712 WALLET batch for an SDK external+DW user redeeming\na resolved Polymarket position.\n\nMirror of `/api/user/wallet/external/dw-redeem/prepare` (the dashboard\nG6 endpoint) under SDK API-key auth. Body takes Simmer's `market_id`\nUUID \u2014 server resolves to `condition_id` + token IDs via DB lookup,\nsame shape as `/api/sdk/redeem`.\n\nReturns the typed-data payload the SDK signs locally with the user's\n`WALLET_PRIVATE_KEY` (or OWS-vault equivalent), then POSTs back to\n`/api/sdk/dw-redeem/submit`.\n\nAuth: SDK API key.\nGuards: real_trading_enabled, wallet_ownership='external',\nwallet_uses_deposit_wallet=true, deposit_wallet_address NOT NULL.",
+        "operationId": "api_sdk_dw_redeem_prepare_api_sdk_dw_redeem_prepare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SDKDwRedeemPrepareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/dw-redeem/submit": {
+      "post": {
+        "summary": "Dw Redeem Submit",
+        "description": "Submit a user-signed redemption WALLET batch (SDK external+DW path).\n\nMirror of `/api/user/wallet/external/dw-redeem/submit` under SDK API-key\nauth. Reuses the same `validate_redeem_calls` security gate, relayer\nsubmit helper, and `_extract_usdc_from_receipt` payout-from-receipt\nextractor.\n\nRecords the redemption to `real_trades` with `source='sdk:redeem:ext-dw'`\nso it's distinguishable from the dashboard path (`dashboard:ext-dw-redeem`)\nin attribution queries.",
+        "operationId": "api_sdk_dw_redeem_submit_api_sdk_dw_redeem_submit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SDKDwRedeemSubmitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/fleet/summary": {
+      "get": {
+        "summary": "Fleet Summary",
+        "description": "Cross-agent fleet summary for the Elite Fleet dashboard tab.\n\nReturns KPIs, per-agent rollups, per-skill cross-agent rollups,\nclassified error patterns, and active cooldowns \u2014 all scoped to\nthe authenticated user's claimed agents.\n\nQuery params:\n  period: \"24h\" | \"7d\" | \"30d\" | \"all\"  (default: \"24h\")",
+        "operationId": "api_sdk_fleet_summary_api_sdk_fleet_summary_get",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "24h",
+              "title": "Period"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sdk/wallet/link/challenge": {
       "get": {
         "summary": "Wallet Link Challenge",
@@ -2496,6 +3292,209 @@
         "summary": "My Skills",
         "description": "List skills submitted by the authenticated user, with trade counts.",
         "operationId": "api_sdk_my_skills_api_sdk_skills_mine_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/skills/featured": {
+      "get": {
+        "summary": "Skill Featured",
+        "description": "Top skill for a category by install_count.\n\nPowers the per-category featured-skill banner on /markets \u2014 when a\nuser clicks a category pill, the existing PromoBannerCarousel slot\non MarketList is replaced with a banner showcasing the most popular\nskill that trades that category's markets.\n\nPublic, no auth. Cached 5 min. Returns 404 if no skill matches.",
+        "operationId": "api_sdk_skill_featured_api_sdk_skills_featured_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/skills/{slug}": {
+      "get": {
+        "summary": "Skill Detail",
+        "description": "Single skill lookup by slug. No auth required. Returns full fields including skill_md_body.",
+        "operationId": "api_sdk_skill_detail_api_sdk_skills__slug__get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/skills/mine/metrics": {
+      "get": {
+        "summary": "Creator Metrics",
+        "description": "Headline stats for all skills owned by the authenticated creator.\n\nReturns one entry per skill with the full sdk_skill_analytics columns\nplus the registry status and created_at.",
+        "operationId": "api_creator_metrics_api_sdk_skills_mine_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/skills/mine/metrics/{slug}/trend": {
+      "get": {
+        "summary": "Creator Skill Trend",
+        "description": "Weekly volume + win-rate trend for a creator's skill (last 12 weeks).\n\nReturns a list of weekly buckets:\n  { week_start, trades, volume_usdc, profitable_wallets, total_wallets_with_pnl }",
+        "operationId": "api_creator_skill_trend_api_sdk_skills_mine_metrics__slug__trend_get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/skills/mine/metrics/{slug}/insights": {
+      "get": {
+        "summary": "Creator Skill Insights",
+        "description": "Computed insight bundle for a creator's skill.\n\nInsights (only shown when wallets_with_pnl_data >= 10):\n  - win_rate: {value, platform_avg, below_avg}\n  - dormancy: median trades per wallet before going dormant (no trade in 14d)\n  - top_errors: top 3 error buckets by count (last 30d)\n  - top_markets: top 5 markets by trade volume (all time)",
+        "operationId": "api_creator_skill_insights_api_sdk_skills_mine_metrics__slug__insights_get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/skill-leaderboard": {
+      "get": {
+        "summary": "Skill Leaderboard",
+        "description": "Ranked skill leaderboard: install proxies, trade count, volume, and\ncashflow-based realized P&L. Public metrics (no per-user data).\n\nQuery params:\n  limit:   max rows (default 50, capped at 200)\n  sort:    one of volume_usdc_alltime | volume_usdc_7d | trades_alltime |\n           trades_7d | installs_from_trades | realized_pnl_cashflow |\n           profitable_user_pct  (default: volume_usdc_alltime)\n  window:  'alltime' (default) | '7d' | '30d' \u2014 filter to skills with\n           trade activity in that window.\n  min_trades: minimum trade count required (default 0)\n\nP&L here is CASHFLOW (sells - buys) on confirmed/filled trades \u2014 it is\nrealized-only and ignores the value of open positions, so active skills\nunder-report. See migrations/20260424_sdk_skill_analytics_view.sql.",
+        "operationId": "api_sdk_skill_leaderboard_api_sdk_skill_leaderboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/skill-rewards": {
+      "get": {
+        "summary": "Skill Rewards",
+        "description": "Creator's claimed skills with per-skill volume and epoch payout history.",
+        "operationId": "api_sdk_skill_rewards_api_sdk_skill_rewards_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2875,10 +3874,324 @@
           }
         }
       }
+    },
+    "/api/sdk/version-check": {
+      "get": {
+        "summary": "Version Check",
+        "description": "Classify an SDK version as ok / deprecated / blocked.\n\nNo authentication required \u2014 called by SimmerClient.__init__ before any\nauth handshake. Returns a JSON body with:\n  {\n    \"status\":  \"ok\" | \"deprecated\" | \"blocked\",\n    \"message\": str,\n  }\n\nQuery params:\n  sdk_version: the client's own __version__ string (e.g. \"0.9.2\")",
+        "operationId": "api_sdk_version_check_api_sdk_version_check_get",
+        "parameters": [
+          {
+            "name": "sdk_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Sdk Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AgentClaimRequest": {
+        "properties": {
+          "claim_code": {
+            "type": "string",
+            "title": "Claim Code"
+          },
+          "dynamic_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dynamic User Id"
+          },
+          "wallet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wallet"
+          },
+          "referral_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referral Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "claim_code"
+        ],
+        "title": "AgentClaimRequest",
+        "description": "Request to claim an agent (requires user auth via JWT)."
+      },
+      "AgentClaimResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id"
+          },
+          "agent_name": {
+            "type": "string",
+            "title": "Agent Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "real_trading_enabled": {
+            "type": "boolean",
+            "title": "Real Trading Enabled"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "agent_id",
+          "agent_name",
+          "status",
+          "real_trading_enabled",
+          "message"
+        ],
+        "title": "AgentClaimResponse",
+        "description": "Response from claiming an agent."
+      },
+      "AgentMarketPositionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "market_id": {
+            "type": "string",
+            "title": "Market Id"
+          },
+          "market_question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Question"
+          },
+          "market_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Price"
+          },
+          "market_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Status"
+          },
+          "market_outcome": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Outcome"
+          },
+          "sim_balance": {
+            "type": "number",
+            "title": "Sim Balance",
+            "default": 10000.0
+          },
+          "shares_yes": {
+            "type": "number",
+            "title": "Shares Yes",
+            "default": 0.0
+          },
+          "shares_no": {
+            "type": "number",
+            "title": "Shares No",
+            "default": 0.0
+          },
+          "cost_basis_yes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Basis Yes",
+            "default": 0.0
+          },
+          "cost_basis_no": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Basis No",
+            "default": 0.0
+          },
+          "cycles_count": {
+            "type": "integer",
+            "title": "Cycles Count",
+            "default": 0
+          },
+          "first_traded_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Traded At"
+          },
+          "last_traded_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Traded At"
+          },
+          "resolves_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolves At"
+          },
+          "has_risk_monitor": {
+            "type": "boolean",
+            "title": "Has Risk Monitor",
+            "default": false
+          },
+          "stop_loss_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Loss Pct"
+          },
+          "take_profit_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Take Profit Pct"
+          },
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Id"
+          },
+          "agent_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "market_id"
+        ],
+        "title": "AgentMarketPositionResponse",
+        "description": "Per-market position for a trading agent."
+      },
       "AgentMeResponse": {
         "properties": {
           "agent_id": {
@@ -3175,6 +4488,39 @@
               }
             ],
             "title": "Deposit Wallet Address"
+          },
+          "per_agent_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Agent Wallet Address"
+          },
+          "per_agent_deposit_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Agent Deposit Wallet Address"
+          },
+          "per_agent_dw_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Agent Dw Active"
           }
         },
         "type": "object",
@@ -3195,6 +4541,43 @@
         ],
         "title": "AgentMeResponse",
         "description": "Response from /agents/me endpoint."
+      },
+      "AgentPositionsResponse": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id"
+          },
+          "total_pnl": {
+            "type": "number",
+            "title": "Total Pnl"
+          },
+          "markets_traded": {
+            "type": "integer",
+            "title": "Markets Traded"
+          },
+          "total_trades": {
+            "type": "integer",
+            "title": "Total Trades"
+          },
+          "positions": {
+            "items": {
+              "$ref": "#/components/schemas/AgentMarketPositionResponse"
+            },
+            "type": "array",
+            "title": "Positions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id",
+          "total_pnl",
+          "markets_traded",
+          "total_trades",
+          "positions"
+        ],
+        "title": "AgentPositionsResponse",
+        "description": "Response with all positions for an agent."
       },
       "AgentRegisterRequest": {
         "properties": {
@@ -3321,6 +4704,102 @@
         "type": "object",
         "title": "AgentSettingsUpdate",
         "description": "Request to update per-agent settings (via API key auth)."
+      },
+      "AgentWalletRegisterRequest": {
+        "properties": {
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Id"
+          },
+          "ows_wallet_name": {
+            "type": "string",
+            "title": "Ows Wallet Name"
+          },
+          "wallet_address": {
+            "type": "string",
+            "title": "Wallet Address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ows_wallet_name",
+          "wallet_address"
+        ],
+        "title": "AgentWalletRegisterRequest",
+        "description": "Register an OWS wallet for an agent."
+      },
+      "AgentWalletResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id"
+          },
+          "ows_wallet_name": {
+            "type": "string",
+            "title": "Ows Wallet Name"
+          },
+          "wallet_address": {
+            "type": "string",
+            "title": "Wallet Address"
+          },
+          "approvals_set": {
+            "type": "boolean",
+            "title": "Approvals Set"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "agent_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Name"
+          },
+          "beta": {
+            "type": "boolean",
+            "title": "Beta",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "agent_id",
+          "ows_wallet_name",
+          "wallet_address",
+          "approvals_set",
+          "is_active"
+        ],
+        "title": "AgentWalletResponse",
+        "description": "Response for agent wallet operations."
       },
       "AlertListResponse": {
         "properties": {
@@ -4959,6 +6438,78 @@
         "title": "SDKCopytradingTradeResult",
         "description": "Result of a single copytrading trade."
       },
+      "SDKDwRedeemPrepareRequest": {
+        "properties": {
+          "market_id": {
+            "type": "string",
+            "title": "Market Id"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "yes",
+              "no"
+            ],
+            "title": "Side"
+          }
+        },
+        "type": "object",
+        "required": [
+          "market_id",
+          "side"
+        ],
+        "title": "SDKDwRedeemPrepareRequest",
+        "description": "Request to prepare an external+DW redemption batch via SDK."
+      },
+      "SDKDwRedeemSubmitRequest": {
+        "properties": {
+          "market_id": {
+            "type": "string",
+            "title": "Market Id"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "yes",
+              "no"
+            ],
+            "title": "Side"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature"
+          },
+          "nonce": {
+            "type": "string",
+            "title": "Nonce"
+          },
+          "deadline": {
+            "type": "string",
+            "title": "Deadline"
+          },
+          "calls": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Calls"
+          }
+        },
+        "type": "object",
+        "required": [
+          "market_id",
+          "side",
+          "signature",
+          "nonce",
+          "deadline",
+          "calls"
+        ],
+        "title": "SDKDwRedeemSubmitRequest",
+        "description": "Request to submit a user-signed external+DW redemption batch via SDK."
+      },
       "SDKImportRequest": {
         "properties": {
           "polymarket_url": {
@@ -5307,7 +6858,7 @@
               }
             ],
             "title": "Resolution Criteria",
-            "description": "Human-readable text describing how the market resolves. For weather markets this names the specific airport / weather station Polymarket reads (e.g. 'recorded at the Chicago O'Hare Intl Airport Station'). Use this to verify your bot's data source matches the market's resolution oracle. Detail endpoint always; list endpoint requires `?include=resolution_criteria`."
+            "description": "Human-readable text describing how the market resolves. For weather markets this names the specific airport / weather station Polymarket reads (e.g. 'recorded at the Chicago O'Hare Intl Airport Station'). Use this to verify your bot's data source matches the market's resolution oracle."
           }
         },
         "type": "object",
@@ -6224,6 +7775,226 @@
         ],
         "title": "SDKTradeRequest",
         "description": "Request to execute a trade via SDK."
+      },
+      "SDKUserSettingsResponse": {
+        "properties": {
+          "clawdbot_webhook_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clawdbot Webhook Url"
+          },
+          "clawdbot_chat_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clawdbot Chat Id"
+          },
+          "clawdbot_channel": {
+            "type": "string",
+            "title": "Clawdbot Channel",
+            "default": "telegram"
+          },
+          "max_trades_per_day": {
+            "type": "integer",
+            "title": "Max Trades Per Day",
+            "default": 50
+          },
+          "max_position_usd": {
+            "type": "number",
+            "title": "Max Position Usd",
+            "default": 100.0
+          },
+          "default_stop_loss_pct": {
+            "type": "number",
+            "title": "Default Stop Loss Pct",
+            "default": 0.5
+          },
+          "default_take_profit_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Take Profit Pct"
+          },
+          "auto_risk_monitor_enabled": {
+            "type": "boolean",
+            "title": "Auto Risk Monitor Enabled",
+            "default": true
+          },
+          "trading_paused": {
+            "type": "boolean",
+            "title": "Trading Paused",
+            "default": false
+          },
+          "sdk_real_trading_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sdk Real Trading Enabled"
+          }
+        },
+        "type": "object",
+        "title": "SDKUserSettingsResponse",
+        "description": "Response with user's SDK settings."
+      },
+      "SDKUserSettingsUpdate": {
+        "properties": {
+          "clawdbot_webhook_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clawdbot Webhook Url"
+          },
+          "clawdbot_hooks_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clawdbot Hooks Token"
+          },
+          "clawdbot_chat_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clawdbot Chat Id"
+          },
+          "clawdbot_channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clawdbot Channel"
+          },
+          "max_trades_per_day": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Trades Per Day"
+          },
+          "max_position_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Position Usd"
+          },
+          "default_stop_loss_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Stop Loss Pct"
+          },
+          "default_take_profit_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Take Profit Pct"
+          },
+          "auto_risk_monitor_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Risk Monitor Enabled"
+          },
+          "trading_paused": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trading Paused"
+          },
+          "sdk_real_trading_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sdk Real Trading Enabled"
+          },
+          "bot_solana_wallet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bot Solana Wallet"
+          }
+        },
+        "type": "object",
+        "title": "SDKUserSettingsUpdate",
+        "description": "Request to update user's SDK settings."
       },
       "SDKWalletPosition": {
         "properties": {
