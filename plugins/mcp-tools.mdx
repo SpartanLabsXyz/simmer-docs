@@ -1,0 +1,131 @@
+---
+title: MCP Tools Reference
+description: All tools available in the simmer-mcp server — data queries, trading, autoresearch, and skill execution.
+icon: wrench
+---
+
+The `simmer-mcp` server exposes tools for querying portfolio data, searching markets, executing trades, running autoresearch experiments, and invoking trading skills. Install it once and your agent gets access to the full Simmer platform via MCP.
+
+For install instructions, see [Autoresearch](/pro/autoresearch#install).
+
+## Free tools
+
+Available without a `SIMMER_API_KEY`:
+
+| Tool | Description |
+|------|-------------|
+| `list_skills` | List all trading skills available in this MCP server |
+| `get_skill_docs` | Get full SKILL.md documentation for a specific skill |
+| `troubleshoot_error` | Look up a Simmer API error and get a fix |
+
+## Data query tools
+
+<Note>
+**Pro feature.** These tools require a `SIMMER_API_KEY`.
+</Note>
+
+### get_portfolio
+
+Get portfolio summary: balance, total value, realized and unrealized P&L, position count, and per-venue breakdown.
+
+```
+No parameters required.
+```
+
+### get_positions
+
+Get open positions with market question, side, size, entry price, current price, and P&L.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `venue` | string (optional) | Filter by venue: `sim`, `polymarket`, or `kalshi` |
+
+### get_expiring_positions
+
+Get positions expiring within a time window. Use this to check what's about to resolve so you can exit or hold.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `hours` | number (optional) | Window in hours to look ahead (default: 24) |
+
+### get_fleet_summary
+
+Get fleet overview: all agents' positions, realized + unrealized P&L, trade counts, and active status. Use this to monitor multi-agent performance.
+
+```
+No parameters required.
+```
+
+### simmer_get_briefing
+
+Get a consolidated agent briefing: portfolio balance, open positions, top opportunities, and recent performance.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `since` | string (optional) | ISO timestamp — only show changes since this time (default: 24h ago) |
+
+### simmer_get_markets
+
+List or search markets available for trading.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `q` | string (optional) | Text search query (min 2 chars) |
+| `limit` | number (optional) | Max markets to return (default 50, max 500) |
+| `venue` | string (optional) | Filter by venue |
+| `status` | string (optional) | Filter by status (e.g., `active`, `resolved`) |
+| `tags` | string (optional) | Comma-separated tags to filter by |
+| `sort` | string (optional) | Sort order |
+
+### simmer_get_market_context
+
+Get rich context for a specific market: price history, your position, recent trades, flip-flop detection, slippage estimates, and edge analysis.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `market_id` | string | Simmer market UUID |
+| `my_probability` | number (optional) | Your estimate (0-1) for edge calculation and TRADE/HOLD recommendation |
+| `venue` | string (optional) | Which venue's positions to include (default: all) |
+
+## Trading tools
+
+### simmer_trade
+
+Execute or dry-run a single direct trade. Use per-skill tools (`simmer_<slug>`) for strategy-driven runs.
+
+Safety triple-gate: a live trade requires (1) `dry_run=false`, (2) venue `polymarket` or `kalshi`, AND (3) `SIMMER_MCP_ALLOW_LIVE=true` env. Missing any gate coerces to sim.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `market_id` | string | Simmer market UUID |
+| `side` | `yes` or `no` | Which outcome to trade |
+| `action` | `buy` or `sell` (optional) | Trade action (default: buy) |
+| `amount` | number (optional) | USD amount for buys |
+| `shares` | number (optional) | Share count for sells |
+| `dry_run` | boolean (optional) | Paper mode (default: true) |
+| `venue` | string (optional) | Trading venue (default: sim) |
+
+### simmer_cancel_order
+
+Cancel a single open order by its order ID. Requires `SIMMER_MCP_ALLOW_LIVE=true`.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `order_id` | string | Order ID to cancel |
+
+## Autoresearch tools
+
+See [Autoresearch](/pro/autoresearch) for the full workflow guide.
+
+| Tool | Description |
+|------|-------------|
+| `init_experiment` | Step 1: initialize experiment session with name, metric, and skill |
+| `run_experiment` | Step 2: run a shell command as a timed experiment |
+| `log_experiment` | Step 3: record result — keep (git commit) or discard/crash (revert) |
+| `backtest_experiment` | Replay historical trades with new config params |
+
+## Per-skill tools
+
+One `simmer_<slug>` tool per bundled trading skill. Each runs in dry-run paper mode by default. Set `trading_venue` to `sim`, `polymarket`, or `kalshi`.
+
+Run `list_skills` to see all available skills and their parameters.

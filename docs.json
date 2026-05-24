@@ -30,6 +30,7 @@
               "agents",
               "skills/overview",
               "plugins/overview",
+              "plugins/mcp-tools",
               "venues",
               "wallets"
             ]
