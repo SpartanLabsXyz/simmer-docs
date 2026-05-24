@@ -16,6 +16,13 @@ clawhub install simmer-skill-builder
 
 Then tell your agent: "Build me a skill that trades X when Y happens."
 
+You can also **paste a full strategy post** — a KOL thread from X, a blog post with code, a quant strategy write-up. The builder extracts the parameters (signal source, entry thresholds, Kelly fraction, position caps, order type), maps external dependencies to Simmer equivalents, and generates a complete skill folder.
+
+The Skill Builder supports three strategy patterns:
+- **External API signal** (weather data, RSS feeds, price oracles) → deterministic trading
+- **Filter-and-trade** (scan Simmer markets, filter by criteria, trade matches)
+- **Agent-as-oracle** (your agent estimates probabilities using LLM reasoning, the script handles bias correction, Kelly sizing, and limit order execution)
+
 The Skill Builder generates a complete, ready-to-publish skill folder.
 
 ## Option 2: Build manually
