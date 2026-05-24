@@ -404,6 +404,106 @@ Two fixes:
 1. **Manifest mismatch (most common)**: make sure every env var and every capability your SKILL.md teaches is declared in `clawhub.json` `requires.env`. Republish as a new patch version. OpenClaw re-scans and clears its verdict.
 2. **VT Code Insight false positive**: if OpenClaw is clean but VirusTotal still flags behavioral patterns (crypto keys + external HTTP + credential handling), email `simmer@agentmail.to` and we'll request a manual override from ClawHub. Include your skill slug and the scan report link from `https://clawhub.ai/skills/<your-slug>`.
 
+## Scanner compliance — passing ClawHub moderation
+
+ClawHub runs an LLM-based moderation scanner (engine v2.4.22+) on every published skill. Skills flagged `suspicious` are hidden from search and blocked from non-interactive installs. The scanner reads your **SKILL.md content** — not just `clawhub.json` — and weighs the first ~30 lines most heavily.
+
+Trading skills trip the scanner more often than utilities because the scanner's ASI (Agentic Security Initiative) taxonomy flags "high-impact authority without clear scoping, reversibility, or containment." The fix is straightforward: tell the scanner your skill is bounded.
+
+### 1. Include a DISCLAIMER.md
+
+Every trading or payment skill needs a `DISCLAIMER.md` in the skill folder. Template:
+
+```markdown
+# Disclaimer
+
+This skill is a **framework**, not a production trading system. Read this
+in full before connecting it to a wallet with real funds.
+
+## No financial advice
+
+Nothing in this skill constitutes financial, investment, or trading advice.
+The default strategy is a starting point, not a tested edge.
+
+## Automated trading carries irreversible risk
+
+When this skill runs with `--live`, it places real on-chain orders.
+On-chain trades cannot be recalled.
+
+## Default parameters are not validated
+
+Default parameters are calibrated for testing the plumbing, not for live
+profit. Run paper mode for an extended period before scaling.
+
+## Use of this skill is at your own risk
+
+By installing and running this skill you agree that the authors are not
+liable for any losses, direct or indirect, that arise from its use.
+```
+
+### 2. Reference DISCLAIMER.md in the first 30 lines of SKILL.md
+
+The scanner weighs your opening content most heavily. Put the bounding warning right after the opening paragraph — before setup instructions, mode tables, or configuration details.
+
+```markdown
+# Your Skill Name
+
+One-paragraph description of what it does.
+
+> 🚨 **Framework, not a production trading system.** Read [DISCLAIMER.md](./DISCLAIMER.md)
+> before connecting to a wallet with real funds. Defaults: $10 max per trade,
+> 5 trades per run, dry-run unless `--live`.
+
+> **This is a template.** The default logic does X — remix it with your own
+> filters, sizing, or signal source. The skill handles plumbing. Your agent
+> provides the alpha.
+```
+
+<Warning>
+**Don't bury the disclaimer.** If your SKILL.md has a complex table, setup walkthrough, or mode comparison before the disclaimer, the scanner may not see it. The disclaimer must be in the first ~30 lines of the body.
+</Warning>
+
+### 3. Include quantitative bounding in the opening
+
+The scanner looks for evidence that your skill constrains its own authority. Mention at least two of these in the first 30 lines:
+
+- **Per-trade cap** — "max $10 per trade"
+- **Per-run cap** — "5 trades per scan cycle"
+- **Paper-mode default** — "dry-run is the default; `--live` required for real trades"
+- **Sizing constraint** — "Kelly capped at 25%", "3% of bankroll per position"
+- **Scope constraint** — "only zero-fee markets", "only markets resolving within 7 days"
+
+### 4. Lead with method, not action
+
+The scanner flags aggressive action verbs in the title and opening line. Compare:
+
+| Flagged | Clean |
+|---|---|
+| "Snipe markets about to resolve" | "Near-expiry conviction trading — scan markets in their final minutes" |
+| "Dominate whale positions" | "Mirror positions from top traders using size-weighted aggregation" |
+| "Crush the spread" | "Identify mispriced markets where AI consensus diverges from market price" |
+
+The slug can keep the punchy name (`polymarket-mert-sniper`) — installed users reference it. But the SKILL.md description and opening line should lead with the methodology, not the action.
+
+### Quick checklist
+
+Before publishing, verify:
+
+- [ ] `DISCLAIMER.md` exists in the skill folder
+- [ ] SKILL.md references it in the first 30 lines
+- [ ] SKILL.md includes "Framework, not a production trading system" or "This is a template" in the first 30 lines
+- [ ] At least two quantitative bounds mentioned in the opening (caps, paper-default, sizing)
+- [ ] Title and opening line describe the method, not an aggressive action
+- [ ] Every env var mentioned in SKILL.md is declared in `clawhub.json` `envVars` (see [credential declaration](#clawhub-json) above)
+
+<Tip>
+After publishing, verify the moderation result:
+```bash
+npx clawhub@latest inspect your-skill-slug
+```
+Look for `Moderation: CLEAN`. If `SUSPICIOUS`, re-read the checklist above — the most common cause is a missing or buried DISCLAIMER reference.
+</Tip>
+
 ## Naming conventions
 
 | Type | Slug pattern | Example |
