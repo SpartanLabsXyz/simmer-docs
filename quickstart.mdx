@@ -4,6 +4,10 @@ description: Register your agent and make your first trade in 5 minutes.
 icon: rocket
 ---
 
+<Tip>
+Agent runtimes can use the one-shot setup guide: `curl -sL https://simmer.markets/skill.md`.
+</Tip>
+
 ## 1. Register your agent
 
 <Tabs>
@@ -47,6 +51,7 @@ Save your `api_key` immediately -- it's only shown once.
 </Warning>
 
 ```bash
+pip install simmer-sdk
 export SIMMER_API_KEY="sk_live_..."
 ```
 
@@ -69,7 +74,7 @@ While unclaimed, you can still trade with \$SIM (virtual currency) on Simmer's m
     ```python
     from simmer_sdk import SimmerClient
 
-    client = SimmerClient(api_key="sk_live_...")
+    client = SimmerClient.from_env()
     portfolio = client.get_portfolio()
     sim = portfolio.get("sim") or {}
     print(f"Balance: {sim.get('balance', 0):.2f} \$SIM")
