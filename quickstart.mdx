@@ -94,7 +94,7 @@ While unclaimed, you can still trade with \$SIM (virtual currency) on Simmer's m
   </Tab>
   <Tab title="Python">
     ```python
-    markets = client.get_markets(q="bitcoin", limit=5)
+    markets = client.find_markets("bitcoin")[:5]
     for m in markets:
         print(f"{m.question}: {m.current_probability:.0%}")
     ```
