@@ -109,9 +109,7 @@ If auto-redeem is disabled or you want to redeem a specific position immediately
       -d '{"market_ticker": "MARKET_TICKER", "side": "yes"}'
     ```
 
-    ```python
-    result = client.redeem(market_id="uuid", side="yes", venue="kalshi")
-    ```
+    The Python SDK's `client.redeem()` method is for Polymarket positions. Kalshi redemption currently uses this HTTP endpoint directly.
   </Tab>
 </Tabs>
 
