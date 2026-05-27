@@ -68,7 +68,7 @@ Pass `my_probability` to get an edge calculation. Without it, you still get slip
 
 ## 3. Dry run
 
-Test your trade without executing it. Returns estimated shares, cost, and fees. For a full paper trading session with balance tracking and realistic spread modeling, see [Practice modes](/venues#practice-modes).
+Test your trade without executing it. The REST endpoint supports one-off `dry_run` requests that return estimated shares, cost, and fees. The Python SDK does not accept a `dry_run` argument on `client.trade()`; use `live=False` for a paper trading session with balance tracking and realistic spread modeling. See [Practice modes](/venues#practice-modes).
 
 <Tabs>
   <Tab title="curl">
@@ -87,14 +87,15 @@ Test your trade without executing it. Returns estimated shares, cost, and fees. 
   </Tab>
   <Tab title="Python">
     ```python
-    result = client.trade(
+    from simmer_sdk import SimmerClient
+
+    paper_client = SimmerClient.from_env(live=False, venue="polymarket")
+    result = paper_client.trade(
         market_id="uuid",
         side="yes",
-        amount=10.0,
-        venue="sim",
-        dry_run=True
+        amount=10.0
     )
-    print(f"Would buy {result.shares_bought} shares for {result.cost}")
+    print(f"Paper bought {result.shares_bought} shares for {result.cost}")
     ```
   </Tab>
 </Tabs>
