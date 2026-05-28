@@ -37,6 +37,16 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-05-28 — Per-agent wallets (Elite)
+
+Elite users can now run each Simmer agent from its own dedicated on-chain wallet. Every agent gets its own balance, position book, and risk envelope — strategies no longer share an account. Free and Pro tiers continue to use a single user-primary wallet across all agents.
+
+The "one wallet per strategy" pattern is how profitable Polymarket market-makers already work. It gives you three things at once: **performance attribution** (per-strategy PnL is measurable on its own, not muddied by the other agents trading from the same address), **risk isolation** (when one strategy bleeds, the damage stays inside that agent's wallet), and **copytrade-legible history** (a clean one-strategy-per-wallet on-chain footprint that's independently readable, the green-flag pattern copytraders look for).
+
+The per-agent EOA is custodied on your agent host via [`openwallet.sh`](https://openwallet.sh) — Simmer never holds the key. Activation runs from the SDK on the agent's machine: `client.update_agent_wallet_creds(ows_wallet_name=...)`. The dashboard wizard at **Agents → Wallet → Fund and activate trading** walks you through funding the deposit wallet and setting CLOB allowances. See the [per-agent wallets guide](/agents) for the full setup.
+
+---
+
 ## 2026-05-24 — `simmer-mcp` listed on the official MCP Registry
 
 `simmer-mcp` is now discoverable on the [official MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.adlai88/simmer-mcp`. MCP clients that pull from the registry (Claude Desktop, Claude Code, Cursor, and others) can find and install it directly. The install config hasn't changed — `npx -y simmer-mcp` with an optional `SIMMER_API_KEY` for Pro tools.
