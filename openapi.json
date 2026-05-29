@@ -700,7 +700,7 @@
           }
         },
         "x-mint": {
-          "content": "<Tip>Need `time_to_resolution`, slippage, or flip-flop detection? Use the [context endpoint](/api/context) \u2014 those fields are not on `/markets`.</Tip>\n\n**Limit:** Max 500 results per request (default 50). When results are truncated, the response includes `\"truncated\": true` and a `total` field showing how many matched. Use `tags`, `q`, or `venue` filters to narrow large result sets.\n\n## Response fields\n\nEach entry in `markets[]` has the same shape as [`GET /api/sdk/markets/{market_id}`](/api-reference/get-market). See that page for the full field reference, including resolution fields (`status`, `resolved_at`, `outcome`)."
+          "content": "<Tip>Need `time_to_resolution`, slippage, or flip-flop detection? Use the [context endpoint](/api/context) \u2014 those fields are not on `/markets`.</Tip>\n\n**Limit:** Max 500 results per request (default 50). When results are truncated, the response includes `\"truncated\": true` and a `total` field showing how many matched. Use `tags`, `q`, or `venue` filters to narrow large result sets.\n\n## Response fields\n\nEach entry in `markets[]` has the same shape as [`GET /api/sdk/markets/{market_id}`](/api-reference/get-market). See that page for the full field reference, including resolution fields (`status`, `resolved_at`, `outcome`).\n\n## Top-of-book quotes\n\nEach market in the response also carries live order-book quotes sourced from the Polymarket CLOB (Sim and Kalshi markets return null for all six fields):\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `best_bid` | float\\|null | Best bid price for the YES outcome (0\u20131). Null when the live book is unavailable. |\n| `best_ask` | float\\|null | Best ask price for the YES outcome (0\u20131). Null when unavailable. |\n| `best_bid_size` | float\\|null | Shares available at `best_bid`. |\n| `best_ask_size` | float\\|null | Shares available at `best_ask`. |\n| `spread` | float\\|null | `best_ask \u2212 best_bid`. Null if either side is null. |\n| `quote_ts` | float\\|null | Epoch-second timestamp of the quote snapshot (typically \u226430s old). Use this to detect stale quotes before acting. |\n\n**Use these for scanning candidates and quick position monitoring.** For precise entry/exit pricing on a specific order size (accounting for depth and slippage), use the [executable-price endpoint](/api-reference/executable-price) instead."
         }
       }
     },
@@ -1621,7 +1621,7 @@
           }
         },
         "x-mint": {
-          "content": "<Tip>Filter by `source` to see positions from a specific skill or strategy.</Tip>"
+          "content": "<Tip>Filter by `source` to see positions from a specific skill or strategy.</Tip>\n\n## Top-of-book quotes on positions\n\nPolymarket positions carry the same six live order-book fields as the markets endpoint, with **held-side semantics**:\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `best_bid` | float\\|null | Exit-side bid price. Pure NO-side holders get the NO outcome's `best_bid` (their exit price); YES-only and dual-held positions get the YES outcome's bid. Null when unavailable. |\n| `best_ask` | float\\|null | Exit-side ask price (same held-side logic as `best_bid`). |\n| `best_bid_size` | float\\|null | Shares available at `best_bid`. |\n| `best_ask_size` | float\\|null | Shares available at `best_ask`. |\n| `spread` | float\\|null | `best_ask \u2212 best_bid` for the held side. |\n| `quote_ts` | float\\|null | Epoch-second timestamp of the quote snapshot (typically \u226430s). |\n\n**Sim and Kalshi positions do not carry these fields** (no CLOB order book). The six keys are omitted from Sim and Kalshi position objects — use `position.get('best_bid')` (which returns `None` for absent keys) rather than `position['best_bid']`.\n\n**Use for monitoring** \u2014 quick scan of your open Polymarket positions and their current exit liquidity. For precise fill estimation on a specific order, use the [context endpoint](/api-reference/get-market-context) (`slippage.estimates`) or the [executable-price endpoint](/api-reference/executable-price)."
         }
       }
     },
@@ -4182,6 +4182,78 @@
               }
             ],
             "title": "Agent Name"
+          },
+          "best_bid": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Bid",
+            "description": "Top-of-book bid price (held-side exit quote, 0\u20131). For YES-only or dual-held positions, this is the YES outcome best bid. For pure NO-side holders, this is the NO outcome best bid (their exit price). Polymarket positions only \u2014 the key is absent from Sim and Kalshi position objects."
+          },
+          "best_ask": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Ask",
+            "description": "Top-of-book ask price (held-side, 0\u20131). Follows the same held-side logic as `best_bid`. Polymarket positions only \u2014 the key is absent from Sim and Kalshi position objects."
+          },
+          "best_bid_size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Bid Size",
+            "description": "Number of shares available at `best_bid`. Null when the order book is unavailable. Polymarket only."
+          },
+          "best_ask_size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Ask Size",
+            "description": "Number of shares available at `best_ask`. Null when the order book is unavailable. Polymarket only."
+          },
+          "spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spread",
+            "description": "`best_ask - best_bid` for the held side. Null if either side is null. Polymarket only."
+          },
+          "quote_ts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote Ts",
+            "description": "Epoch-second timestamp of the quote snapshot. Quotes are sourced from the live order book and are typically \u226430 seconds old. Null = no quote available. Polymarket only."
           }
         },
         "type": "object",
@@ -6859,6 +6931,78 @@
             ],
             "title": "Resolution Criteria",
             "description": "Human-readable text describing how the market resolves. For weather markets this names the specific airport / weather station Polymarket reads (e.g. 'recorded at the Chicago O'Hare Intl Airport Station'). Use this to verify your bot's data source matches the market's resolution oracle."
+          },
+          "best_bid": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Bid",
+            "description": "Top-of-book bid price (YES outcome, 0\u20131). Null when the live order book is unavailable or empty. Polymarket only \u2014 null for Sim and Kalshi markets."
+          },
+          "best_ask": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Ask",
+            "description": "Top-of-book ask price (YES outcome, 0\u20131). Null when the live order book is unavailable or empty. Polymarket only \u2014 null for Sim and Kalshi markets."
+          },
+          "best_bid_size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Bid Size",
+            "description": "Number of shares available at `best_bid`. Null when the order book is unavailable."
+          },
+          "best_ask_size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Ask Size",
+            "description": "Number of shares available at `best_ask`. Null when the order book is unavailable."
+          },
+          "spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spread",
+            "description": "`best_ask - best_bid`. Null if either side is null."
+          },
+          "quote_ts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote Ts",
+            "description": "Epoch-second timestamp of the quote snapshot. Quotes are sourced from the live order book and are typically \u226430 seconds old. Use this to detect stale quotes (null = no quote available)."
           }
         },
         "type": "object",
