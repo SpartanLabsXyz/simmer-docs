@@ -1621,7 +1621,7 @@
           }
         },
         "x-mint": {
-          "content": "<Tip>Filter by `source` to see positions from a specific skill or strategy.</Tip>\n\n## Top-of-book quotes on positions\n\nPolymarket positions carry the same six live order-book fields as the markets endpoint, with **held-side semantics**:\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `best_bid` | float\\|null | Exit-side bid price. Pure NO-side holders get the NO outcome's `best_bid` (their exit price); YES-only and dual-held positions get the YES outcome's bid. Null when unavailable. |\n| `best_ask` | float\\|null | Exit-side ask price (same held-side logic as `best_bid`). |\n| `best_bid_size` | float\\|null | Shares available at `best_bid`. |\n| `best_ask_size` | float\\|null | Shares available at `best_ask`. |\n| `spread` | float\\|null | `best_ask \u2212 best_bid` for the held side. |\n| `quote_ts` | float\\|null | Epoch-second timestamp of the quote snapshot (typically \u226430s). |\n\n**Sim and Kalshi positions do not carry these fields** (no CLOB order book). All six fields are null for Sim and Kalshi positions.\n\n**Use for monitoring** \u2014 quick scan of your open Polymarket positions and their current exit liquidity. For precise fill estimation on a specific order, use the [context endpoint](/api-reference/get-market-context) (`slippage.estimates`) or the [executable-price endpoint](/api-reference/executable-price)."
+          "content": "<Tip>Filter by `source` to see positions from a specific skill or strategy.</Tip>\n\n## Top-of-book quotes on positions\n\nPolymarket positions carry the same six live order-book fields as the markets endpoint, with **held-side semantics**:\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `best_bid` | float\\|null | Exit-side bid price. Pure NO-side holders get the NO outcome's `best_bid` (their exit price); YES-only and dual-held positions get the YES outcome's bid. Null when unavailable. |\n| `best_ask` | float\\|null | Exit-side ask price (same held-side logic as `best_bid`). |\n| `best_bid_size` | float\\|null | Shares available at `best_bid`. |\n| `best_ask_size` | float\\|null | Shares available at `best_ask`. |\n| `spread` | float\\|null | `best_ask \u2212 best_bid` for the held side. |\n| `quote_ts` | float\\|null | Epoch-second timestamp of the quote snapshot (typically \u226430s). |\n\n**Sim and Kalshi positions do not carry these fields** (no CLOB order book). The six keys are omitted from Sim and Kalshi position objects — use `position.get('best_bid')` (which returns `None` for absent keys) rather than `position['best_bid']`.\n\n**Use for monitoring** \u2014 quick scan of your open Polymarket positions and their current exit liquidity. For precise fill estimation on a specific order, use the [context endpoint](/api-reference/get-market-context) (`slippage.estimates`) or the [executable-price endpoint](/api-reference/executable-price)."
         }
       }
     },
@@ -4193,7 +4193,7 @@
               }
             ],
             "title": "Best Bid",
-            "description": "Top-of-book bid price (held-side exit quote, 0\u20131). For YES-only or dual-held positions, this is the YES outcome best bid. For pure NO-side holders, this is the NO outcome best bid (their exit price). Polymarket positions only \u2014 null for Sim and Kalshi."
+            "description": "Top-of-book bid price (held-side exit quote, 0\u20131). For YES-only or dual-held positions, this is the YES outcome best bid. For pure NO-side holders, this is the NO outcome best bid (their exit price). Polymarket positions only \u2014 the key is absent from Sim and Kalshi position objects."
           },
           "best_ask": {
             "anyOf": [
@@ -4205,7 +4205,7 @@
               }
             ],
             "title": "Best Ask",
-            "description": "Top-of-book ask price (held-side, 0\u20131). Follows the same held-side logic as `best_bid`. Polymarket positions only \u2014 null for Sim and Kalshi."
+            "description": "Top-of-book ask price (held-side, 0\u20131). Follows the same held-side logic as `best_bid`. Polymarket positions only \u2014 the key is absent from Sim and Kalshi position objects."
           },
           "best_bid_size": {
             "anyOf": [
