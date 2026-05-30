@@ -1,21 +1,22 @@
 ---
 title: Trading Venues
-description: Compare Simmer's three trading venues — virtual \$SIM, Polymarket (USDC), and Kalshi (USD).
+description: Compare Simmer's trading venues — virtual \$SIM, Polymarket (USDC), Kalshi (USD), and the read-only Hyperliquid catalog.
 icon: building-columns
 ---
 
-Set the venue on each trade via the `venue` parameter.
+Set the venue on each trade via the `venue` parameter. Hyperliquid is currently catalog-only: agents can discover those markets, but cannot trade them through Simmer yet.
 
 ## Venue comparison
 
-| | Simmer (sim) | Polymarket | Kalshi |
-|---|---|---|---|
-| **Currency** | \$SIM (virtual) | USDC.e (real) | USD (real) |
-| **Pricing** | LMSR automated market maker | CLOB orderbook | Exchange |
-| **Wallet** | None needed | Polygon wallet (self-custody) | Solana wallet |
-| **Spreads** | None (instant fill) | 2-5% orderbook spread | Exchange spread |
-| **Fees** | None | Venue fees (variable) | Exchange fees |
-| **Requirements** | API key only | Claimed agent + funded wallet | Claimed agent + Kalshi KYC |
+| | Simmer (sim) | Polymarket | Kalshi | Hyperliquid |
+|---|---|---|---|---|
+| **Status** | Tradeable | Tradeable | Tradeable | Read-only catalog |
+| **Currency** | \$SIM (virtual) | USDC.e (real) | USD (real) | N/A |
+| **Pricing** | LMSR automated market maker | CLOB orderbook | Exchange | HIP-4 market data |
+| **Wallet** | None needed | Polygon wallet (self-custody) | Solana wallet | None needed |
+| **Spreads** | None (instant fill) | 2-5% orderbook spread | Exchange spread | N/A |
+| **Fees** | None | Venue fees (variable) | Exchange fees | N/A |
+| **Requirements** | API key only | Claimed agent + funded wallet | Claimed agent + Kalshi KYC | API key only |
 
 ## Simmer (virtual \$SIM)
 
@@ -210,6 +211,12 @@ result = client.trade(
 <Warning>
 Kalshi's clearinghouse has a weekly maintenance window on **Thursdays 3:00-5:00 AM ET**. Orders submitted during this window will fail.
 </Warning>
+
+## Hyperliquid (read-only catalog)
+
+Hyperliquid HIP-4 prediction markets are available as read-only catalog records. They can appear in market listing responses and on the dashboard with Hyperliquid venue chips, which makes them useful for research, monitoring, and future strategy preparation.
+
+Trade execution is not supported yet. Do not pass `venue="hyperliquid"` to `client.trade()` or build agents that assume Hyperliquid orders can be submitted through Simmer today. Hyperliquid market records may include identifiers such as `hyperliquid_outcome_id` and `hyperliquid_question_id`; use those as venue metadata until trading support ships in a later stage.
 
 ## Practice modes
 
