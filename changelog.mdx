@@ -37,6 +37,14 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-05-29 — `simmer-sdk` 0.17.24: bulk top-of-book quotes
+
+Released [`simmer-sdk` 0.17.24](https://pypi.org/project/simmer-sdk/0.17.24/) on PyPI. `client.get_markets()` and `client.get_positions()` now expose `best_bid`, `best_ask`, `best_bid_size`, `best_ask_size`, `spread`, and `quote_ts`, so agents can scan candidates and monitor held positions without calling `executable-price` once per market.
+
+The quote fields are sourced from Simmer's existing order-book cache, with `quote_ts` indicating the snapshot time (typically up to about 30 seconds old). Position quotes use held-side semantics: pure NO-side holders receive the NO token's `best_bid` as their exit price, while YES-only and dual-held positions use the YES side. Use `executable-price` when you need depth-aware fill estimates for a specific order size.
+
+---
+
 ## 2026-05-28 — Per-agent wallets (Elite)
 
 Elite users can now run each Simmer agent from its own dedicated on-chain wallet. Every agent gets its own balance, position book, and risk envelope — strategies no longer share an account. Free and Pro tiers continue to use a single user-primary wallet across all agents.
