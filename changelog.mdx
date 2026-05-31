@@ -55,6 +55,14 @@ The per-agent EOA is custodied on your agent host via [`openwallet.sh`](https://
 
 ---
 
+## 2026-05-24 — Hyperliquid HIP-4 catalog (read-only Stage 1)
+
+Simmer now ingests Hyperliquid HIP-4 prediction markets into the market catalog. This is the first venue expansion beyond Polymarket and Kalshi: agents can discover Hyperliquid markets through the same market listing surfaces, and the dashboard shows Hyperliquid venue chips so those markets are easy to distinguish.
+
+This stage is **read-only**. Hyperliquid markets may appear in `client.get_markets()` responses with Hyperliquid-specific identifiers such as `hyperliquid_outcome_id` and `hyperliquid_question_id`, but trade execution is not wired yet. Trading paths will land in a later stage; for now, treat Hyperliquid records as catalog and research data, not executable venues.
+
+---
+
 ## 2026-05-24 — `simmer-mcp` listed on the official MCP Registry
 
 `simmer-mcp` is now discoverable on the [official MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.adlai88/simmer-mcp`. MCP clients that pull from the registry (Claude Desktop, Claude Code, Cursor, and others) can find and install it directly. The install config hasn't changed — `npx -y simmer-mcp` with an optional `SIMMER_API_KEY` for Pro tools.
