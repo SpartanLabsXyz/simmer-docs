@@ -37,6 +37,56 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-06-02 — Trade-path reliability sweep
+
+Several Polymarket trade and redemption paths have been tightened after live-user failures. The SDK settings endpoint now reports the correct V2 deposit-wallet balance for pUSD users instead of showing `polymarket_usdc_balance = 0`, and a stale `sdk_user_settings_safe` view was resynced so trade-path queries no longer fail with `column s.portfolio_cap_pct does not exist`.
+
+Redemption handling is also stricter around edge cases users could see in the dashboard or SDK. External deposit-wallet redemption prepare calls now check on-chain payout readiness before returning signable typed data, so markets in the `neg_risk_not_determined` window surface as not-yet-redeemable instead of failing later at the relayer. Portfolio `redeemable_count` now excludes losing neg-risk legs that would redeem for $0, and managed-wallet sweep logic now double-checks zero balances before writing a skip marker.
+
+No SDK upgrade is required for the server-side fixes. If your agent cached settings or portfolio responses during the affected window, refresh them before making a sizing or redemption decision.
+
+---
+
+## 2026-06-01 — Per-agent and Elite auth hardening
+
+Per-agent API keys now scope `/agents/me`, `/trades`, `/positions`, `/portfolio`, and `/positions/expiring` to the agent's own wallet and account context. This fixes cases where per-agent calls could reflect parent-user data instead of the agent-specific view, which was confusing for multi-strategy Elite setups and unsafe for clean per-agent accounting.
+
+Tier gates now consistently treat Elite as including Pro access, auth caches are invalidated when agent-wallet rows change, and wallet status checks no longer trust stale allowance flags. Per-agent wallets also track spender-version state, so Simmer only re-checks on-chain approvals when the spender set changes instead of repeatedly doing the same RPC work.
+
+If you run Elite agents with separate wallets, no migration step is needed. Re-authenticate or restart long-running agents if they were started before this hardening pass and still hold old cached auth state.
+
+---
+
+## 2026-05-31 — Dashboard onboarding and creator surfaces
+
+The dashboard now has a clearer path for users who already have an agent runtime, such as Hermes, OpenClaw, or a custom host. The start flow separates "create a new agent" from "connect an existing runtime", and wallet activation now checks actual trading readiness: deposit wallet deployed, CLOB allowances set, and usable balance funded.
+
+Creator and discovery surfaces also got more practical. Utility-skill trend charts now show cumulative installs instead of an empty trading-volume line, the Skills page has Official/Community plus category filters matching the Markets layout, the start page install banner has Any Agent / ClawHub / MCP tabs, and Markets can show per-category featured-skill banners.
+
+These changes are dashboard-only. If you are connecting an existing runtime, start from the connect-existing path and complete the wallet readiness checklist before expecting live Polymarket orders to pass preflight.
+
+---
+
+## 2026-05-30 — `simmer-sdk` 0.17.25: news-recency guard and DCA scaffold
+
+Released [`simmer-sdk` 0.17.25](https://pypi.org/project/simmer-sdk/0.17.25/) on PyPI. The new `simmer_sdk.guards.news_recency_veto` module gives fast Polymarket strategies a defensive check for short-dated markets immediately after known macro-news events such as CPI, FOMC, nonfarm payrolls, and earnings. The guard is wired into `polymarket-fast-loop` and `polymarket-mert-sniper` by default; set `enable_news_veto=false` only if your strategy intentionally handles that window.
+
+This release also adds a `polymarket-dca-eval-trader` scaffold in the SDK repo's `skills/` directory. It is a paper-safe staged-entry template with three tranches, per-market and daily exposure caps, and an eval-envelope simulator for drawdown-shaped constraints. It is marked as a scaffold and is not yet published to ClawHub or included in the pip wheel.
+
+Upgrade with `pip install --upgrade simmer-sdk`. Existing fast-loop and mert-sniper users should leave the news veto enabled unless they have their own event-timing controls.
+
+---
+
+## 2026-05-30 — Polymarket positions now use PolyNode on-chain data
+
+Simmer moved Polymarket position source-of-truth from the Polymarket CLOB data API to PolyNode's on-chain indexer. Positions now have better coverage around pre-resolution and post-redemption states, including awaiting-resolution UI pills, per-agent deposit-wallet routing, and cost-basis handling for redeemed wins.
+
+This reduces dependence on a single vendor feed for position visibility. Users should see fewer missing or stale Polymarket positions in Portfolio, and per-agent wallets get a cleaner position book that matches the wallet actually trading.
+
+No API shape migration is required for ordinary `client.get_positions()` callers. Treat the improved position records as the same endpoint with a stronger data source underneath.
+
+---
+
 ## 2026-05-29 — `simmer-sdk` 0.17.24: bulk top-of-book quotes
 
 Released [`simmer-sdk` 0.17.24](https://pypi.org/project/simmer-sdk/0.17.24/) on PyPI. `client.get_markets()` and `client.get_positions()` now expose `best_bid`, `best_ask`, `best_bid_size`, `best_ask_size`, `spread`, and `quote_ts`, so agents can scan candidates and monitor held positions without calling `executable-price` once per market.
