@@ -240,12 +240,22 @@ All skills support `venue=sim` — you don't need `venue=polymarket` to run a Po
 
 ### Dry run (`dry_run=True`)
 
-A single-trade preview. The server validates the trade, calculates price/shares/cost, and returns the result without executing. No state changes. Works from any client (SDK, curl, etc).
+A single-trade preview for the REST trade endpoint. The server validates the trade, calculates price/shares/cost, and returns the result without executing. No state changes.
 
-```python
-result = client.trade(market_id, "yes", 10.0, dry_run=True)
-print(f"Would buy {result.shares_bought} shares at {result.cost}")
+```bash
+curl -X POST https://api.simmer.markets/api/sdk/trade \
+  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "market_id": "MARKET_ID",
+    "side": "yes",
+    "amount": 10.0,
+    "venue": "polymarket",
+    "dry_run": true
+  }'
 ```
+
+The Python SDK does not expose `dry_run` on `client.trade()`. Use SDK paper trading with `live=False` for local simulated trades.
 
 ### SDK paper trading (`live=False`)
 
