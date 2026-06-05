@@ -56,7 +56,7 @@ curl -X PATCH "https://api.simmer.markets/api/sdk/reactor/config" \
   }'
 
 # Recommended: cron with --once (reliable, survives restarts)
-# Run every 1 minute via your runtime's cron
+# Run every 60s — signals live 120s, so a 1-minute cron always catches them
 python copytrading_trader.py --reactor --once
 
 # Advanced: loop mode (lower latency, needs process manager)
@@ -64,7 +64,7 @@ python copytrading_trader.py --reactor
 ```
 
 <Warning>
-**Reactor signals expire after a short window.** Use `--once` on a 1-minute cron for reliable coverage. If your polling process stops (crash, timeout, reboot), signals expire silently. Cron prevents missed signals.
+**Reactor signals expire 120 seconds after they're generated.** Poll at least once a minute — a 1-minute `--once` cron always lands inside the window (2× safety margin). Polling slower than that (e.g. every few minutes) will silently miss signals as they expire between checks. And if your polling process stops entirely (crash, timeout, reboot), in-flight signals expire unseen — a cron with `--once` is the reliable pattern.
 </Warning>
 
 Loop mode polls every 2s for lower latency, but requires a process manager (launchd, systemd) to auto-restart. Not recommended for agent runtimes with exec timeouts.
