@@ -51,7 +51,8 @@ Elite-tier accounts can run multiple agents under one account, each with its own
 
 | Agent type | Signing | Use case |
 |---|---|---|
-| **Primary agent** | Browser-signable (managed or external) | Manual trades placed from the [Simmer dashboard](https://simmer.markets/dashboard). |
+| **Primary agent (external)** | Browser-signable | Manual trades placed from the dashboard, signed via the connected browser wallet. |
+| **Primary agent (managed)** | Server-signed | Manual trades placed from the dashboard, signed server-side with the encrypted key. |
 | **OWS agent** | Autonomous via OWS daemon on your agent host | Bot-driven trading via the SDK. Not accessible from the browser. |
 
 To designate a primary agent: open the dashboard → **My Agents** → click the **star icon** on a non-OWS agent's card. The pinned agent's wallet becomes the active surface for manual trades on the dashboard.
