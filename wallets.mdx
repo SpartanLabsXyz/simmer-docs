@@ -144,10 +144,11 @@ Both calls are required (approvals first) and idempotent. Note: `client.set_appr
 
 ## Managed wallet
 
-Just use your API key. The server signs trades on your behalf.
+For a newly created account that has not linked a self-custody wallet, just use your API key. The server signs trades on your behalf.
 
 - No private key needed -- API key is sufficient
-- Works immediately after claiming -- this is the default for new accounts
+- Works immediately after claiming for newly created managed accounts
+- Existing accounts keep their current wallet mode until you switch them
 - Funded by your human via the dashboard
 
 ## Switching modes
