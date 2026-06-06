@@ -16,7 +16,7 @@ clawhub install simmer-skill-builder
 
 Then tell your agent: "Build me a skill that trades X when Y happens."
 
-You can also **paste a full strategy post** — a KOL thread from X, a blog post with code, a quant strategy write-up. The builder extracts the parameters (signal source, entry thresholds, Kelly fraction, position caps, order type), maps external dependencies to Simmer equivalents, and generates a complete skill folder.
+You can also **paste a full strategy post** — a KOL thread from X, a blog post with code, a quant strategy write-up, or a campaign brief. The builder extracts the parameters (signal source, entry thresholds, Kelly fraction, position caps, order type), maps external dependencies to Simmer equivalents, and generates a complete skill folder.
 
 The Skill Builder supports three strategy patterns:
 - **External API signal** (weather data, RSS feeds, price oracles) → deterministic trading
@@ -24,6 +24,64 @@ The Skill Builder supports three strategy patterns:
 - **Agent-as-oracle** (your agent estimates probabilities using LLM reasoning, the script handles bias correction, Kelly sizing, and limit order execution)
 
 The Skill Builder generates a complete, ready-to-publish skill folder.
+
+### Worked example: turn a World Cup strategy thread into a skill
+
+If you came from the World Cup campaign page, paste the strategy in plain language. You do not need to know the SDK first.
+
+Example prompt:
+
+```text
+Build a World Cup skill from this strategy:
+
+Polymarket splits each soccer match into three YES/NO markets:
+Team A win, Team B win, and Draw. When the three YES midpoints sum
+below 98%, buy the cheapest underpriced outcome. Only trade World Cup
+matches within 24 hours of kickoff, skip markets under $5K volume, cap
+each match at $15, and use limit orders. If PolyNode is available, use
+its sports endpoints for game state; otherwise scan Simmer/Polymarket
+markets by World Cup keywords.
+```
+
+The Skill Builder should extract this into a deterministic spec before writing code:
+
+| Parameter | Value |
+|---|---|
+| Market selection | World Cup match markets; Team A win, Team B win, Draw |
+| Signal | Sum of the three YES midpoints |
+| Entry gate | Trade only when sum is below `0.98` and the chosen outcome still clears spread/slippage checks |
+| Risk bounds | $15 max exposure per match; dry-run by default |
+| Order type | Limit/GTC, because this is price-sensitive |
+| Data dependency | Optional `POLYNODE_API_KEY`; fallback to Simmer market search/import |
+| Exit | Ask the user to confirm hold-to-resolution vs sell-on-normalization if the thread does not say |
+
+Good generated output is narrow and testable:
+
+```text
+polymarket-worldcup-split-scanner/
+  SKILL.md
+  DISCLAIMER.md
+  clawhub.json
+  worldcup_split_scanner.py
+  scripts/status.py
+```
+
+Before publishing, run a dry-run fixture:
+
+| Prices | Expected result |
+|---|---|
+| `[0.49, 0.24, 0.24]` | Trigger: sum is `0.97` |
+| `[0.50, 0.25, 0.27]` | Skip: sum is `1.02`, normal overround |
+
+This pattern also works for other World Cup ideas. The important move is to convert "market lag" or "momentum" into one measurable signal, one entry gate, one sizing rule, and one exit rule. Examples:
+
+| Idea from a thread | Deterministic skill shape |
+|---|---|
+| "Markets lag injury news" | Search/fetch context, require fresh injury source, compare current price to pre-news price |
+| "xG pressure is not priced in" | Read xG/shots/possession data, require an xG gap, trade only if market price has not moved |
+| "Futures overreact to lucky wins" | Compare post-match futures move to xG/performance data, trade only after group-stage matches |
+
+Keep the first skill small. A single World Cup signal with explicit caps is easier to test, publish, and remix than a broad "AI World Cup trader" with unclear authority.
 
 ## Option 2: Build manually
 
