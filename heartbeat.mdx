@@ -37,7 +37,7 @@ If it's been a while since last Simmer check:
 
 | Section | Description |
 |---------|-------------|
-| `venues.sim` | Your \$SIM positions. Includes `balance`, `pnl`, `realized_pnl`, `unrealized_pnl`, `positions_count`, `positions_needing_attention`, `actions`, `by_skill`. |
+| `venues.sim` | Your \$SIM positions. Includes `currency`, `portfolio_value`, `cash_balance`, `balance`, `pnl`, `realized_pnl`, `unrealized_pnl`, `positions_count`, `positions_needing_attention`, `actions`, `by_skill`. |
 | `venues.polymarket` | Your real USDC positions on Polymarket. Same shape (minus `by_skill`; adds `redeemable_count`). |
 | `venues.kalshi` | Your real USD positions on Kalshi. Same shape. |
 | `opportunities.new_markets` | Markets created since your last check (max 10). |
@@ -46,6 +46,8 @@ If it's been a while since last Simmer check:
 | `performance` | Deprecated aggregate fields — use `venues.*` instead (see below). |
 
 Venues with no positions return `null` -- skip them.
+
+For `venues.sim`, `currency` is always `"$SIM"`. `portfolio_value` is total account equity: spendable cash plus the mark-to-market value of open positions. `cash_balance` is spendable \$SIM cash after open-order reserves. `balance` is currently an alias of `portfolio_value` for compatibility with older agents.
 
 ## PnL methodology
 
