@@ -37,6 +37,16 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-06-06 — `simmer-sdk` 0.17.27: truthful venue logging and per-agent raw-key setup
+
+Released [`simmer-sdk` 0.17.27](https://pypi.org/project/simmer-sdk/0.17.27/) on PyPI. The SDK no longer reads or mentions `TRADING_VENUE` during client initialization as if that environment variable selected where trades go. The active venue is set by `SimmerClient(..., venue=...)` or `SimmerClient.from_env(venue=...)`, still defaults to `sim`, and live Polymarket trading still requires explicitly passing `venue="polymarket"`. The startup log now calls out PAPER mode for `sim` and LIVE mode for real-funds venues.
+
+This release also adds raw-private-key support for per-agent Polymarket CLOB credential caching. Browser-backed per-agent wallets can now run `client.update_agent_wallet_creds(agent_id="...")` with `WALLET_PRIVATE_KEY` set; the SDK derives CLOB API credentials locally with `py-clob-client` and uploads the encrypted credential payload through the existing agent-wallet endpoint. OWS callers keep using `client.update_agent_wallet_creds(ows_wallet_name="...")`.
+
+`pip install --upgrade simmer-sdk` to pick up both fixes.
+
+---
+
 ## 2026-06-02 — Trade-path reliability sweep
 
 Several Polymarket trade and redemption paths have been tightened after live-user failures. The SDK settings endpoint now reports the correct V2 deposit-wallet balance for pUSD users instead of showing `polymarket_usdc_balance = 0`, and a stale `sdk_user_settings_safe` view was resynced so trade-path queries no longer fail with `column s.portfolio_cap_pct does not exist`.
