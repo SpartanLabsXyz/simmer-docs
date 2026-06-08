@@ -1,0 +1,40 @@
+name: MDX syntax check
+
+# Guards against the one MDX mistake that silently freezes docs.simmer.markets:
+# a bare '<' immediately followed by a digit in prose (e.g. "<1×", "<6 hours",
+# "<0.10.0"). Mintlify's PRODUCTION parser reads it as a JSX tag open, a digit
+# can't begin a tag name, and the deploy aborts with "Unexpected character ...
+# before name / Deployment not updated" — leaving the live site frozen at the
+# last good build. PR PREVIEW builds are more lenient and pass, so this class
+# never shows up until production. Catch it here, on every PR. (Incident 2026-06-08.)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  bare-lt-before-digit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Flag bare '<digit' in MDX prose
+        run: |
+          # Fenced code blocks (``` ... ```) are not MDX-parsed, so strip them
+          # before flagging. Inline-code and spaced comparisons ("< 5", "<= 0.85")
+          # don't match '<[0-9]' and are safe.
+          hits=$(find . -name '*.mdx' -not -path './node_modules/*' -exec awk '
+            FNR==1 { infence=0 }
+            /^[[:space:]]*```/ { infence = !infence; next }
+            !infence && /<[0-9]/ { print FILENAME ":" FNR ": " $0 }
+          ' {} +)
+          if [ -n "$hits" ]; then
+            echo "Bare '<digit' found in MDX prose — this breaks the Mintlify production deploy:"
+            echo ""
+            echo "$hits"
+            echo ""
+            echo "Fix: use 'under N' / 'before N' / 'less than N' in prose, or escape as '&lt;N'."
+            echo "(Inside fenced code blocks or \`inline code\` it is safe — write 'x < 5' with a space there.)"
+            exit 1
+          fi
+          echo "OK: no bare '<digit' MDX hazards."
