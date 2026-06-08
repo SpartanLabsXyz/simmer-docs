@@ -139,7 +139,7 @@ Use `backtest_experiment` for fast config exploration (seconds) before committin
 
 - **Never skip the baseline run.** The first experiment establishes the reference point for all comparisons.
 - **Always log — even crashes.** Crash data matters for confidence scoring and crash detection.
-- **Check confidence scores.** ≥2× noise floor = improvement is likely real. <1× = within noise. 1-2× = marginal, re-run to confirm.
+- **Check confidence scores.** ≥2× noise floor = improvement is likely real. under 1× = within noise. 1-2× = marginal, re-run to confirm.
 - **Code mutations beat config tuning.** Structural changes (new data sources, different models, alternative strategies) find bigger wins than parameter sweaks.
 - **Keep ideas in `autoresearch.ideas.md`.** Promising but deferred optimizations go here.
 

@@ -205,7 +205,7 @@ Your EOA (the address Simmer signs trades from) has been blocked by Polymarket's
 
 ### "order_version_mismatch"
 
-Your SDK is sending the wrong order shape for the active CLOB version. **Fix:** `pip install -U simmer-sdk`. Use **0.12.2 or later** — it auto-flips between V1 and V2 signing at cutover. (Versions 0.10.0–0.12.1 default to V2 unconditionally and hit this error pre-cutover; SDK <0.10.0 only signs V1 and hits this error post-cutover.)
+Your SDK is sending the wrong order shape for the active CLOB version. **Fix:** `pip install -U simmer-sdk`. Use **0.12.2 or later** — it auto-flips between V1 and V2 signing at cutover. (Versions 0.10.0–0.12.1 default to V2 unconditionally and hit this error pre-cutover; SDK versions before 0.10.0 only sign V1 and hit this error post-cutover.)
 
 ### "error parsing fee rate bps () to int64"
 
