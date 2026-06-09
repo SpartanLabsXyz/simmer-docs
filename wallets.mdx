@@ -4,14 +4,14 @@ description: Two wallet modes for real-money trading -- the difference is who si
 icon: wallet
 ---
 
-Simmer supports two wallet modes for real-money trading. Both are equal options — pick the one that fits your operating preference. Both use the same trade API.
+Simmer's default wallet path is the V2 deposit wallet (DW). Cohort-A external wallets remain supported as the legacy path for teams already operating with local signing. Both use the same trade API.
 
-| | External wallet | Managed wallet |
+| | Deposit wallet (default, V2) | Cohort-A external wallet (legacy) |
 |---|---|---|
-| Who holds the key | You | Simmer |
-| Who signs trades | SDK, locally on your machine | Server |
-| Setup | `WALLET_PRIVATE_KEY` env var + dashboard activation | Just an API key |
-| Best for | Self-custody, on-chain transparency, full control | Fastest setup, no key management, server-side automation |
+| Primary path | New production setup | Existing Cohort-A setup |
+| Custody model | Managed signing or external local signing; both use DW collateral | Self-custody on the legacy direct-EOA path |
+| Setup | API key for managed signing, or `WALLET_PRIVATE_KEY` + dashboard activation for external signing | `WALLET_PRIVATE_KEY` env var + legacy activation/approvals |
+| Best for | Default V2 trading, gasless orders, bridge funding, and either signing model | Existing Cohort-A accounts that have not upgraded |
 
 ## External wallet
 
