@@ -404,6 +404,27 @@ Two fixes:
 1. **Manifest mismatch (most common)**: make sure every env var and every capability your SKILL.md teaches is declared in `clawhub.json` `requires.env`. Republish as a new patch version. OpenClaw re-scans and clears its verdict.
 2. **VT Code Insight false positive**: if OpenClaw is clean but VirusTotal still flags behavioral patterns (crypto keys + external HTTP + credential handling), email `simmer@agentmail.to` and we'll request a manual override from ClawHub. Include your skill slug and the scan report link from `https://clawhub.ai/skills/<your-slug>`.
 
+### Distribute beyond Simmer (skills.sh)
+
+Publishing to ClawHub (above) is what lists your skill in the Simmer registry. Keep doing that. For extra reach across other coding agents (Claude Code, Codex, Cursor, OpenCode, and 60+ more), you can also make the skill installable via [skills.sh](https://skills.sh), the open agent-skills ecosystem.
+
+There is no separate publish step. skills.sh resolves skills straight from a public git repo:
+
+1. Push your skill folder to a **public GitHub (or GitLab) repo**, e.g. `your-org/your-skills/<skill-slug>/SKILL.md`.
+2. Anyone, on any supported agent, can install it:
+
+```bash
+npx skills add your-org/your-skills --skill your-skill-slug
+```
+
+The same `SKILL.md` frontmatter (`name` + `description`) that ClawHub reads is what skills.sh reads, so no extra config is needed.
+
+<Note>
+A public repo makes your skill **installable** immediately, but the skills.sh search and leaderboard rank by install count, so a brand-new skill won't surface in discovery until it accrues installs. Share the direct `npx skills add` command to drive those first installs. To keep a skill installable but hidden from skills.sh discovery, set `metadata.internal: true` in the frontmatter.
+</Note>
+
+Distribution is additive: ClawHub feeds the Simmer registry (primary), skills.sh adds cross-agent reach (optional).
+
 ## Scanner compliance — passing ClawHub moderation
 
 ClawHub runs an LLM-based moderation scanner (engine v2.4.22+) on every published skill. Skills flagged `suspicious` are hidden from search and blocked from non-interactive installs. The scanner reads your **SKILL.md content** — not just `clawhub.json` — and weighs the first ~30 lines most heavily.
