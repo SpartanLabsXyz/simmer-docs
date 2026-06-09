@@ -513,6 +513,52 @@ Look for `Moderation: CLEAN`. If `SUSPICIOUS`, re-read the checklist above — t
 | Platform-agnostic | `<strategy>` | `prediction-trade-journal` |
 | Simmer utility | `simmer-<tool>` | `simmer-skill-builder` |
 
+## Discoverability — name and category tabs
+
+### Display name
+
+The Simmer registry renders your skill's `metadata.displayName` on its card and
+detail page. Set a clean human name:
+
+```yaml
+metadata:
+  displayName: "World Cup Shock Ladder"
+```
+
+The slug (`polymarket-soccer-shock-ladder`) is only the install ID and URL. If you
+omit `displayName`, the registry falls back to the slug title-cased ("Polymarket
+Soccer Shock Ladder"), which usually mangles acronyms and product names.
+
+### Category tabs
+
+The `/skills` page has category pills (Sports, Crypto, Politics, Weather, and more).
+Most are assigned automatically from your strategy, so you don't set a category.
+
+The **World Cup** tab is a campaign overlay with its own rule. It surfaces any skill
+that either:
+
+- mentions **world cup**, **fifa**, or **soccer** in its name or description, or
+- declares a `world-cup` tag.
+
+If the name already says so ("World Cup Shock Ladder"), it appears automatically. If
+the name is generic (for example a `player-goal-value` skill), add the tag in your
+SKILL.md frontmatter:
+
+```yaml
+tags:
+  - world-cup
+```
+
+or in `clawhub.json`:
+
+```json
+{ "tags": ["world-cup"] }
+```
+
+A skill keeps its normal category (Sports, Multi-market) at the same time, so the
+World Cup tab adds visibility without moving the skill out of its home category.
+Tags and displayName sync into the registry within ~1 hour of publishing.
+
 ## Updating skills
 
 ```bash
