@@ -9,9 +9,9 @@ Simmer's default wallet path is the V2 deposit wallet (DW). Cohort-A external wa
 | | Deposit wallet (default, V2) | Cohort-A external wallet (legacy) |
 |---|---|---|
 | Primary path | New production setup | Existing Cohort-A setup |
-| Custody model | Simmer-managed signing | Self-custody |
-| Setup | Just an API key | `WALLET_PRIVATE_KEY` env var + dashboard activation |
-| Best for | Fastest setup, no key management, server-side automation | Local signing, on-chain transparency, full control |
+| Custody model | Managed signing or external local signing; both use DW collateral | Self-custody on the legacy direct-EOA path |
+| Setup | API key for managed signing, or `WALLET_PRIVATE_KEY` + dashboard activation for external signing | `WALLET_PRIVATE_KEY` env var + legacy activation/approvals |
+| Best for | Default V2 trading, gasless orders, bridge funding, and either signing model | Existing Cohort-A accounts that have not upgraded |
 
 ## External wallet
 
