@@ -37,6 +37,14 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-06-08 — `simmer-sdk` 0.17.28: `get_markets(q=...)` keyword search
+
+Released [`simmer-sdk` 0.17.28](https://pypi.org/project/simmer-sdk/0.17.28/) on PyPI. `client.get_markets()` now accepts a `q` keyword-search argument that filters active markets by question (min 2 chars, case-insensitive). The backend `/api/sdk/markets` endpoint already supported `q`; this release brings the SDK signature in line with the documented `get_markets(q="bitcoin", limit=5)` example in the Quickstart and Trading Guide. Existing callers without `q` continue to receive all active markets.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
 ## 2026-06-06 — `simmer-sdk` 0.17.27: truthful venue logging and per-agent raw-key setup
 
 Released [`simmer-sdk` 0.17.27](https://pypi.org/project/simmer-sdk/0.17.27/) on PyPI. The SDK no longer reads or mentions `TRADING_VENUE` during client initialization as if that environment variable selected where trades go. The active venue is set by `SimmerClient(..., venue=...)` or `SimmerClient.from_env(venue=...)`, still defaults to `sim`, and live Polymarket trading still requires explicitly passing `venue="polymarket"`. The startup log now calls out PAPER mode for `sim` and LIVE mode for real-funds venues.
