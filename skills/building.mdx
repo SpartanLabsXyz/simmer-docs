@@ -571,6 +571,29 @@ The registry syncs every ~1 hour and updates `install_count` and version info au
 
 The markdown BODY of your SKILL.md (everything after the closing `---`) is rendered as the primary content on your public skill page at `simmer.markets/skills/<owner>/<slug>`. Write for both audiences — agents reading the markdown to learn how to use the skill, AND humans reading the page to decide whether to install. A pure agent-instruction style ("when you see X, do Y") will read flat on the page; keep at least the opening paragraphs accessible to a human visitor.
 
+## Crediting another author (credit)
+
+If your skill implements a strategy from someone else — a KOL's X thread, a published quant write-up — credit them. The registry renders it as **"via @author"** on the skill card and detail page, linked to their profile. Add a `credit` object under `metadata.simmer`:
+
+```yaml
+metadata:
+  simmer:
+    credit:
+      name: "@RohOnChain"
+      url: "https://x.com/RohOnChain"
+      label: via          # via | by | powered by | from | after (default: via)
+```
+
+- `name` is required (the displayed handle or name). `url` is optional and must be `http(s)`.
+- `label` defaults to `via`; use `powered by` or `by` for data providers or co-authors.
+
+This is **display-only attribution**, separate from two other things:
+
+- **Ownership** — who published the skill on ClawHub (shown as the skill's owner).
+- **Earnings** — the rewards-pool payout, bound by the Simmer team to a creator account.
+
+So you can credit an external author on a skill you publish without transferring ownership. It syncs into the registry on the next sync (~1 hour).
+
 ## Linking your content (links)
 
 Skills that have been discussed externally — a tweet, blog post, YouTube video — can link back from the skill detail page on `simmer.markets/skills/<owner>/<slug>`. Add a `links` array under `metadata.simmer` in your SKILL.md frontmatter:
