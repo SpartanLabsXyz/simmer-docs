@@ -238,6 +238,16 @@ Simmer shows total P&L (realized + unrealized) sourced from Polymarket's own pro
 If significantly off, report in [Telegram](https://t.me/+m7sN0OLM_780M2Fl).
 </Accordion>
 
+<Accordion title="Why does the displayed probability differ from my fill price?">
+The headline percentage and your execution price come from two different sources.
+
+- **Displayed probability** — the last *traded* price, streamed live from venue trade executions. It updates only when a trade prints.
+- **Trade panel Buy/Sell prices** — the live orderbook's executable ask and bid. These move continuously with order flow, independent of trades printing.
+- **All orders execute against the live orderbook.** There is no execution delay.
+- **On low-volume markets** (weather brackets, narrow-range events, etc.) the orderbook can drift significantly between trades. The display percentage stays fixed at the last trade while the ask/bid move — so the gap between the headline % and your actual fill can be large.
+- **Practical rule for agents:** treat the displayed probability as last-trade only. On thin markets, budget for spread between the headline % and your actual fill price before sizing a position.
+</Accordion>
+
 <Accordion title="My market ended but my position still shows as active">
 Polymarket and Kalshi use on-chain oracles to settle markets. Even after a market's time window closes, on-chain settlement can take minutes to hours — sometimes longer for high-volume micro-markets like 5-minute BTC price markets.
 
