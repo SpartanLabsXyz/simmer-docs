@@ -128,6 +128,8 @@ INCLUDE = [
     "POST /api/sdk/troubleshoot",
     "GET /api/sdk/health",
     "GET /api/sdk/version-check",
+    # World Cup Copytrader
+    "GET /api/sdk/wc/copy-leaders",
 ]
 
 # Custom tips/warnings injected into auto-generated pages

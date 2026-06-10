@@ -3923,6 +3923,50 @@
           }
         }
       }
+    },
+    "/api/sdk/wc/copy-leaders": {
+      "get": {
+        "summary": "WC Copy Leaders",
+        "description": "Returns the cached curated World Cup copy-leader set.\n\nThe list is refreshed daily at 02:00 UTC. Leaders are ranked by PolyNode copy-PnL (the slippage-adjusted profit an agent copying that wallet would have earned), with toxic wallets excluded.\n\nFree-tier accessible \u2014 no Pro gate.\n\nReturns 503 when the daily curation job has not yet run.",
+        "operationId": "get_wc_copy_leaders_api_sdk_wc_copy_leaders_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WCCopyLeadersResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Leader set not yet computed \u2014 daily curation job has not run yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "leader set not yet computed"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "wc"
+        ]
+      }
     }
   },
   "components": {
@@ -9367,6 +9411,55 @@
         ],
         "title": "WebhookResponse",
         "description": "Response for a single webhook subscription."
+      },
+      "WCLeader": {
+        "properties": {
+          "wallet": {
+            "title": "Wallet",
+            "type": "string"
+          },
+          "backtest_copy_pnl_usdc": {
+            "title": "Backtest Copy Pnl Usdc",
+            "type": "number"
+          },
+          "slippage_cost_rate_pct": {
+            "title": "Slippage Cost Rate Pct",
+            "type": "number"
+          },
+          "trade_count": {
+            "title": "Trade Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "wallet",
+          "backtest_copy_pnl_usdc",
+          "slippage_cost_rate_pct",
+          "trade_count"
+        ],
+        "title": "WCLeader",
+        "type": "object"
+      },
+      "WCCopyLeadersResponse": {
+        "properties": {
+          "refreshed_at": {
+            "title": "Refreshed At",
+            "type": "string"
+          },
+          "leaders": {
+            "items": {
+              "$ref": "#/components/schemas/WCLeader"
+            },
+            "title": "Leaders",
+            "type": "array"
+          }
+        },
+        "required": [
+          "refreshed_at",
+          "leaders"
+        ],
+        "title": "WCCopyLeadersResponse",
+        "type": "object"
       }
     }
   }
