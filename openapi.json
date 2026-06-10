@@ -2597,6 +2597,9 @@
     },
     "/api/sdk/alerts": {
       "post": {
+        "tags": [
+          "sdk-alerts"
+        ],
         "summary": "Create Alert",
         "description": "Create a price alert.\n\nAlerts trigger when market price crosses the specified threshold.\nUnlike risk monitors, alerts don't require a position.\n\nParameters:\n- market_id: Market to monitor\n- side: Which price to monitor ('yes' or 'no')\n- condition: Trigger condition ('above', 'below', 'crosses_above', 'crosses_below')\n- threshold: Price threshold (0-1)\n- webhook_url: Optional HTTPS URL to receive webhook notification",
         "operationId": "api_create_alert_api_sdk_alerts_post",
@@ -2634,6 +2637,9 @@
         }
       },
       "get": {
+        "tags": [
+          "sdk-alerts"
+        ],
         "summary": "List Alerts",
         "description": "List user's alerts.\n\nBy default only returns active (non-triggered) alerts.\nSet include_triggered=true to include triggered alerts.",
         "operationId": "api_list_alerts_api_sdk_alerts_get",
@@ -2675,6 +2681,9 @@
     },
     "/api/sdk/alerts/{alert_id}": {
       "delete": {
+        "tags": [
+          "sdk-alerts"
+        ],
         "summary": "Delete Alert",
         "description": "Delete a price alert.",
         "operationId": "api_delete_alert_api_sdk_alerts__alert_id__delete",
@@ -2713,6 +2722,9 @@
     },
     "/api/sdk/alerts/triggered": {
       "get": {
+        "tags": [
+          "sdk-alerts"
+        ],
         "summary": "Triggered Alerts",
         "description": "Get alerts that triggered within the last N hours.\n\nParameters:\n- hours: Look back period in hours (default: 24, max: 168 = 1 week)",
         "operationId": "api_triggered_alerts_api_sdk_alerts_triggered_get",
@@ -2754,6 +2766,9 @@
     },
     "/api/sdk/webhooks": {
       "post": {
+        "tags": [
+          "sdk-webhooks"
+        ],
         "summary": "Create Webhook",
         "description": "Register a webhook URL to receive event notifications.\n\nEvents:\n- trade.executed: Fired when a trade fills or is submitted\n- market.resolved: Fired when a market you hold positions in resolves\n- price.movement: Fired on >5% price change for markets you hold\n\nPayload includes X-Simmer-Signature header (HMAC-SHA256) if secret is set.\nWebhooks auto-disable after 10 consecutive delivery failures.",
         "operationId": "api_create_webhook_api_sdk_webhooks_post",
@@ -2791,6 +2806,9 @@
         }
       },
       "get": {
+        "tags": [
+          "sdk-webhooks"
+        ],
         "summary": "List Webhooks",
         "description": "List all webhook subscriptions for the authenticated user.",
         "operationId": "api_list_webhooks_api_sdk_webhooks_get",
@@ -2810,6 +2828,9 @@
     },
     "/api/sdk/webhooks/{webhook_id}": {
       "delete": {
+        "tags": [
+          "sdk-webhooks"
+        ],
         "summary": "Delete Webhook",
         "description": "Delete a webhook subscription.",
         "operationId": "api_delete_webhook_api_sdk_webhooks__webhook_id__delete",
@@ -2848,6 +2869,9 @@
     },
     "/api/sdk/webhooks/test": {
       "post": {
+        "tags": [
+          "sdk-webhooks"
+        ],
         "summary": "Test Webhook",
         "description": "Send a test payload to all active webhook subscriptions.",
         "operationId": "api_test_webhook_api_sdk_webhooks_test_post",
@@ -3926,10 +3950,12 @@
     },
     "/api/sdk/wc/copy-leaders": {
       "get": {
+        "tags": [
+          "wc"
+        ],
         "summary": "WC Copy Leaders",
-        "description": "Returns the cached curated World Cup copy-leader set.\n\nThe list is refreshed daily at 02:00 UTC. Leaders are ranked by PolyNode copy-PnL (the slippage-adjusted profit an agent copying that wallet would have earned), with toxic wallets excluded.\n\nFree-tier accessible \u2014 no Pro gate.\n\nReturns 503 when the daily curation job has not yet run.",
+        "description": "Returns the cached curated World Cup copy-leader set.\n\nThe list is refreshed daily at 02:00 UTC. Leaders are ranked by PolyNode\ncopy-PnL (the slippage-adjusted profit an agent copying that wallet would\nhave earned), with toxic wallets excluded.\n\nFree-tier accessible \u2014 no Pro gate.\n\nReturns 503 when the daily curation job has not yet run.",
         "operationId": "get_wc_copy_leaders_api_sdk_wc_copy_leaders_get",
-        "parameters": [],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3946,26 +3972,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "properties": {
                     "error": {
                       "type": "string",
                       "example": "leader set not yet computed"
                     }
-                  }
+                  },
+                  "type": "object"
                 }
               }
             }
           }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "tags": [
-          "wc"
-        ]
+        }
       }
     }
   },
@@ -9135,6 +9153,55 @@
         "type": "object",
         "title": "VenuesBlock"
       },
+      "WCCopyLeadersResponse": {
+        "properties": {
+          "refreshed_at": {
+            "type": "string",
+            "title": "Refreshed At"
+          },
+          "leaders": {
+            "items": {
+              "$ref": "#/components/schemas/WCLeader"
+            },
+            "type": "array",
+            "title": "Leaders"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refreshed_at",
+          "leaders"
+        ],
+        "title": "WCCopyLeadersResponse"
+      },
+      "WCLeader": {
+        "properties": {
+          "wallet": {
+            "type": "string",
+            "title": "Wallet"
+          },
+          "backtest_copy_pnl_usdc": {
+            "type": "number",
+            "title": "Backtest Copy Pnl Usdc"
+          },
+          "slippage_cost_rate_pct": {
+            "type": "number",
+            "title": "Slippage Cost Rate Pct"
+          },
+          "trade_count": {
+            "type": "integer",
+            "title": "Trade Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "wallet",
+          "backtest_copy_pnl_usdc",
+          "slippage_cost_rate_pct",
+          "trade_count"
+        ],
+        "title": "WCLeader"
+      },
       "WalletCredentialsDeriveRequest": {
         "properties": {
           "poly_address": {
@@ -9411,55 +9478,6 @@
         ],
         "title": "WebhookResponse",
         "description": "Response for a single webhook subscription."
-      },
-      "WCLeader": {
-        "properties": {
-          "wallet": {
-            "title": "Wallet",
-            "type": "string"
-          },
-          "backtest_copy_pnl_usdc": {
-            "title": "Backtest Copy Pnl Usdc",
-            "type": "number"
-          },
-          "slippage_cost_rate_pct": {
-            "title": "Slippage Cost Rate Pct",
-            "type": "number"
-          },
-          "trade_count": {
-            "title": "Trade Count",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "wallet",
-          "backtest_copy_pnl_usdc",
-          "slippage_cost_rate_pct",
-          "trade_count"
-        ],
-        "title": "WCLeader",
-        "type": "object"
-      },
-      "WCCopyLeadersResponse": {
-        "properties": {
-          "refreshed_at": {
-            "title": "Refreshed At",
-            "type": "string"
-          },
-          "leaders": {
-            "items": {
-              "$ref": "#/components/schemas/WCLeader"
-            },
-            "title": "Leaders",
-            "type": "array"
-          }
-        },
-        "required": [
-          "refreshed_at",
-          "leaders"
-        ],
-        "title": "WCCopyLeadersResponse",
-        "type": "object"
       }
     }
   }
