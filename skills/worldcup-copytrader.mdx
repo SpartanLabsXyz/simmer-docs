@@ -1,0 +1,129 @@
+---
+title: World Cup Copytrader
+description: Copy the top World Cup traders on Polymarket — auto-curated daily by Simmer. Free tier, daily rebalance, no wallet list to configure.
+icon: futbol
+---
+
+The `polymarket-worldcup-copytrader` skill copies the top World Cup traders on Polymarket using Simmer's auto-curated leader set. Unlike [`polymarket-copytrading`](/pro/reactor#the-first-reactor-skill-polymarket-copytrading), there is no wallet list to configure — Simmer's daily curation job screens the top WC traders for *copyability* (slippage-adjusted copy P&L via PolyNode) and serves the qualified set through [`GET /api/sdk/wc/copy-leaders`](/api-reference/wc-copy-leaders).
+
+<Info>
+**Free tier.** No Pro subscription required. Works with managed and self-custody wallets, on `$SIM` (paper) or Polymarket (real USDC).
+</Info>
+
+<Warning>
+This skill executes trades automatically when run with `--live`. Dry-run is the default. Copyability screening reduces slippage risk; **it does not remove market risk**. Read the skill's `DISCLAIMER.md` before going live. The skill makes no claims about win rates or expected returns.
+</Warning>
+
+## What it does
+
+1. Fetches the daily-curated World Cup leader set from `GET /api/sdk/wc/copy-leaders`.
+2. Runs the leaders' wallets through Simmer's copytrading engine to compute a portfolio-level rebalance: size-weighted aggregation across all leaders, conflict detection, Top-N filtering, drift/stale checks.
+3. Executes the rebalance trades via your Simmer wallet.
+
+The curation pipeline runs once daily at **02:00 UTC**: PolyNode top traders → slippage-adjusted copy-PnL screen (`exclude_toxic=true`) → top-10 copyable WC sharps. You follow this curated set, not wallets you chose yourself.
+
+## How it differs from `polymarket-copytrading`
+
+| | `polymarket-copytrading` | `polymarket-worldcup-copytrader` |
+|---|---|---|
+| Wallet list | User configures manually | Auto-curated from server |
+| Scope | All Polymarket markets | World Cup markets only |
+| Curation | None (follows whoever you set) | PolyNode copy-PnL screen |
+| Modes | Polling + Reactor | Regular (daily rebalance) |
+| Tier | Free | Free |
+
+## Setup
+
+1. **Install the skill**:
+
+   ```bash
+   npx clawhub@latest install polymarket-worldcup-copytrader
+   ```
+
+2. **Install the Simmer SDK** (0.17.27 or newer):
+
+   ```bash
+   pip install -U 'simmer-sdk>=0.17.27'
+   ```
+
+3. **Set your Simmer API key** (from [simmer.markets/dashboard](https://simmer.markets/dashboard), SDK tab):
+
+   ```bash
+   export SIMMER_API_KEY=...
+   ```
+
+4. **Optional — Polymarket wallet key** (only for `--venue polymarket --live` with a self-custody wallet; not needed for `$SIM` or managed wallets):
+
+   ```bash
+   export WALLET_PRIVATE_KEY=0x...
+   ```
+
+## Quick start (sim-first)
+
+```bash
+# 1. Dry run on sim — show what would trade, no orders placed (default)
+python copytrader.py
+
+# 2. Live on sim — real trades using $SIM (no real money)
+python copytrader.py --live
+
+# 3. Show the current curated leader set
+python copytrader.py --leaders
+
+# 4. Show positions
+python copytrader.py --positions
+
+# 5. Live on Polymarket (real USDC — only after sim validation)
+python copytrader.py --venue polymarket --live
+```
+
+Validate on `$SIM` before switching to `--venue polymarket`. See [Venues](/venues#paper-trading-strategy) for the paper-to-real graduation path.
+
+## Running on a schedule
+
+The skill runs in **Regular mode**: a once-daily rebalance. Schedule it after 02:00 UTC, when the leader set refreshes:
+
+```bash
+# Linux crontab — daily at 03:00 UTC
+0 3 * * * cd /path/to/skill && python copytrader.py --live
+
+# OpenClaw daily cron
+openclaw cron add --name "wc-copytrader" --cron "0 3 * * *" --tz UTC \
+  --message "Run: cd /path/to/skill && python copytrader.py --live"
+```
+
+Each run recomputes its plan from current positions. Live orders are placed as FAK (fill-and-kill) with a price cap of the plan price ± `WC_COPYTRADER_MAX_SLIPPAGE`, so nothing rests on the book between runs.
+
+## Configuration
+
+| Variable | Default | Description |
+|---|---|---|
+| `SIMMER_API_KEY` | — | Required. Your Simmer SDK API key. |
+| `TRADING_VENUE` | `sim` | Venue: `sim` for `$SIM`, `polymarket` for real USDC. |
+| `WC_COPYTRADER_MAX_USD` | `30` | Max per-position size in USDC / `$SIM`. |
+| `WC_COPYTRADER_MAX_TRADES` | `10` | Max trades per run. |
+| `WC_COPYTRADER_BUY_ONLY` | `true` | Buy-only mode. Set `false` for full rebalance (includes sells). |
+| `WC_COPYTRADER_DETECT_EXITS` | `true` | Sell when leaders exit a market. |
+| `WC_COPYTRADER_MIN_LEADERS` | `5` | Minimum curated leaders required to trade. Below this the run exits cleanly. |
+| `WC_COPYTRADER_MAX_SLIPPAGE` | `0.02` | Max slippage vs the plan price (fraction). Clamped to [0.005, 0.10]. |
+| `WALLET_PRIVATE_KEY` | — | Self-custody Polymarket key (Polymarket venue only). |
+
+## World Cup scope and cold start
+
+- **WC-scoped.** The server-side curation is World Cup-market-scoped. Behavior outside the tournament depends on the contents of the leader cache.
+- **Cold start.** Early in the tournament the leader set may be small until enough fills accumulate; curation widens its lookback window (7d → 14d → 30d → 90d) until at least 10 leaders qualify. If the cache is empty or thin (`< WC_COPYTRADER_MIN_LEADERS`), the skill exits cleanly and retries on the next scheduled run.
+- **Leader churn.** The set refreshes daily; leaders rotate in and out. `WC_COPYTRADER_DETECT_EXITS=true` (default) mitigates stranded positions during leader transitions.
+
+## Sensitivity
+
+This skill is marked **sensitive** in the registry: it is novel-risk automation that executes trades without per-trade approval by mirroring a curated set of external wallets. Sim-first defaults, dry-run default, FAK price-capped orders, and per-run trade caps are the guardrails — they reduce operational risk, not market risk.
+
+## Troubleshooting
+
+**"Leader cache not yet populated"** — the daily curation job runs at 02:00 UTC; run after that time. Check with `python copytrader.py --leaders`.
+
+**"No trades needed"** — your portfolio already mirrors the leaders. Normal on subsequent runs.
+
+**"Conflict skipped"** — some leaders disagree on a market; the engine skips conflicted markets.
+
+**"External wallet requires a pre-signed order"** — `WALLET_PRIVATE_KEY` is not set. Required for `--venue polymarket --live` with a self-custody wallet.
