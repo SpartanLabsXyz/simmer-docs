@@ -56,6 +56,18 @@ if context.get("edge", {}).get("recommendation") == "TRADE":
 
 See the [Trading Guide](/trading-guide) for the full workflow.
 
+### Market discovery filters
+
+`get_markets()` supports keyword-only filters for discovery (SDK 0.17.31+):
+
+```python
+liquid = client.get_markets(sort="volume", limit=20)      # most-traded first — best for finding tradeable markets
+wc = client.get_markets(tags="world-cup", limit=50)       # by tag (comma-separated, all must match)
+poly = client.get_markets(venue="polymarket", limit=20)   # by trading venue; venue="sim" returns all active markets
+```
+
+Unfiltered browse returns a server-capped slice of the catalog (the newest ~1,000 active markets), not the full set: use `q=`, `tags=`, or `sort="volume"` to reach what you're looking for. The default ordering of unfiltered browse is scheduled to flip from newest-first to liquidity-first in a release after June 19, 2026; pass `sort="recent"` to pin newest-first ordering.
+
 ## Data classes
 
 ### Market
