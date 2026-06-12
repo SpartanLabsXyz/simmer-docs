@@ -490,7 +490,7 @@
     "/api/sdk/markets": {
       "get": {
         "summary": "List Markets",
-        "description": "List markets available for SDK trading.\n\nBy default, excludes tracking markets (no AI counterparty for simmer trading).\nSet include_analytics_only=true to include them (for real trading only).\n\nParameters:\n- status: Filter by status ('active', 'resolved', etc.). Omit to get all statuses when using ids.\n- venue: Filter by venue ('polymarket', 'sim'). Alias for import_source.\n        Deprecated: 'sandbox'/'simmer' are accepted but deprecated, use 'sim' instead.\n- import_source: Same as venue (kept for backwards compatibility).\n- q: Text search for market questions (min 2 chars, case-insensitive)\n- ids: Comma-separated market IDs to fetch (max 50). When provided, status filter is optional.\n- tags: Comma-separated tags to filter by (e.g., 'weather' or 'weather,crypto'). Returns markets with ALL specified tags.\n- sort: 'volume' (by 24h volume), 'created' (by created_at), or None (default by created_at)\n- include: Comma-separated optional response fields. `resolution_criteria` is\n           returned by default for active-market source verification; the\n           include value remains accepted for older SDK callers.\n- tradeable_only: Defaults true. Set false to include active DB rows even\n           when Redis/CLOB liveness checks mark the orderbook unavailable.\n\nUnknown params will trigger a warning in the response (helps debug typos).\nRequires API key in Authorization header.",
+        "description": "List markets available for SDK trading.\n\nBy default, excludes tracking markets (no AI counterparty for simmer trading).\nSet include_analytics_only=true to include them (for real trading only).\n\nParameters:\n- status: Filter by status ('active', 'resolved', etc.). Omit to get all statuses when using ids.\n- venue: Filter by venue ('polymarket', 'sim'). Alias for import_source.\n        Deprecated: 'sandbox'/'simmer' are accepted but deprecated, use 'sim' instead.\n- import_source: Same as venue (kept for backwards compatibility).\n- q: Text search for market questions (min 2 chars, case-insensitive)\n- ids: Comma-separated market IDs to fetch (max 50). When provided, status filter is optional.\n- tags: Comma-separated tags to filter by (e.g., 'weather' or 'weather,crypto'). Returns markets with ALL specified tags.\n- sort: 'volume' (by 24h volume), 'created' (by created_at), or None (default by created_at)\n- include: Comma-separated optional response fields. `resolution_criteria` is\n           returned by default for active-market source verification; the\n           include value remains accepted for older SDK callers.\n- tradeable_only: Defaults true. Set false to include active DB rows even\n           when Redis/CLOB liveness checks mark the orderbook unavailable.\n\nEach market row includes `seconds_to_resolution` (float seconds until\n`resolves_at`, server-computed at response time; null when the market has\nno resolution timestamp, negative once it has passed). Prefer it over\ncomputing expiry from `resolves_at` locally \u2014 it is immune to host clock\nskew and matches replay semantics.\n\nUnknown params will trigger a warning in the response (helps debug typos).\nRequires API key in Authorization header.",
         "operationId": "api_sdk_list_markets_api_sdk_markets_get",
         "parameters": [
           {
@@ -8764,6 +8764,50 @@
               }
             ],
             "title": "Credit"
+          },
+          "replayable": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replayable"
+          },
+          "replay_archetype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Archetype"
+          },
+          "replay_badge": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Badge"
+          },
+          "replay_badge_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Badge Reason"
           }
         },
         "type": "object",
