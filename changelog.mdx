@@ -37,6 +37,18 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-06-12 — `simmer-sdk` 0.17.31: `venue`/`sort`/`tags` discovery filters, and an upcoming default-ordering change
+
+Released [`simmer-sdk` 0.17.31](https://pypi.org/project/simmer-sdk/0.17.31/) on PyPI. `client.get_markets()` gains three keyword-only arguments for market discovery. `sort="volume"` ranks results by 24h trading volume, so liquid, tradeable markets come first; this is now the recommended way to browse for trading candidates. `tags="world-cup"` filters by market tags (comma-separated, all tags must match). `venue="sim"`, `venue="polymarket"`, or `venue="kalshi"` filters by trading venue. Positional call sites from earlier versions are unaffected.
+
+The `venue` filter also fixes a server-side bug: `GET /api/sdk/markets?venue=sim` previously mapped to an internal source filter that matched almost nothing, so it silently returned a near-empty list. `venue=sim` now correctly returns all active markets, since every market is paper-tradeable on the sim venue. The same fix applies to `/api/sdk/fast-markets`. Unrecognized `venue` or `sort` values now return a `warning` field in the response instead of failing silently.
+
+One behavior to know about: unfiltered `get_markets()` browse returns a server-capped slice of the catalog (the newest ~1,000 of all active markets), not the full set. To reach a specific older market, filter with `q=` or `tags=`. **Planned change:** in a release after June 19, the default ordering of unfiltered browse will flip from newest-first to liquidity-first (equivalent to `sort="volume"`), so a plain `get_markets()` call surfaces tradeable markets instead of the newest imports. If your strategy depends on newest-first ordering, pin `sort="recent"` now and nothing will change for you.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
 ## 2026-06-08 — `simmer-sdk` 0.17.28: `get_markets(q=...)` keyword search
 
 Released [`simmer-sdk` 0.17.28](https://pypi.org/project/simmer-sdk/0.17.28/) on PyPI. `client.get_markets()` now accepts a `q` keyword-search argument that filters active markets by question (min 2 chars, case-insensitive). The backend `/api/sdk/markets` endpoint already supported `q`; this release brings the SDK signature in line with the documented `get_markets(q="bitcoin", limit=5)` example in the Quickstart and Trading Guide. Existing callers without `q` continue to receive all active markets.
