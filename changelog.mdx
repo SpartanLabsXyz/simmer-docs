@@ -36,6 +36,27 @@ icon: "clock-rotate-left"
 */}
 
 ---
+## 2026-06-13 — `simmer-sdk` 0.18.0: backtest CLI + Hyperliquid venue
+
+Released [`simmer-sdk` 0.18.0](https://pypi.org/project/simmer-sdk/0.18.0/) on PyPI.
+
+The SDK now includes a local backtesting toolchain. `simmer backtest` is a new top-level CLI command, backed by the `simmer_sdk.backtest` module, to run local historical simulations from skill configs and replay data. If you already build and tune skills locally, this is now a one-step path from backtest script to local validation.
+
+We also added Hyperliquid (HIP-4) venue support behind an extra. `pip install simmer-sdk[hyperliquid]` enables Hyperliquid adapter support for the new signing and market flows.
+
+`simmer-sdk` now includes a cleaner data-plane story for local analysis, plus a practical second venue option where previously only Polymarket covered the stack.
+
+---
+
+## 2026-06-12 — `simmer-sdk` 0.17.32: `client.get_candles` for replayed skills
+
+Released [`simmer-sdk` 0.17.32](https://pypi.org/project/simmer-sdk/0.17.32/) on PyPI.
+
+`fast-loop`, `fast-scaler`, and `btc-up-down` now route Binance candles through `client.get_candles` instead of fetching Binance URLs directly. This aligns historical replay and runtime flows around the SDK’s exchange abstraction so candle retrieval is consistent with the configured data path.
+
+For users of those skills, the practical difference is fewer ad-hoc candle source edges and a simpler data source to reason about when troubleshooting backtests or replay behavior.
+
+---
 
 ## 2026-06-12 — `simmer-sdk` 0.17.31: `venue`/`sort`/`tags` discovery filters, and an upcoming default-ordering change
 
