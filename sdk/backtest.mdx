@@ -1,0 +1,141 @@
+---
+title: Backtesting
+description: Test a trading skill on historical prediction-market data before risking capital, with the simmer backtest CLI.
+icon: clock-rotate-left
+---
+
+Simmer's sim-venue, dry-run, and paper-trade modes all run *live-forward* — they
+test a strategy against today's prices going forward. **Backtesting** is the
+missing *historical* leg: replay your skill against past prediction-market data
+to see how it would have performed before you commit real money.
+
+<Note>
+  Available in `simmer-sdk >= 0.18.0`. Backtesting ships as an optional extra —
+  it pulls a few heavier dependencies (duckdb, fastapi, uvicorn) that most SDK
+  users don't need.
+</Note>
+
+## Install
+
+```bash
+pip install 'simmer-sdk[backtest]'
+```
+
+This adds the `simmer` command:
+
+```bash
+simmer backtest --help
+```
+
+## Try it offline
+
+The SDK bundles a tiny demo slice, so you can run a complete backtest with no
+data download and no network:
+
+```bash
+simmer backtest --demo
+```
+
+```
+── backtest summary ─────────────────────────────────────────
+  skill        backtest-demo-favorites@1.0.0
+  window       2026-04-28 → 2026-05-05 @ 43200s
+  pnl          -29.54   (final equity 970.46 on 1,000)
+  hit rate     50.0%   (10 settled)
+  max drawdown 5.8%
+  activity     10 decisions · 10 trades · 10 markets · 15 ticks
+  baselines    buy&hold YES -29.54 · random +269.34
+  realism gaps no slippage, no market impact at size, no queue position, ...
+  config_hash  4995db6204207cda
+─────────────────────────────────────────────────────────────
+```
+
+## Backtest your own skill
+
+Point the CLI at a skill bundle and a local historical **tape** (a directory of
+`markets.parquet` + `quant.parquet`):
+
+```bash
+simmer backtest ./my-skill \
+    --entrypoint run.py \
+    --tape ./slice \
+    --t0 2026-03-01 --t1 2026-03-08 \
+    --cadence 12h \
+    --out report.json
+```
+
+The engine runs your **unmodified** skill once per tick as a subprocess against
+a frozen, look-ahead-safe replay server — the same wire shapes as production, so
+anything that calls `/api/sdk/*` can be backtested. State files the skill writes
+(daily-spend counters, etc.) are sandboxed in a temp copy.
+
+| Flag | Meaning |
+|---|---|
+| `bundle` | Path to the skill bundle directory (positional). |
+| `--entrypoint` | Script filename inside the bundle to run each tick. |
+| `--tape` | Local tape slice (`markets.parquet` + `quant.parquet`). |
+| `--t0` / `--t1` | Window bounds (ISO, e.g. `2026-03-01`). |
+| `--cadence` | Tick spacing: `15m` / `12h` / `30d` / minutes (default `15m`). |
+| `--balance` | Starting balance (default `1000`). |
+| `--args` | Entrypoint CLI args, space-separated (default `--live --quiet`). |
+| `--out` | Write the full report JSON here. |
+| `--demo` | Run the bundled offline demo (no tape needed). |
+
+## Programmatic API
+
+```python
+from simmer_sdk.backtest import run_backtest
+
+report = run_backtest(
+    "./my-skill",
+    entrypoint="run.py",
+    tape="./slice",
+    t0="2026-03-01", t1="2026-03-08",
+    cadence="12h",
+)
+print(report["summary"]["pnl"], report["summary"]["hit_rate"])
+```
+
+## Reading the report
+
+The report (stdout summary + full JSON via `--out`) includes:
+
+- **`summary`** — pnl, hit rate, max drawdown, trades, decisions, settlements, ticks.
+- **`baselines`** — the same entries/notionals under *buy-and-hold-YES* and a
+  seeded *random* side rule, so you can tell skill from luck.
+- **`decisions`** / **`fills`** / **`equity_curve`** — the full per-tick trace.
+- **`realism_gaps`** — what the model does **not** capture (see below).
+- **`reproducibility.config_hash`** — a deterministic hash of the run inputs.
+  Same `(bundle, tape, window, cadence, args)` → same `config_hash` → identical
+  results.
+
+## What backtests do and don't model
+
+<Warning>
+  Backtests use **trade-tape prices, not an order book**. They measure *decision
+  quality* — did the strategy pick the right side at the right time — not
+  *execution realism*. Every report lists its `realism_gaps`: no slippage, no
+  market impact at size, no queue position, no latency, no maker rebates. Treat a
+  backtest as a filter for bad ideas, not a promise of live P&L.
+</Warning>
+
+A run is only trustworthy if it's **clean** — `bundle.clean == true` means the
+skill executed successfully on every tick. A run with failed ticks under-reports
+the strategy (the skill didn't actually run on those ticks) and the CLI exits
+non-zero.
+
+## Getting a tape
+
+For now, pass a local `--tape` directory or use `--demo`. Self-serve window
+download (`--window 30d` to fetch a slice automatically) is coming in a follow-up
+release.
+
+## Graduation path
+
+```
+backtest (historical)  →  sim (instant fills, no spread)
+  →  polymarket + live=False (real prices, spread modeled)
+  →  polymarket live (real USDC)
+```
+
+See [Trading Venues](/venues) for the live-forward modes.

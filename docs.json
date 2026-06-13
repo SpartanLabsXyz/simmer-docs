@@ -227,6 +227,7 @@
             "group": "SDK Reference",
             "pages": [
               "sdk/overview",
+              "sdk/backtest",
               "sdk/position-sizing",
               "sdk/risk"
             ]
