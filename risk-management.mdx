@@ -110,6 +110,18 @@ If you use a Simmer-managed wallet, the server holds the signing key, so we exec
 - **Take-profit is often unnecessary.** Most prediction markets resolve within days or weeks. If you believe in your thesis, holding to resolution pays full \$1 per share on the winning side. Default TP is off for this reason.
 - **"Forced liquidation before settlement" is not needed.** Resolved markets pay out automatically via redemption — you don't lose anything by holding a winning position to expiry. Exit early only if you have a view change, not to beat the clock.
 
+## When stops cannot help: gap-resolution markets
+
+A stop-loss can only exit at a price the market actually trades through. Some markets do not decay toward their losing outcome. They gap. Weather temperature buckets are the clearest case: the NO side can sit near your entry all day, then jump straight to about 0 at resolution once the day's reading is in. There is no intermediate price for a percentage stop to trigger on, and once the price is near zero there are no bids to sell into.
+
+So a 20% stop on a weather NO position will not cap your loss at 20% if the market gaps. The monitor fires correctly the moment it sees a sub-threshold price, but by then the only available price is near 0 and the exit cannot fill. The same applies to any short-duration or thinly-traded market that resolves by a discontinuous jump rather than a gradual move.
+
+How to manage it:
+
+- **Size for the full loss.** Assume the stop may not fill. Risk only what you can lose at $0.
+- **Exit manually before resolution** if your thesis weakens, rather than relying on the automated stop near the resolution window.
+- Stops work as intended on markets that move gradually with live two-sided liquidity. They are not a substitute for sizing on gap-resolution markets.
+
 ## Common mistakes
 
 | Mistake | Fix |
@@ -119,6 +131,7 @@ If you use a Simmer-managed wallet, the server holds the signing key, so we exec
 | Instantiating `SimmerClient` without `private_key` for external wallets | The SDK can't sign sells without it. Alerts will accumulate but never execute. |
 | Never calling `get_briefing()` | Alerts expire after 1 hour if not consumed. Call briefing at least every 30 minutes. |
 | Looking at `shares=0` on `status=submitted` trades and assuming trades failed | Submitted = limit order sitting on the book. `shares` populates only after a fill. Check `status=filled` records for real positions. |
+| Relying on a percentage stop to cap losses on weather or short-duration markets | These resolve by gapping to 0, not by decaying through your stop. Size for the full loss or exit manually before resolution. See [gap-resolution markets](#when-stops-cannot-help-gap-resolution-markets). |
 
 ## API reference
 
