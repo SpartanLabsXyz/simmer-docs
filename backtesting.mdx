@@ -1,0 +1,157 @@
+---
+title: Backtesting
+description: Validate a trading skill on real historical data before you risk capital — the workflow from first run to graduating into live trading.
+icon: magnifying-glass-chart
+---
+
+Simmer's `sim`, dry-run, and paper-trade modes are all *live-forward* — they test a
+strategy against today's prices going forward. **Backtesting** is the missing
+*historical* leg: replay your skill against past prediction-market data to see how
+it would have performed before you commit anything. It's the first rung on the
+graduation ladder:
+
+```
+backtest (historical)  →  sim (paper, real prices)  →  polymarket live=False (spread modeled)  →  live (real USDC)
+```
+
+This guide walks the full workflow. For the complete flag and report-field
+reference, see the [Backtesting SDK reference](/sdk/backtest).
+
+<Note>
+  Self-serve backtesting needs `simmer-sdk >= 0.19.0` and the `[backtest]` extra.
+  Data currently covers **Nov 2022 → ~May 5 2026** — pick a window in that range.
+</Note>
+
+## 1. Install and try the demo
+
+The engine ships as an optional extra; a bundled demo lets you see a full run with
+zero setup or network.
+
+```bash
+pip install 'simmer-sdk[backtest]'
+simmer backtest --demo
+```
+
+```
+── backtest summary ─────────────────────────────────────────
+  skill        backtest-demo-favorites@1.0.0
+  window       2026-04-28 → 2026-05-05 @ 43200s
+  pnl          -29.54   (final equity 970.46 on 1,000)
+  hit rate     50.0%   (10 settled)
+  baselines    buy&hold YES -29.54 · random +269.34
+  realism gaps no slippage, no market impact at size, ...
+  config_hash  4995db6204207cda
+─────────────────────────────────────────────────────────────
+```
+
+If that prints, your install is good. Now point it at a real skill.
+
+## 2. Backtest your own skill
+
+Give the CLI your skill bundle and a window — the historical **tape** is fetched and
+cached for you, no data hunting.
+
+```bash
+export SIMMER_API_KEY=sk_live_...   # the same key you trade with
+
+simmer backtest ./my-skill \
+    --entrypoint run.py \
+    --t0 2026-03-01 --t1 2026-03-08 \
+    --cadence 12h \
+    --out report.json
+
+# or by duration instead of explicit dates:
+simmer backtest ./my-skill --entrypoint run.py --window 30d
+```
+
+<Note>
+  The first run for a window fetches a small slice (tens of MB) from Simmer's tape
+  service and caches it under `~/.simmer/tapes/`; repeat runs of the same window are
+  instant. The fetch uses your `SIMMER_API_KEY` — no separate signup. Prefer your own
+  data? Pass `--tape <dir>` with a local `markets.parquet` + `quant.parquet`
+  ([details](/sdk/backtest#getting-a-tape)).
+</Note>
+
+Your **unmodified** skill runs once per tick as a subprocess against a frozen,
+look-ahead-safe replay server — the same wire shapes as production, so anything that
+calls `/api/sdk/*` backtests without code changes. The replay clock never serves data
+dated after the current tick, so a skill can't accidentally "see the future."
+
+## 3. Read the report — skill vs. luck
+
+The summary prints to stdout; `--out` writes the full JSON. The numbers that matter:
+
+- **`pnl` / `hit_rate` / `max_drawdown`** — did it make money, how often was it right,
+  how deep was the worst drawdown.
+- **`baselines`** — the same entries and notionals run under *buy-and-hold-YES* and a
+  seeded *random* side rule. **This is the most important line.** If your skill doesn't
+  clearly beat both baselines, you're looking at luck or beta, not edge.
+- **`realism_gaps`** — what the model does **not** capture (see below).
+- **`reproducibility.config_hash`** — a deterministic hash of the run inputs. Same
+  `(bundle, window, cadence, args)` → same hash → identical results.
+
+<Warning>
+  A run is only trustworthy if it's **clean** — `bundle.clean == true` means the skill
+  ran successfully on every tick. Failed ticks under-report the strategy (the skill
+  didn't actually run on those), and the CLI exits non-zero. Don't trust a backtest
+  with failed ticks.
+</Warning>
+
+## 4. Iterate
+
+Backtesting is a tight loop: change a threshold, re-run, compare. Because the
+`config_hash` changes whenever the bundle or inputs change, you can tell a real
+improvement from a re-run of the same thing. A few honest practices:
+
+- **Beat the baselines by a margin, not a hair.** Real venues have 1–5% spreads plus
+  fees — a backtest that edges buy-and-hold by 1% is a loss live.
+- **Vary the window.** A strategy that only works on one month is overfit. Run a few
+  windows across different regimes.
+- **Watch `--cadence`.** Too coarse and you miss entries; too fine and you over-trade.
+  Match it to how often your skill actually decides.
+
+## 5. Graduate
+
+A backtest is a filter for bad ideas, not a promise of live P&L. Once a skill beats its
+baselines across windows, walk it up the ladder:
+
+<Steps>
+  <Step title="Paper trade in $SIM">
+    Run live-forward against real prices with virtual currency — `venue="sim"`. Confirm
+    the live behavior matches what the backtest implied.
+  </Step>
+  <Step title="Real prices, no money">
+    `venue="polymarket", live=False` — real prices with spread modeled, still no USDC at
+    risk.
+  </Step>
+  <Step title="Go live">
+    `venue="polymarket"` (or `kalshi`) with safety rails on. See the [Trading Guide](/trading-guide).
+  </Step>
+</Steps>
+
+## What backtests do and don't model
+
+<Warning>
+  Backtests use **trade-tape prices, not an order book**. They measure *decision
+  quality* — did the strategy pick the right side at the right time — not *execution
+  realism*. Every report lists its `realism_gaps`: no slippage, no market impact at
+  size, no queue position, no latency, no maker rebates. Treat a backtest as a way to
+  kill bad ideas cheaply, then prove the survivors forward in `$SIM`.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Backtesting reference" icon="book" href="/sdk/backtest">
+    Every flag, the programmatic `run_backtest()` API, and the full report schema.
+  </Card>
+  <Card title="Building Skills" icon="hammer" href="/skills/building">
+    Build the skill you want to backtest.
+  </Card>
+  <Card title="Trading Guide" icon="chart-line" href="/trading-guide">
+    The live-forward workflow you graduate into.
+  </Card>
+  <Card title="Risk Management" icon="shield" href="/risk-management">
+    Stops, caps, and monitors for when you go live.
+  </Card>
+</CardGroup>
