@@ -1,6 +1,6 @@
 ---
 title: Reactor
-description: Real-time on-chain signals for agent skills — whale trades, price feeds, oracle events, and more.
+description: Signal bus for agent skills — producers write typed signals, consumers poll and act by type.
 icon: bolt
 ---
 
@@ -8,40 +8,47 @@ icon: bolt
 **Pro & Elite feature.** Reactor is available on [Simmer Pro](https://simmer.markets/dashboard) and Elite plans (Elite includes everything in Pro).
 </Info>
 
-Reactor is Simmer's real-time on-chain signal infrastructure. It holds a persistent connection to Polymarket's on-chain data and delivers pre-resolved, trade-ready signals to your agent's skills — no WebSocket management, no chain parsing, no market resolution. Your skill just polls a REST endpoint and acts.
-
-Reactor turns on-chain events into skill triggers. The first reactor skill is **Polymarket Copytrading** (whale trade mirroring). More signal types — price feeds, oracle events, large trade alerts — are coming soon. If you're building a skill that needs real-time on-chain data, reactor is how you get it.
+Reactor is Simmer's signal bus. **Producers** (Simmer's server-side relay and detector services) detect on-chain events and write typed signals. **Consumer skills** poll `GET /api/sdk/reactor/pending`, branch on `payload.type`, act, and DELETE the signal on success. Skills subscribe to specific signal types — a copytrading skill ignores shock signals and vice versa.
 
 ## How it works
 
 ```
-On-chain settlement data (real-time)
-   ↓
-Simmer relay (server-side)
-   ↓ matches against your watchlist + min_size filter
-   ↓ resolves markets + computes mirror size
-   ↓ queues trade-ready signal
-   ↓
-Your agent's skill (any runtime)
-   ↓ polls GET /api/sdk/reactor/pending (via cron or loop)
-   ↓ executes trade via SimmerClient.trade()
-   ↓ DELETEs signal on success
+Producers (server-side)
+  ├─ Copytrading relay       → detects whale on-chain settlement, resolves market + mirror size
+  └─ Shock detector          → detects in-play price shock, sizes ladder rungs
+       ↓ _write_signal delivery (typed payload, 120s TTL)
+       ↓
+Reactor pending queue
+       ↓
+Consumer skill (your agent, any runtime)
+  ↓ GET /api/sdk/reactor/pending
+  ↓ branch on payload.type
+  ├─ type == "copytrading"  → mirror trade via SimmerClient.trade()
+  └─ type == "shock_ladder" → place recovery ladder
+  ↓ DELETE /api/sdk/reactor/pending/{id} on success
 ```
 
-1. **Detect** — Simmer monitors on-chain Polymarket settlement data in real-time and matches events against your configured watchlist
-2. **Resolve** — Each matching event is pre-resolved: market IDs mapped, mirror size computed, ready to trade
-3. **Signal** — Pre-resolved signals are queued for your agent with a short expiry window
-4. **Execute** — Your skill polls for pending signals and executes trades via `SimmerClient.trade()` in your own process
+1. **Detect** — A producer (relay or detector) monitors on-chain or order-flow data in real time
+2. **Resolve** — Server-side: market IDs mapped, sizes computed, payload assembled
+3. **Queue** — Typed signal written to your pending feed with a 120s expiry window
+4. **Consume** — Your skill polls the endpoint, reads `payload.type`, and acts accordingly
+5. **Acknowledge** — DELETE on success clears the signal; unacknowledged signals expire automatically
 
-## The first reactor skill: Polymarket Copytrading
+<Warning>
+**Signals expire 120 seconds after they're generated.** Poll at least once a minute — a 1-minute cron with `--once` always lands inside the window (2× safety margin). If your polling process stops entirely (crash, timeout, reboot), in-flight signals expire unseen.
+</Warning>
 
-The `polymarket-copytrading` skill has a built-in reactor mode that handles the full pipeline:
+## Signal-type catalog
+
+Reactor currently delivers two signal types. Your skill filters by `payload.type` on every poll.
+
+### `copytrading` — Whale trade mirroring
+
+Emitted by Simmer's copytrading relay when a watched wallet settles a trade on-chain. The signal is pre-resolved: market ID mapped, mirror size computed, ready to trade. The `polymarket-copytrading` skill consumes this type.
+
+**Arm copytrading signals:**
 
 ```bash
-# Install the skill
-npx clawhub@latest install polymarket-copytrading
-
-# Configure your watchlist
 curl -X PATCH "https://api.simmer.markets/api/sdk/reactor/config" \
   -H "Authorization: Bearer $SIMMER_API_KEY" \
   -H "Content-Type: application/json" \
@@ -54,42 +61,9 @@ curl -X PATCH "https://api.simmer.markets/api/sdk/reactor/config" \
     "venue": "sim",
     "enabled": true
   }'
-
-# Recommended: cron with --once (reliable, survives restarts)
-# Run every 60s — signals live 120s, so a 1-minute cron always catches them
-python copytrading_trader.py --reactor --once
-
-# Advanced: loop mode (lower latency, needs process manager)
-python copytrading_trader.py --reactor
 ```
 
-<Warning>
-**Reactor signals expire 120 seconds after they're generated.** Poll at least once a minute — a 1-minute `--once` cron always lands inside the window (2× safety margin). Polling slower than that (e.g. every few minutes) will silently miss signals as they expire between checks. And if your polling process stops entirely (crash, timeout, reboot), in-flight signals expire unseen — a cron with `--once` is the reliable pattern.
-</Warning>
-
-Loop mode polls every 2s for lower latency, but requires a process manager (launchd, systemd) to auto-restart. Not recommended for agent runtimes with exec timeouts.
-
-The same skill also has a polling mode (free tier) for portfolio-style copying. See the [skill's SKILL.md](https://github.com/SpartanLabsXyz/simmer-sdk/tree/main/skills/polymarket-copytrading) for the full comparison.
-
-## What reactor enables
-
-Reactor provides pre-resolved trade signals. What your agent does with them depends on your skills and strategy.
-
-### Whale copytrading
-
-Track specific wallets and mirror their trades as they happen. The built-in copytrading skill handles sizing, dedup, and execution automatically.
-
-### Flow-based signals
-
-Any skill can poll the pending endpoint. A whale dumping $50K on "NO" is useful context for momentum, sentiment, or research-driven strategies — not just copytrading.
-
-### Market discovery
-
-Whales trading on markets your agent hasn't seen yet is a discovery signal. Reactor pre-resolves market IDs and auto-imports missing markets.
-
-## Configuration
-
-Configure your reactor watchlist via the API:
+**Config fields:**
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -99,17 +73,14 @@ Configure your reactor watchlist via the API:
 | `mirror_fraction` | `number` | Fraction of whale size to mirror (e.g. 0.01 = 1%) |
 | `daily_cap` | `number` | Max total spend per day (venue-native units) |
 | `venue` | `string` | `sim`, `polymarket`, or `kalshi` |
-| `enabled` | `boolean` | Pause reactor by setting `false` |
+| `enabled` | `boolean` | Pause copytrading signals by setting `false` |
 | `price_buffer` | `number` | Fraction added above whale's fill price for your buy order (default 0.02 = 2%). Prevents order failures on thin books. Range 0–0.2. |
 
-Changes take effect within seconds — no skill restart needed.
-
-## Signal data
-
-Each pending signal includes:
+**Signal payload fields:**
 
 | Field | Description |
 |-------|-------------|
+| `type` | `"copytrading"` |
 | `tx_hash` | Unique transaction hash (used for dedup + DELETE) |
 | `taker_wallet` | Whale wallet address |
 | `taker_side` | BUY or SELL |
@@ -121,17 +92,91 @@ Each pending signal includes:
 | `action` | buy or sell |
 | `amount` | Computed mirror amount (USD) |
 
-## Current limitations
+**Skill:** Install `polymarket-copytrading` from [ClawHub](https://github.com/SpartanLabsXyz/simmer-sdk/tree/main/skills/polymarket-copytrading). The skill's built-in reactor mode handles the full poll → filter → trade → DELETE pipeline.
+
+```bash
+npx clawhub@latest install polymarket-copytrading
+python copytrading_trader.py --reactor --once   # cron-safe; recommended
+```
 
 <Warning>
-**Buys only (MVP).** Reactor currently mirrors whale **buys only**. Sell signals are filtered server-side — if a whale exits a position, reactor won't mirror the sell. Sell mirroring is planned for a future release.
+**Buys only (MVP).** Reactor currently mirrors whale **buys only**. Sell signals are filtered server-side. Sell mirroring is planned for a future release.
 </Warning>
+
+### `shock_ladder` — Soccer in-play shock fader
+
+Emitted by Simmer's shock detector when a Polymarket World Cup market's price drops sharply during a live match. The server detects the shock, classifies it (by favoritism, order-book depth, match minute), and emits a pre-sized signal with rung prices and sizes derived from historical depth percentiles. The `polymarket-soccer-shock-ladder` skill consumes this type.
+
+Currently scoped to **2026 World Cup markets** during live match windows.
+
+**Arm shock-ladder signals** (opt-in, Pro required):
+
+```bash
+curl -X PATCH https://api.simmer.markets/api/sdk/shock-ladder/config \
+  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true}'
+```
+
+Returns `{"shock_ladder_enabled": true}`. The server starts delivering World Cup shock signals to your reactor pending feed within ~5 minutes. Check or disarm anytime:
+
+```bash
+# Check status
+curl https://api.simmer.markets/api/sdk/shock-ladder/config \
+  -H "Authorization: Bearer $SIMMER_API_KEY"
+
+# Disarm
+curl -X PATCH https://api.simmer.markets/api/sdk/shock-ladder/config \
+  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
+
+**Skill:** Install `polymarket-soccer-shock-ladder` from [ClawHub](https://github.com/SpartanLabsXyz/simmer-sdk/tree/main/skills/polymarket-soccer-shock-ladder). Arm first (above), then run the skill.
+
+```bash
+npx clawhub@latest install polymarket-soccer-shock-ladder
+python shock_ladder_trader.py --once          # dry-run; shows ladder without trading
+python shock_ladder_trader.py --once --live   # live
+```
+
+## Risk alerts: a sibling mechanism
+
+Risk alerts are **not** on the reactor bus. They travel on a separate `risk_alert:*` channel with their own consumer endpoint (`GET /api/sdk/risk-alerts`) and a 3600s TTL. They're emitted when your server-side risk monitor (stop-loss / take-profit) triggers on an external wallet position — the SDK picks them up on the next `get_briefing()` call or `SimmerClient` init and executes the exit.
+
+See [Risk Management](/risk-management) for the full consumer pattern and configuration.
+
+## Consuming signals
+
+Both skills follow the same consumer loop:
+
+```python
+from simmer_sdk import SimmerClient
+
+client = SimmerClient()
+signals = client._request("GET", "/api/sdk/reactor/pending").get("signals", [])
+
+for signal in signals:
+    signal_type = signal.get("type")
+
+    if signal_type == "copytrading":
+        # mirror trade ...
+        pass
+    elif signal_type == "shock_ladder":
+        # place recovery ladder ...
+        pass
+    else:
+        continue  # ignore unknown types
+
+    # acknowledge
+    client._request("DELETE", f"/api/sdk/reactor/pending/{signal['tx_hash']}")
+```
+
+Skills installed from ClawHub include this loop; you don't need to write it yourself.
 
 ## Monitoring
 
-All reactor activity — mirrored trades, skipped signals, and failures with error messages — appears in the **Reactor tab** on your [dashboard](https://simmer.markets/dashboard). This is where you check signal flow, diagnose failures, and manage your watchlist.
-
-You can label wallets in the watchlist for easier identification. Labels show in the Reaction Log so you see "GCR" instead of `0x59a4...`.
+All reactor activity — signals received, trades executed, skipped signals, and failures — appears in the **Reactor tab** on your [dashboard](https://simmer.markets/dashboard). You can label whale wallets in the copytrading watchlist for easier identification; labels appear in the Reaction Log.
 
 <Note>
 Reactor activity appears in the **Reactor tab**, not the Observability tab. Observability tracks executed trades across all skills. The Reactor tab tracks the full signal pipeline — including signals your agent correctly skipped.
@@ -139,36 +184,22 @@ Reactor activity appears in the **Reactor tab**, not the Observability tab. Obse
 
 ## Safety features
 
-- **Circuit breaker** — 5 consecutive trade failures triggers a pause. Signals are skipped until the underlying issue is fixed. The circuit auto-resets after 1 hour, or you can reset it manually from the Reactor tab.
-- **Signal expiry** — Unprocessed signals expire automatically. No stale trades.
-- **Server-side filtering** — Only events matching your watchlist and `min_size` generate signals. Your skill doesn't see noise.
-- **Per-config caps** — `max_size` and `daily_cap` limit exposure.
+- **Circuit breaker** — 5 consecutive trade failures triggers a pause. Signals are skipped until the issue is resolved. The circuit auto-resets after 1 hour, or reset manually from the Reactor tab.
+- **Signal expiry** — Unprocessed signals expire after 120s. No stale trades.
+- **Server-side filtering** — Copytrading signals only generate for wallets on your watchlist above `min_size`. Shock signals only generate when you've opted in. Your skill doesn't see noise.
+- **Per-config caps** — `max_size` and `daily_cap` (copytrading) limit exposure.
 
 ## Cross-runtime
 
-Reactor works with any agent runtime — OpenClaw, Hermes, Claude Code, or plain Python scripts. The skill polls a standard REST endpoint and trades via `SimmerClient.trade()`, which handles both managed and external wallets.
-
-No daemon, no WebSocket client, no special runtime requirements. If your agent can run a Python script, it can use reactor.
+Reactor works with any agent runtime — OpenClaw, Hermes, Claude Code, or plain Python scripts. The pending endpoint is a standard REST call; your skill trades via `SimmerClient.trade()`, which handles both managed and external wallets.
 
 ## Requirements
 
 - **Simmer Pro** plan
 - `SIMMER_API_KEY` environment variable
-- `simmer-sdk` Python package, version 0.9.21 or newer:
+- `simmer-sdk` Python package, version 0.17.0 or newer:
   ```bash
-  pip install -U 'simmer-sdk>=0.9.21'
+  pip install -U 'simmer-sdk>=0.17.0'
   ```
-  Older versions lack the `signal_data` parameter on `trade()` that the reactor skill requires.
-
-## What's next
-
-Reactor currently delivers whale settlement signals. We're expanding to more on-chain streams:
-
-- **Real-time price feeds** — Chainlink BTC/ETH/SOL prices at ~1 update/sec, for sub-minute trading strategies
-- **Large trade alerts** — whale activity across all markets, not just your watchlist
-- **Oracle events** — market resolution proposals and disputes as they happen
-- **Market activity** — price-moving events on specific markets you're tracking
-
-Each stream follows the same pattern: Simmer subscribes server-side, filters and resolves events, and delivers trade-ready signals to your skill via the same polling endpoint. Build once, consume any stream.
 
 Have a skill idea that needs real-time on-chain data? Tell us in [Telegram](https://t.me/simaborz) or [Discord](https://discord.gg/simmer).
