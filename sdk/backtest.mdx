@@ -10,9 +10,9 @@ missing *historical* leg: replay your skill against past prediction-market data
 to see how it would have performed before you commit real money.
 
 <Note>
-  Available in `simmer-sdk >= 0.18.0`. Backtesting ships as an optional extra —
-  it pulls a few heavier dependencies (duckdb, fastapi, uvicorn) that most SDK
-  users don't need.
+  Self-serve window download available in `simmer-sdk >= 0.19.0`. Backtesting
+  ships as an optional extra — it pulls a few heavier dependencies (duckdb,
+  fastapi, uvicorn) that most SDK users don't need.
 </Note>
 
 ## Install
@@ -52,17 +52,26 @@ simmer backtest --demo
 
 ## Backtest your own skill
 
-Point the CLI at a skill bundle and a local historical **tape** (a directory of
-`markets.parquet` + `quant.parquet`):
+Point the CLI at a skill bundle and a window — the historical **tape** is fetched
+for you and cached, no data hunting required:
 
 ```bash
+export SIMMER_API_KEY=sk_live_...   # the same key you trade with
+
 simmer backtest ./my-skill \
     --entrypoint run.py \
-    --tape ./slice \
     --t0 2026-03-01 --t1 2026-03-08 \
     --cadence 12h \
     --out report.json
+
+# or give a duration instead of explicit dates:
+simmer backtest ./my-skill --entrypoint run.py --window 30d
 ```
+
+The first run for a window fetches a small slice (tens of MB) from Simmer's tape
+service and caches it under `~/.simmer/tapes/`; repeat runs of the same window are
+instant. The fetch needs your `SIMMER_API_KEY` (set it in the environment, the
+same key you use to trade) — there's no separate signup.
 
 The engine runs your **unmodified** skill once per tick as a subprocess against
 a frozen, look-ahead-safe replay server — the same wire shapes as production, so
@@ -73,13 +82,16 @@ anything that calls `/api/sdk/*` can be backtested. State files the skill writes
 |---|---|
 | `bundle` | Path to the skill bundle directory (positional). |
 | `--entrypoint` | Script filename inside the bundle to run each tick. |
-| `--tape` | Local tape slice (`markets.parquet` + `quant.parquet`). |
-| `--t0` / `--t1` | Window bounds (ISO, e.g. `2026-03-01`). |
+| `--t0` / `--t1` | Window bounds (ISO, e.g. `2026-03-01`). Required (or use `--window`). |
+| `--window` | Window duration to fetch, e.g. `30d` / `12h` — alternative to `--t0`/`--t1`. |
+| `--max-markets` | Cap on markets in a fetched slice (default `300`, max `1000`). |
+| `--min-volume` | Minimum market volume to include (default `1000`). |
 | `--cadence` | Tick spacing: `15m` / `12h` / `30d` / minutes (default `15m`). |
 | `--balance` | Starting balance (default `1000`). |
+| `--tape` | Use a local tape slice instead of fetching (BYO — see [Getting a tape](#getting-a-tape)). |
 | `--args` | Entrypoint CLI args, space-separated (default `--live --quiet`). |
 | `--out` | Write the full report JSON here. |
-| `--demo` | Run the bundled offline demo (no tape needed). |
+| `--demo` | Run the bundled offline demo (no key, no tape, no network). |
 
 ## Programmatic API
 
@@ -89,7 +101,8 @@ from simmer_sdk.backtest import run_backtest
 report = run_backtest(
     "./my-skill",
     entrypoint="run.py",
-    tape="./slice",
+    # omit `tape=` to fetch + cache the window (uses SIMMER_API_KEY);
+    # or pass tape="./slice" to use your own local slice.
     t0="2026-03-01", t1="2026-03-08",
     cadence="12h",
 )
@@ -126,9 +139,21 @@ non-zero.
 
 ## Getting a tape
 
-For now, pass a local `--tape` directory or use `--demo`. Self-serve window
-download (`--window 30d` to fetch a slice automatically) is coming in a follow-up
-release.
+Most users don't need to — pass `--t0`/`--t1` (or `--window`) and the slice is
+fetched and cached automatically (see [above](#backtest-your-own-skill)).
+
+<Note>
+  **Data coverage currently ends ~2026-05-05.** Pick a window inside that range;
+  a window starting after it returns an error. (The dataset is a snapshot of
+  public on-chain Polymarket history; a freshness updater is planned.)
+</Note>
+
+**Bring your own tape (`--tape`).** If you'd rather supply your own data — a
+different window, your own source, or to work fully offline — point `--tape` at a
+local directory containing `markets.parquet` + `quant.parquet`. The public,
+MIT-licensed dataset and the toolkit to regenerate it live at
+[SII-WANGZJ/Polymarket_data](https://huggingface.co/datasets/SII-WANGZJ/Polymarket_data);
+`--tape` lets power users slice their own and skip the hosted fetch entirely.
 
 ## Graduation path
 
