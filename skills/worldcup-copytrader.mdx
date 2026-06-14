@@ -4,7 +4,7 @@ description: Copy the top World Cup traders on Polymarket — auto-curated daily
 icon: futbol
 ---
 
-The `polymarket-worldcup-copytrader` skill copies the top World Cup traders on Polymarket using Simmer's auto-curated leader set. Unlike [`polymarket-copytrading`](/pro/reactor#the-first-reactor-skill-polymarket-copytrading), there is no wallet list to configure — Simmer's daily curation job screens the top WC traders for *copyability* (slippage-adjusted copy P&L via PolyNode) and serves the qualified set through [`GET /api/sdk/wc/copy-leaders`](/api-reference/wc-copy-leaders).
+The `polymarket-worldcup-copytrader` skill copies the top World Cup traders on Polymarket using Simmer's auto-curated leader set. Unlike [`polymarket-copytrading`](/pro/reactor#signal-type-catalog), there is no wallet list to configure — Simmer's daily curation job screens the top WC traders for *copyability* (slippage-adjusted copy P&L via PolyNode) and serves the qualified set through the `GET /api/sdk/wc/copy-leaders` endpoint.
 
 <Info>
 **Free tier.** No Pro subscription required. Works with managed and self-custody wallets, on `$SIM` (paper) or Polymarket (real USDC).
