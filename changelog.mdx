@@ -37,6 +37,33 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-06-13 — `simmer-sdk` 0.18.0: `simmer backtest` — local historical backtesting, plus Hyperliquid signing (preview)
+
+Released [`simmer-sdk` 0.18.0](https://pypi.org/project/simmer-sdk/0.18.0/) on PyPI. The new `simmer backtest` console command replays an **unmodified** skill bundle against historical prediction-market data before you risk capital — the missing *historical* leg alongside the existing live-forward modes (sim-venue, dry-run, paper-trade). Install the extra and run it:
+
+```bash
+pip install 'simmer-sdk[backtest]'
+simmer backtest ./my-skill --entrypoint run.py --tape ./slice \
+    --t0 2026-03-01 --t1 2026-03-08 [--cadence 12h] [--out report.json]
+simmer backtest --demo        # bundled offline demo, no tape needed
+```
+
+The engine runs locally, replaying your real skill subprocess against a frozen, look-ahead-safe replay server, and returns pnl, hit-rate, drawdown, trades, decisions, buy-and-hold / random baselines, realism gaps, and a reproducible `config_hash`. There's a programmatic mirror at `simmer_sdk.backtest.run_backtest(...)`. Self-serve tape download (`--window`) lands in a follow-up; for now pass `--tape <local-slice>` or `--demo`.
+
+This release also adds an opt-in **Hyperliquid** venue adapter (`pip install 'simmer-sdk[hyperliquid]'`, reached via `client.hyperliquid`) for HIP-4 outcome-market signing. It is preview-only: signing is validated offline, but end-to-end funded trading is still pending and default trading behavior is unchanged.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
+## 2026-06-12 — `simmer-sdk` 0.17.32: Binance-trio skills read signals from Simmer's data plane
+
+Released [`simmer-sdk` 0.17.32](https://pypi.org/project/simmer-sdk/0.17.32/) on PyPI. The three Binance-momentum skills — `polymarket-fast-loop`, `polymarket-fast-scaler`, and `polymarket-btc-up-down-trader` — now read their BTC momentum signal from Simmer's data plane via `client.get_candles()` instead of calling `api.binance.com` directly. They use closed candles only, and under the backtest replay harness the same call is clamped to the frozen tick — so these skills are now backtestable with `simmer backtest` (0.18.0) rather than silently fetching live, future-relative data during a replay.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
 ## 2026-06-12 — `simmer-sdk` 0.17.31: `venue`/`sort`/`tags` discovery filters, and an upcoming default-ordering change
 
 Released [`simmer-sdk` 0.17.31](https://pypi.org/project/simmer-sdk/0.17.31/) on PyPI. `client.get_markets()` gains three keyword-only arguments for market discovery. `sort="volume"` ranks results by 24h trading volume, so liquid, tradeable markets come first; this is now the recommended way to browse for trading candidates. `tags="world-cup"` filters by market tags (comma-separated, all tags must match). `venue="sim"`, `venue="polymarket"`, or `venue="kalshi"` filters by trading venue. Positional call sites from earlier versions are unaffected.
