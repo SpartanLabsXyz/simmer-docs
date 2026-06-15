@@ -267,6 +267,24 @@ if edge.get("recommendation") == "HOLD":
 
 This isn't a hard rule -- some high-frequency skills skip context checks for speed. But for most strategies, checking context prevents costly mistakes like flip-flopping or trading into illiquid books.
 
+### Discovering markets already in Simmer
+
+`client.get_markets()` is how you browse Simmer's index. The trap: an **unfiltered** browse is server-windowed to roughly the newest ~1,000 active markets, out of 20k+. A market that has been in the index for a while is absent from an unfiltered result even though it's fully tradeable — "not in `get_markets()`" does **not** mean "not imported."
+
+Always filter for discovery. `q=`, `tags=`, and `sort=` are applied server-side *before* the window, so they reach the whole catalog:
+
+```python
+# Filtered — reaches the full catalog
+wc_legs    = client.get_markets(tags="world-cup", limit=50)
+liquid     = client.get_markets(sort="volume", limit=20)
+by_keyword = client.get_markets(q="win group", limit=50)
+
+# Unfiltered — only the newest ~1,000, silently misses older markets
+markets = client.get_markets(limit=50)
+```
+
+Before you conclude a market is missing and reach for `import_market` (below), confirm with a filtered `q=` search or `client.check_market_exists(...)`. Re-importing a market that's already indexed just burns your daily import quota.
+
 ### Discover-then-trade for arbitrary markets
 
 If your skill discovers markets off-Simmer (e.g. via the Polymarket Gamma API by event slug, or by walking external trader portfolios), you can't trade them via `SimmerClient.trade()` until they're in Simmer's index — every trade endpoint, including paper modes, fetches the price from `/api/sdk/context/{market_id}` and 404s for unindexed markets.
