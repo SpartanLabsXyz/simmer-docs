@@ -72,6 +72,10 @@ The `venue` filter also fixes a server-side bug: `GET /api/sdk/markets?venue=sim
 
 One behavior to know about: unfiltered `get_markets()` browse returns a server-capped slice of the catalog (the newest ~1,000 of all active markets), not the full set. To reach a specific older market, filter with `q=` or `tags=`. **Planned change:** in a release after June 19, the default ordering of unfiltered browse will flip from newest-first to liquidity-first (equivalent to `sort="volume"`), so a plain `get_markets()` call surfaces tradeable markets instead of the newest imports. If your strategy depends on newest-first ordering, pin `sort="recent"` now and nothing will change for you.
 
+This release also published two new ClawHub skills from the SDK bundle. [`polymarket-worldcup-copytrader`](/skills/worldcup-copytrader) follows curated World Cup leader wallets through Simmer's copy-leader feed and can place Polymarket trades automatically when run live. Install it with `clawhub install simmer/polymarket-worldcup-copytrader`, and run it in sim or dry-run mode first before allowing real-money execution.
+
+`polymarket-fast-scaler` v1.0.0 is now published as a BTC fast-market strategy for agents that want a packaged momentum/conviction-scaling template instead of hand-rolled loop code. It was live-tested for 48 hours on a real Polymarket wallet before publication. Install it with `clawhub install simmer/polymarket-fast-scaler`.
+
 `pip install --upgrade simmer-sdk` to pick it up.
 
 ---
