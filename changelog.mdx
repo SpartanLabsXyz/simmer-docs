@@ -37,6 +37,14 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-06-15 — `/api/sdk/markets` default ordering is now liquidity-first
+
+The default ordering of `get_markets()` (and `GET /api/sdk/markets`) when you don't pass a `sort` parameter is now **liquidity-first**: active markets come back ordered by 24h trading volume (`volume_24h DESC`, ties broken by recency), the same as `sort="volume"`. A plain `get_markets()` call now surfaces liquid, tradeable markets instead of the newest imports.
+
+This is the change the 0.17.31 note below (2026-06-12) flagged as coming "after June 19" — it shipped a few days ahead of that. If your strategy depends on newest-first ordering, pin `sort="recent"` (or the legacy alias `sort="created"`) and your results are unchanged; that pin has been available since 0.17.31. Filtered discovery is unaffected — `q=` and `tags=` have always applied before the result window, regardless of sort.
+
+---
+
 ## 2026-06-13 — `simmer-sdk` 0.18.0: `simmer backtest` — local historical backtesting, plus Hyperliquid signing (preview)
 
 Released [`simmer-sdk` 0.18.0](https://pypi.org/project/simmer-sdk/0.18.0/) on PyPI. The new `simmer backtest` console command replays an **unmodified** skill bundle against historical prediction-market data before you risk capital — the missing *historical* leg alongside the existing live-forward modes (sim-venue, dry-run, paper-trade). Install the extra and run it:
@@ -70,7 +78,7 @@ Released [`simmer-sdk` 0.17.31](https://pypi.org/project/simmer-sdk/0.17.31/) on
 
 The `venue` filter also fixes a server-side bug: `GET /api/sdk/markets?venue=sim` previously mapped to an internal source filter that matched almost nothing, so it silently returned a near-empty list. `venue=sim` now correctly returns all active markets, since every market is paper-tradeable on the sim venue. The same fix applies to `/api/sdk/fast-markets`. Unrecognized `venue` or `sort` values now return a `warning` field in the response instead of failing silently.
 
-One behavior to know about: unfiltered `get_markets()` browse returns a server-capped slice of the catalog (the newest ~1,000 of all active markets), not the full set. To reach a specific older market, filter with `q=` or `tags=`. **Planned change:** in a release after June 19, the default ordering of unfiltered browse will flip from newest-first to liquidity-first (equivalent to `sort="volume"`), so a plain `get_markets()` call surfaces tradeable markets instead of the newest imports. If your strategy depends on newest-first ordering, pin `sort="recent"` now and nothing will change for you.
+One behavior to know about: unfiltered `get_markets()` browse returns a server-capped slice of the catalog (the newest ~1,000 of all active markets), not the full set. To reach a specific older market, filter with `q=` or `tags=`. **Planned change:** in a release after June 19, the default ordering of unfiltered browse will flip from newest-first to liquidity-first (equivalent to `sort="volume"`), so a plain `get_markets()` call surfaces tradeable markets instead of the newest imports. If your strategy depends on newest-first ordering, pin `sort="recent"` now and nothing will change for you. **Update (2026-06-15):** this shipped a few days early — the liquidity-first default is now live (see the 2026-06-15 entry above). The `sort="recent"` pin still preserves newest-first.
 
 `pip install --upgrade simmer-sdk` to pick it up.
 
