@@ -84,6 +84,18 @@ One behavior to know about: unfiltered `get_markets()` browse returns a server-c
 
 ---
 
+## 2026-06-12 — Two new Polymarket skills on ClawHub: World Cup Copytrader and Fast Scaler
+
+Alongside the 0.17.31 SDK release, two new trading skills published to ClawHub.
+
+**`polymarket-worldcup-copytrader`** copies the auto-curated top World Cup traders on Polymarket. Unlike the base `polymarket-copytrading` skill, which needs a manually maintained wallet list, this one fetches its leader set automatically from Simmer's daily World Cup curation — the top copyable WC sharps, screened by slippage-adjusted copy-PnL. It aggregates positions across all leaders size-weighted, detects conflicting signals, and filters stale or drifting wallets. It defaults to dry-run and sim-first (`--venue sim`); point it at real USDC only once you've watched it on the synthetic venue. Because copytrading executes without per-trade approval, treat it as novel-risk automation. Install with `clawhub install polymarket-worldcup-copytrader`.
+
+**`polymarket-fast-scaler`** (v1.0.0) is a magnitude-gated BTC 5-minute fast-market strategy. It fires only when short-term BTC momentum clears its magnitude gate — the regime its backtest found EV-positive — and scales position size across three conviction tiers. It was live-tested for 48 hours on a real Polymarket wallet, honoring its budget cap. Install with `clawhub install polymarket-fast-scaler`.
+
+`pip install --upgrade simmer-sdk` for the SDK; browse published skills with `clawhub search polymarket`.
+
+---
+
 ## 2026-06-08 — `simmer-sdk` 0.17.28: `get_markets(q=...)` keyword search
 
 Released [`simmer-sdk` 0.17.28](https://pypi.org/project/simmer-sdk/0.17.28/) on PyPI. `client.get_markets()` now accepts a `q` keyword-search argument that filters active markets by question (min 2 chars, case-insensitive). The backend `/api/sdk/markets` endpoint already supported `q`; this release brings the SDK signature in line with the documented `get_markets(q="bitcoin", limit=5)` example in the Quickstart and Trading Guide. Existing callers without `q` continue to receive all active markets.
