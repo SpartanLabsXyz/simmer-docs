@@ -437,11 +437,21 @@ if market.polymarket_condition_id:
 
 Returns `address`, `display_name`, `amount`, `outcome`, and `profile_url` per holder. Use `market.polymarket_condition_id` (0x hex) — not the Simmer UUID or CLOB token ID.
 
+<Warning>
+**`polymarket_condition_id` can be `None`.** Not every market in Simmer has a mapped Polymarket condition ID — new imports, Kalshi markets, and some edge cases may return `None`. Always guard with `if market.polymarket_condition_id:` (as in the example above).
+
+For cross-referencing Polymarket markets, prefer `market.polymarket_token_id` (YES CLOB token) and `market.polymarket_no_token_id` (NO CLOB token) — these are populated for any market with a live CLOB and are the reliable keys for wallet-position lookups and order routing. `polymarket_condition_id` is only needed for the `get_top_holders()` call.
+</Warning>
+
 ### External market data
 
 The SDK doesn't bundle third-party API clients. If your skill needs Polymarket metadata beyond what `SimmerClient.get_markets()` exposes — categories, descriptions, full event groupings, raw volume and liquidity — call [Polymarket's Gamma API](https://gamma-api.polymarket.com/) directly from the skill. It's free, no auth, well-documented. Keep the helper next to the skill so the SDK stays scoped to Simmer's surface area plus universal primitives.
 
 ## Publishing
+
+<Note>
+**Node.js >= 22.12 required** for all `npx clawhub@latest` commands. Run `node --version` to check. The ClawHub CLI uses native `fetch` APIs introduced in Node 22.12; older versions will fail with a runtime error on the publish or install step.
+</Note>
 
 ```bash
 # From inside your skill folder
@@ -451,12 +461,14 @@ npx clawhub@latest publish . --slug your-skill-slug --version 1.0.0
 npx clawhub@latest publish . --slug your-skill-slug --bump patch
 ```
 
-Within 6 hours, the Simmer sync job will:
+**License:** Publishing accepts Simmer's **MIT-0** skill license terms automatically when using `npx clawhub@latest` (CLI 0.15.0+). MIT-0 is a no-attribution variant of MIT — no copyright notice required in distributions. To publish under a different license, include a `LICENSE` file in your skill folder before publishing; ClawHub's moderation scanner will use it instead of the MIT-0 default.
+
+Within **~6 hours**, the Simmer sync job will:
 1. Discover your skill via ClawHub search
-2. Verify it has `simmer-sdk` as a dependency
+2. Verify it has `simmer-sdk` as a `requires.pip` dependency (this is the trigger — skills without it are ignored)
 3. Add it to the registry at [simmer.markets/skills](https://simmer.markets/skills)
 
-No approval process. No submission form.
+No approval process. No submission form. Subsequent updates (version bumps, metadata changes) sync within ~1 hour once the skill is initially indexed.
 
 <Warning>
 **Always pass `--slug` explicitly.** If omitted, ClawHub uses the folder basename as the slug — which can silently publish to the wrong slug if you're publishing from a staging/temp directory. Make the slug explicit every time.

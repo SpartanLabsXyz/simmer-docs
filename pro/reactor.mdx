@@ -103,6 +103,57 @@ python copytrading_trader.py --reactor --once   # cron-safe; recommended
 **Buys only (MVP).** Reactor currently mirrors whale **buys only**. Sell signals are filtered server-side. Sell mirroring is planned for a future release.
 </Warning>
 
+#### Polling mode — how the copytrading endpoint works
+
+The `polymarket-copytrading` skill also has a free-tier **polling mode** that doesn't use the reactor bus. Understanding its endpoint pattern is useful if you're building a custom copytrading flow:
+
+```
+POST /api/sdk/copytrading/execute  (server-side)
+  → server reads tracked whale wallets, aggregates positions, returns planned trades
+client.trade()                     (client-side, once per planned trade)
+  → your agent signs and submits each trade
+```
+
+There is **no `copytrading_execute()` method on `SimmerClient`** — the server-side planning and the client-side signing are deliberately split. Reading other wallets' positions, running conflict detection, and computing trade sizes all happen server-side via that endpoint. The client only executes the resulting plan.
+
+```python
+import os, requests
+from simmer_sdk import SimmerClient
+
+client = SimmerClient.from_env()
+
+# Step 1: server computes the plan from whale positions
+resp = requests.post(
+    "https://api.simmer.markets/api/sdk/copytrading/execute",
+    headers={"Authorization": f"Bearer {os.environ['SIMMER_API_KEY']}"},
+    json={
+        "wallets": ["0xWhaleWallet1", "0xWhaleWallet2"],
+        "max_usd_per_position": 50.0,
+        "dry_run": True,  # always fetch plan first; omit or set False to skip step 2
+        "buy_only": True,
+        "venue": "sim",   # "polymarket" for real USDC
+    },
+    timeout=60,
+)
+plan = resp.json()
+
+# Step 2: execute each planned trade client-side (handles signing)
+for t in plan.get("trades", []):
+    result = client.trade(
+        market_id=t["market_id"],
+        side=t["side"],
+        action=t.get("action", "buy"),
+        amount=t["estimated_cost"] if t.get("action") != "sell" else 0,
+        shares=t["shares"] if t.get("action") == "sell" else 0,
+        order_type="GTC",
+        reasoning=f"Copytrading: mirror whale on {t.get('market_title', '')}",
+        source="sdk:copytrading",
+    )
+    print(f"{t['market_id']}: success={result.success}")
+```
+
+**World Cup variant:** `polymarket-worldcup-copytrader` uses `GET /api/sdk/wc/copy-leaders` to fetch a daily-curated leader set, then passes those wallets into the same `POST /api/sdk/copytrading/execute` flow. See [World Cup Copytrader](/skills/worldcup-copytrader).
+
 ### `shock_ladder` — Soccer in-play shock fader
 
 Emitted by Simmer's shock detector when a Polymarket World Cup market's price drops sharply during a live match. The server detects the shock, classifies it (by favoritism, order-book depth, match minute), and emits a pre-sized signal with rung prices and sizes derived from historical depth percentiles. The `polymarket-soccer-shock-ladder` skill consumes this type.
@@ -197,9 +248,9 @@ Reactor works with any agent runtime — OpenClaw, Hermes, Claude Code, or plain
 
 - **Simmer Pro** plan
 - `SIMMER_API_KEY` environment variable
-- `simmer-sdk` Python package, version 0.17.0 or newer:
+- `simmer-sdk` Python package, 0.20.0 or newer:
   ```bash
-  pip install -U 'simmer-sdk>=0.17.0'
+  pip install -U 'simmer-sdk>=0.20.0'
   ```
 
 Have a skill idea that needs real-time on-chain data? Tell us in [Telegram](https://t.me/simaborz) or [Discord](https://discord.gg/simmer).

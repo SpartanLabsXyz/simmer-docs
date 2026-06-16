@@ -9,8 +9,12 @@ The `simmer-sdk` package wraps the [REST API](/api/overview) with an authenticat
 ## Installation
 
 ```bash
-pip install simmer-sdk
+pip install -U simmer-sdk   # examples on this page verified against 0.20.0
 ```
+
+<Note>
+Run `pip install -U simmer-sdk` to get the latest version. Versions before 0.20.0 are missing several `get_markets` keyword filters (`q`, `venue`, `sort`, `tags`) and will raise `TypeError`.
+</Note>
 
 ## Initialization
 
@@ -73,14 +77,19 @@ Unfiltered browse returns a server-capped slice of the catalog (the newest ~1,00
 ### Market
 
 ```python
-market.id                    # UUID
-market.question              # Market question
-market.status                # "active" or "resolved"
-market.current_probability   # Current YES price (0-1)
-market.url                   # Direct link
-market.import_source         # "polymarket", "kalshi", etc.
-market.resolves_at           # Resolution date
+market.id                        # UUID
+market.question                  # Market question
+market.status                    # "active" or "resolved"
+market.current_probability       # Current YES price (0-1)
+market.url                       # Direct link
+market.import_source             # "polymarket", "kalshi", etc.
+market.resolves_at               # Resolution date
+market.polymarket_token_id       # YES CLOB token ID (may be None for non-Polymarket markets)
+market.polymarket_no_token_id    # NO CLOB token ID (may be None)
+market.polymarket_condition_id   # Polymarket condition ID 0x hex — may be None; use for get_top_holders()
 ```
+
+`polymarket_condition_id` is `None` for Kalshi markets, some new imports, and edge cases. For cross-referencing Polymarket markets, `polymarket_token_id` and `polymarket_no_token_id` are the more reliable keys — they're populated for any market with an active CLOB.
 
 ### TradeResult
 
