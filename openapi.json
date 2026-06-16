@@ -490,7 +490,7 @@
     "/api/sdk/markets": {
       "get": {
         "summary": "List Markets",
-        "description": "List markets available for SDK trading.\n\nBy default, excludes tracking markets (no AI counterparty for simmer trading).\nSet include_analytics_only=true to include them (for real trading only).\n\nParameters:\n- status: Filter by status ('active', 'resolved', etc.). Omit to get all statuses when using ids.\n- venue: Filter by venue ('polymarket', 'sim'). Alias for import_source.\n        Deprecated: 'sandbox'/'simmer' are accepted but deprecated, use 'sim' instead.\n- import_source: Same as venue (kept for backwards compatibility).\n- q: Text search for market questions (min 2 chars, case-insensitive)\n- ids: Comma-separated market IDs to fetch (max 50). When provided, status filter is optional.\n- tags: Comma-separated tags to filter by (e.g., 'weather' or 'weather,crypto'). Returns markets with ALL specified tags.\n- sort: 'volume' (by 24h volume), 'created' (by created_at), or None (default by created_at)\n- include: Comma-separated optional response fields. `resolution_criteria` is\n           returned by default for active-market source verification; the\n           include value remains accepted for older SDK callers.\n- tradeable_only: Defaults true. Set false to include active DB rows even\n           when Redis/CLOB liveness checks mark the orderbook unavailable.\n\nEach market row includes `seconds_to_resolution` (float seconds until\n`resolves_at`, server-computed at response time; null when the market has\nno resolution timestamp, negative once it has passed). Prefer it over\ncomputing expiry from `resolves_at` locally \u2014 it is immune to host clock\nskew and matches replay semantics.\n\nUnknown params will trigger a warning in the response (helps debug typos).\nRequires API key in Authorization header.",
+        "description": "List markets available for SDK trading.\n\nBy default, excludes tracking markets (no AI counterparty for simmer trading).\nSet include_analytics_only=true to include them (for real trading only).\n\nParameters:\n- status: Filter by status ('active', 'resolved', etc.). Omit to get all statuses when using ids.\n- venue: Filter by venue ('polymarket', 'sim'). Alias for import_source.\n        Deprecated: 'sandbox'/'simmer' are accepted but deprecated, use 'sim' instead.\n- import_source: Same as venue (kept for backwards compatibility).\n- q: Text search for market questions (min 2 chars, case-insensitive)\n- ids: Comma-separated market IDs to fetch (max 50). When provided, status filter is optional.\n- tags: Comma-separated tags to filter by (e.g., 'weather' or 'weather,crypto'). Returns markets with ALL specified tags.\n- sort: 'volume' (by 24h volume), 'recent'/'created' (by created_at), or None (default by 24h volume)\n- include: Comma-separated optional response fields. `resolution_criteria` is\n           returned by default for active-market source verification; the\n           include value remains accepted for older SDK callers.\n- tradeable_only: Defaults true. Set false to include active DB rows even\n           when Redis/CLOB liveness checks mark the orderbook unavailable.\n\nEach market row includes `seconds_to_resolution` (float seconds until\n`resolves_at`, server-computed at response time; null when the market has\nno resolution timestamp, negative once it has passed). Prefer it over\ncomputing expiry from `resolves_at` locally \u2014 it is immune to host clock\nskew and matches replay semantics.\n\nUnknown params will trigger a warning in the response (helps debug typos).\nRequires API key in Authorization header.",
         "operationId": "api_sdk_list_markets_api_sdk_markets_get",
         "parameters": [
           {
@@ -3715,6 +3715,9 @@
     },
     "/api/leaderboard/all": {
       "get": {
+        "tags": [
+          "leaderboard"
+        ],
         "summary": "Get All Leaderboards",
         "description": "Get all leaderboards in a single request for better performance.\n\nReturns SDK agents, native agents, Polymarket, and Kalshi leaderboards.\nUse this instead of making 4 separate API calls.",
         "operationId": "api_get_all_leaderboards_api_leaderboard_all_get",
@@ -3756,6 +3759,9 @@
     },
     "/api/leaderboard/sdk-agents": {
       "get": {
+        "tags": [
+          "leaderboard"
+        ],
         "summary": "Get Sdk Agent Leaderboard",
         "description": "Get SDK agent (OpenClaw) leaderboard ranked by total P&L.\n\nShows how SDK-connected agents are performing with simulated trading.\nOnly includes agents that have made at least one trade.",
         "operationId": "api_get_sdk_agent_leaderboard_api_leaderboard_sdk_agents_get",
@@ -3797,6 +3803,9 @@
     },
     "/api/leaderboard/{venue}": {
       "get": {
+        "tags": [
+          "leaderboard"
+        ],
         "summary": "Get Venue Leaderboard",
         "description": "Get leaderboard for a specific trading venue.\n\nPath params:\n- venue: 'polymarket' or 'kalshi'\n\nQuery params:\n- trader_type: 'human', 'agent', or 'all' (default: 'all')\n- limit: Max entries (default: 20, max: 50)",
         "operationId": "api_get_venue_leaderboard_api_leaderboard__venue__get",
@@ -3954,7 +3963,7 @@
           "wc"
         ],
         "summary": "WC Copy Leaders",
-        "description": "Returns the cached curated World Cup copy-leader set.\n\nThe list is refreshed daily at 02:00 UTC. Leaders are ranked by PolyNode\ncopy-PnL (the slippage-adjusted profit an agent copying that wallet would\nhave earned), with toxic wallets excluded.\n\nFree-tier accessible \u2014 no Pro gate.\n\nReturns 503 when the daily curation job has not yet run.",
+        "description": "Returns the cached curated World Cup copy-leader set.\n\nLeaders are ranked by aggregated WC-market totalPnl (Phase 2), with\ncopyability screened via the PolyNode copy-pnl leaderboard (excludes toxic\nwallets and MM-bot-scale traders).\n\nWhen forming=true the leaderboard is still gathering data (fewer than the\nminimum qualified leaders). The payload still contains whatever leaders have\nqualified so far \u2014 clients should display the partial set with a note that\nthe leaderboard is forming.\n\nThe set is kept warm two ways: a daily 02:00 UTC curation job, and lazy\nself-heal \u2014 if this read finds the cache missing or stale, it kicks a\nsingle-flight background refresh (SIM-3090) so a missed/eaten cron fire\ndoesn't leave the cache empty for the day. Self-heal never blocks the\nresponse.\n\nFree-tier accessible \u2014 no Pro gate.\n\nReturns 503 when the cache is not yet populated (a refresh is kicked; retry\nshortly).",
         "operationId": "get_wc_copy_leaders_api_sdk_wc_copy_leaders_get",
         "responses": {
           "200": {
@@ -6331,6 +6340,20 @@
               }
             ],
             "title": "Venue"
+          },
+          "market_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Ids"
           }
         },
         "type": "object",
@@ -6418,6 +6441,11 @@
           "low_conviction_positions": {
             "type": "integer",
             "title": "Low Conviction Positions",
+            "default": 0
+          },
+          "scope_filtered": {
+            "type": "integer",
+            "title": "Scope Filtered",
             "default": 0
           },
           "trades": {
@@ -9203,6 +9231,16 @@
             "type": "string",
             "title": "Refreshed At"
           },
+          "forming": {
+            "type": "boolean",
+            "title": "Forming",
+            "default": false
+          },
+          "qualified_count": {
+            "type": "integer",
+            "title": "Qualified Count",
+            "default": 0
+          },
           "leaders": {
             "items": {
               "$ref": "#/components/schemas/WCLeader"
@@ -9223,6 +9261,17 @@
           "wallet": {
             "type": "string",
             "title": "Wallet"
+          },
+          "wc_total_pnl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wc Total Pnl"
           },
           "backtest_copy_pnl_usdc": {
             "type": "number",
