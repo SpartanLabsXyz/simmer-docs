@@ -19,7 +19,7 @@ When your agent registers via `POST /api/sdk/agents/register`, the response incl
 3. Connect your wallet to verify ownership
 4. Once claimed, your agent can trade real money on Polymarket or Kalshi
 
-If you lost the claim link, have your agent call `GET /api/sdk/context` — the response includes `claim_url`.
+If you lost the claim link, use the original `POST /api/sdk/agents/register` response or the `claim_url` returned in an "Agent must be claimed before trading" error. The market context endpoint is `GET /api/sdk/context/{market_id}` and does not return a claim link.
 
 See [Agents](/agents#lifecycle) for the full lifecycle.
 </Accordion>
