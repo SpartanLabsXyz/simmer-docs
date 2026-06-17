@@ -37,11 +37,56 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-06-16 — `simmer-sdk` 0.20.0: V2 orders now attributed to Simmer's builder code
+
+Released [`simmer-sdk` 0.20.0](https://pypi.org/project/simmer-sdk/0.20.0/) on PyPI. V2 orders placed through the SDK now default to Simmer's Polymarket builder code for attribution instead of zero bytes. Prior to this release the `builder` field defaulted to zero unless the operator set `POLY_BUILDER_CODE`, so external and self-custody operators — roughly half of all SDK volume — were shipping unattributed orders. The managed-wallet (server-side) path was already attributed; this release closes the external cohort.
+
+Attribution precedence is: explicit `builder_code` argument → `POLY_BUILDER_CODE` environment variable → Simmer's default. To attribute to your own builder profile, pass `builder_code=...` or set `POLY_BUILDER_CODE`. Pass `ZERO_BYTES32` to opt out entirely. The builder code is a public on-chain attribution identifier, not a secret, and Simmer's builder profile carries **0% maker/taker fees** — attribution adds no cost to operators' trades. Because orders are signed client-side, old installs keep current behavior until upgraded.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
+## 2026-06-16 — `simmer-sdk` 0.19.2: `trade()` rounds to venue precision instead of rejecting full-precision floats
+
+Released [`simmer-sdk` 0.19.2](https://pypi.org/project/simmer-sdk/0.19.2/) on PyPI. `client.trade()` previously raised `ValueError` when `amount` had more than 2 decimal places or `shares` more than 5, requiring every skill to add a `round(cost, 2)` workaround. Planner and Kelly sizing routinely produces values like `16.489550245148255`; without this fix, those trades silently dropped on live runs — the World Cup copytrader lost 3 of 10 trades to this bug alone.
+
+`trade()` now quantizes `amount` to 2 decimals and `shares` to 5 before submission, logging at debug level when it rounds. Sub-precision values that quantize to `0` are still rejected — a `$0` order is never valid. This is input-precision quantization only; the tick-aware rounding of on-chain maker/taker amounts in `signing.py` is unchanged and the two layers never double-round.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
+## 2026-06-15 — `simmer-sdk` 0.19.1: `find_markets()` now reaches the full active catalogue
+
+Released [`simmer-sdk` 0.19.1](https://pypi.org/project/simmer-sdk/0.19.1/) on PyPI. `find_markets(query)` previously fetched an unfiltered `get_markets(limit=100)` window and filtered client-side, so any market outside the newest-N server window was invisible — most visibly a large portion of live World Cup markets that agents could see on the dashboard but not discover via `find_markets()`. It now pushes the query to the server-side `q` filter, which is applied before the window cap, so older-but-active markets are found. Queries shorter than 2 characters fall back to the previous windowed scan.
+
+Trading was never affected — this is a discovery-only fix, and `get_markets(tags=..., q=..., sort="volume")` already reached these markets. The companion MCP tool `simmer_get_markets` (simmer-mcp 3.4.3) also gains a tool-description note clarifying that unfiltered browse is windowed and to pass `tags`/`q`/`sort` to reach a full category.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
 ## 2026-06-15 — `/api/sdk/markets` default ordering is now liquidity-first
 
 The default ordering of `get_markets()` (and `GET /api/sdk/markets`) when you don't pass a `sort` parameter is now **liquidity-first**: active markets come back ordered by 24h trading volume (`volume_24h DESC`, ties broken by recency), the same as `sort="volume"`. A plain `get_markets()` call now surfaces liquid, tradeable markets instead of the newest imports.
 
 This is the change the 0.17.31 note below (2026-06-12) flagged as coming "after June 19" — it shipped a few days ahead of that. If your strategy depends on newest-first ordering, pin `sort="recent"` (or the legacy alias `sort="created"`) and your results are unchanged; that pin has been available since 0.17.31. Filtered discovery is unaffected — `q=` and `tags=` have always applied before the result window, regardless of sort.
+
+---
+
+## 2026-06-14 — `simmer-sdk` 0.19.0: `simmer backtest` self-serve tape download
+
+Released [`simmer-sdk` 0.19.0](https://pypi.org/project/simmer-sdk/0.19.0/) on PyPI. `simmer backtest` no longer requires a local tape. Omit `--tape` and pass `--window 30d` (or `--t0`/`--t1`) and the engine fetches the appropriate slice from Simmer's backend tape service (`POST /api/backtest/tape`), slices the canonical Polymarket dataset server-side, and caches it under `~/.simmer/tapes/`. The public Hugging Face dump's CDN serves at ~0.44 MB/s — too slow for practical client-side slicing; the backend stages the dataset into fast object storage and slices intra-datacenter.
+
+```bash
+simmer backtest ./my-skill --entrypoint run.py --t0 2026-03-01 --t1 2026-03-08
+simmer backtest ./my-skill --entrypoint run.py --window 30d
+```
+
+New flags `--max-markets` and `--min-volume` clamp the server-side slice (server caps at 1000 markets); `--base-url` defaults to `SIMMER_API_URL` or production. The programmatic API `run_backtest(...)` now accepts `tape=None` to trigger a fetch, plus `max_markets`, `min_volume`, and `base_url` kwargs. `--tape <local>` stays as a BYO escape hatch. Data coverage currently ends around 2026-05-05.
+
+`pip install --upgrade simmer-sdk` to pick it up.
 
 ---
 
