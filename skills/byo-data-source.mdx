@@ -1,0 +1,78 @@
+---
+title: Bring Your Own Data
+description: Wire a data source you already have access to into your agent by generating a clean, agent-native CLI/MCP for it.
+icon: database
+---
+
+A trading agent is only as good as the data it reasons over. Simmer gives your agent first-class access to its core surface — markets, prices, positions, context, and briefing across every venue (see [Building Skills](/skills/building)). For everything beyond that — a data feed you subscribe to, a broker or analytics API you hold keys for, an internal tool you operate — you can **bring your own data**: generate a clean, agent-native interface for it and plug it into your skill.
+
+<Warning>
+**Only bring data you are authorized to use.** This pattern is for sources you already have rights to — your own API keys, subscriptions, accounts, or data. Many services prohibit automated access or redistribution in their Terms of Service; some prohibit reverse-engineering. You are responsible for ensuring your use is permitted. Simmer does not host, proxy, cache, or redistribute anything you generate this way — it runs entirely on your machine, under your own access and credentials.
+</Warning>
+
+## The pattern
+
+The SDK deliberately doesn't bundle third-party API clients — it stays scoped to Simmer's surface plus universal primitives. For a one-off call, hitting the source's API directly from your skill is fine (see [External market data](/skills/building#external-market-data)). But when you want a **reusable, agent-native interface** to a source — one your agent can call thousands of times a day without burning tokens on hand-rolled request payloads — generate a dedicated CLI/MCP for it.
+
+The tool for this is [Printing Press](https://github.com/mvanhorn/cli-printing-press) (open-source, MIT). It turns an API into a token-efficient CLI **and** an MCP server, shaped for agents: typed exit codes, auto-JSON when piped, `--compact` output, a local SQLite cache. Three input modes:
+
+- **OpenAPI spec** — if the source publishes one.
+- **HAR file** — export your own authenticated session's traffic from your browser's DevTools.
+- **URL** — for a source you operate or are entitled to script, it can capture traffic and reverse-engineer a spec.
+
+## Workflow
+
+<Steps>
+<Step title="Install Printing Press">
+Requires Go 1.26.4+ and an agent that loads [open-agent-skills](https://www.npmjs.com/package/skills) (Claude Code is the tested path).
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mvanhorn/cli-printing-press/main/scripts/install.sh | bash
+```
+</Step>
+
+<Step title="Generate the interface for your source">
+Inside your agent, point it at the API by name, a spec, or a URL you're authorized to use:
+
+```text
+/printing-press <your-source>
+```
+
+You get two binaries — `<source>-pp-cli` (for shell agents) and `<source>-pp-mcp` (an MCP server) — from one spec, sharing the same client, store, and auth.
+</Step>
+
+<Step title="Provide your credentials">
+The generated CLI reads auth from environment variables — **your** keys for **your** access. Run `cli-printing-press auth doctor` to confirm they're set. Nothing is sent to Simmer.
+</Step>
+
+<Step title="Register the MCP with your agent">
+Add the generated `<source>-pp-mcp` server to your agent's MCP config. Now your agent can call the new data source as a native tool — in the same loop where it reads Simmer context and places trades.
+</Step>
+</Steps>
+
+## Using it in a skill
+
+Once your agent can read the external source, the skill shape is the same as any other Simmer skill: **turn the data into one measurable signal, one entry gate, one sizing rule, one exit rule** (see [Building Skills](/skills/building)). Your agent fetches from your data source, forms a probability or signal, and executes through `SimmerClient` with sizing and safeguards:
+
+```python
+from simmer_sdk import SimmerClient
+from simmer_sdk.sizing import size_position
+
+# Your agent reads your data source (via the generated MCP/CLI),
+# turns it into a probability, then trades through Simmer:
+amount = size_position(p_win=my_probability, market_price=price, bankroll=bankroll, min_ev=0.03)
+if amount > 0:
+    client.trade(market_id=mid, side="BUY", outcome="YES", amount=amount,
+                 source="sdk:my-skill", skill_slug="my-skill",
+                 reasoning="Signal from my own data source diverges from market")
+```
+
+Simmer handles the trading plumbing — market discovery, execution, position management, safeguards. Your data source provides the alpha.
+
+<Note>
+This is a developer-grade path. It needs Go, a skills-capable agent harness, and (for the HAR/URL modes) a manual capture step. If you'd rather not run it, hitting your source's API directly from the skill (as in [External market data](/skills/building#external-market-data)) is the lighter option for simple cases.
+</Note>
+
+## What Simmer touches
+
+Nothing. The generated CLI/MCP runs on your machine, authenticates with your credentials, and feeds your agent. Simmer never sees, stores, or redistributes the external data — your agent simply arrives at its trades better-informed. That's the whole point: the data relationship stays yours.
