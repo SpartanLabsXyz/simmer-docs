@@ -26,6 +26,10 @@ Search by keyword or browse active markets.
   </Tab>
 </Tabs>
 
+<Note>
+**Browsing returns a capped window, not the full catalog.** `get_markets()` with no filter returns the ~1,000 highest-volume active markets, so a specific or lower-volume market can be missing even though it's live on the venue. Pass `q=` for keyword search (applied server-side across the full catalog) — or `tags=` / `sort=` — to reach it, e.g. `client.get_markets(q="seoul")`.
+</Note>
+
 The [briefing endpoint](/api-reference/briefing) also surfaces new markets and opportunities in a single call.
 
 <Tip>
