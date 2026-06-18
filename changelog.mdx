@@ -141,6 +141,20 @@ Alongside the 0.17.31 SDK release, two new trading skills published to ClawHub.
 
 ---
 
+## 2026-06-10 — `simmer-sdk` 0.17.29: security hardening for signing flows
+
+Released [`simmer-sdk` 0.17.29](https://pypi.org/project/simmer-sdk/0.17.29/) on PyPI. This release adds client-side validation for server-supplied EIP-712 signing batches before local wallets sign activation, redemption, or wrap transactions. The SDK now refuses unexpected batch payloads instead of asking external wallets, OWS, or per-agent wallets to sign them.
+
+The validation checks that each prepared batch targets pinned Polymarket contracts, uses an allowed selector, and names a pinned spender. The SDK also rejects non-HTTPS `base_url` values except for loopback development URLs, and adds upper version bounds on signing-critical dependencies so fresh installs do not silently pick up incompatible signing libraries.
+
+Upgrade is recommended for anyone signing locally, including external-wallet, OWS, and per-agent wallet flows:
+
+```bash
+pip install --upgrade simmer-sdk
+```
+
+---
+
 ## 2026-06-08 — `simmer-sdk` 0.17.28: `get_markets(q=...)` keyword search
 
 Released [`simmer-sdk` 0.17.28](https://pypi.org/project/simmer-sdk/0.17.28/) on PyPI. `client.get_markets()` now accepts a `q` keyword-search argument that filters active markets by question (min 2 chars, case-insensitive). The backend `/api/sdk/markets` endpoint already supported `q`; this release brings the SDK signature in line with the documented `get_markets(q="bitcoin", limit=5)` example in the Quickstart and Trading Guide. Existing callers without `q` continue to receive all active markets.
