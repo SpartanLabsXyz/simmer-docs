@@ -62,7 +62,7 @@ from simmer_sdk.sizing import size_position
 # turns it into a probability, then trades through Simmer:
 amount = size_position(p_win=my_probability, market_price=price, bankroll=bankroll, min_ev=0.03)
 if amount > 0:
-    client.trade(market_id=mid, side="BUY", outcome="YES", amount=amount,
+    client.trade(market_id=mid, side="yes", amount=amount,
                  source="sdk:my-skill", skill_slug="my-skill",
                  reasoning="Signal from my own data source diverges from market")
 ```
