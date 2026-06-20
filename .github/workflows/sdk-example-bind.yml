@@ -1,0 +1,33 @@
+name: SDK Example Bind
+
+# Proves every documented SDK example binds against the minimum simmer-sdk
+# version the docs claim to support (.sdk-doc-floor). Catches the class of bug
+# where a doc example uses a kwarg/method the shipped wheel rejects — which a
+# builder copying the example hits as a TypeError. See scripts/check_sdk_examples.py.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  sdk-example-bind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install simmer-sdk at the documented floor
+        run: |
+          FLOOR="$(cat .sdk-doc-floor)"
+          echo "Installing simmer-sdk==$FLOOR"
+          pip install "simmer-sdk==$FLOOR" pytest
+
+      - name: Self-test the checker
+        run: pytest scripts/test_check_sdk_examples.py -q
+
+      - name: Bind documented SDK examples against the floor signature
+        run: python scripts/check_sdk_examples.py

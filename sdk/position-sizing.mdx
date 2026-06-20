@@ -31,8 +31,7 @@ amount = size_position(
 if amount > 0:
     client.trade(
         market_id="...",
-        side="BUY",
-        outcome="YES",
+        side="yes",
         amount=amount,
         reasoning="Kelly: 70% vs 55%, +15% edge",
     )
