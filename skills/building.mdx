@@ -144,6 +144,8 @@ Rules:
 }
 ```
 
+`automaton.managed: true` means users can install the published skill and let the managed runner execute its cron for them. They do not need to keep a laptop or VPS online. Advanced users can still self-host a fork by running the script from cron on their own always-on machine; see [Skills → Where does my agent run?](/skills/overview#where-does-my-agent-run) for the managed vs self-hosted credential split.
+
 <Warning>
 `simmer-sdk` in `requires.pip` is required. This is what causes the skill to appear in the Simmer registry automatically.
 </Warning>
