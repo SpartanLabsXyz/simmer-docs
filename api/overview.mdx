@@ -70,7 +70,7 @@ Your exact limits are returned by `GET /api/sdk/agents/me` in the `rate_limits` 
 | Max trade amount (sim) | $500 per trade | $500 per trade | $500 per trade |
 | Max position (sim) | $2,000 per market | $2,000 per market | $2,000 per market |
 
-Sell orders are never blocked by the daily trade cap (you can always exit), but completed trades of either side count toward the daily total. Free users can raise the cap up to 1,000 themselves — no upgrade required. Configure via `PATCH /api/sdk/user/settings`.
+Only buys count toward the daily trade cap — sells (exits) and redemptions are exempt, so you can always close or redeem a position. Free users can raise the cap up to 1,000 themselves — no upgrade required. Configure via `PATCH /api/sdk/user/settings`.
 
 ## HTTP status codes
 
@@ -115,7 +115,7 @@ curl -H "Authorization: Bearer $SIMMER_API_KEY" \
 | `clawdbot_webhook_url` | string | Webhook URL for trade notifications |
 | `clawdbot_chat_id` | string | Chat ID for notifications |
 | `clawdbot_channel` | string | Notification channel (`telegram`, `discord`, etc.) |
-| `max_trades_per_day` | int | Daily trade limit across all venues. Sells never blocked, but count toward the total. Free: max 1,000. Pro: max 5,000. |
+| `max_trades_per_day` | int | Daily buy limit across all venues — sells and redemptions are exempt. Free: max 1,000. Pro: max 5,000. |
 | `max_position_usd` | float | Max USD per position |
 | `default_stop_loss_pct` | float | Default stop-loss percentage (default: 0.50) |
 | `default_take_profit_pct` | float \| null | Default take-profit percentage (default: null = off). Set to `0` to disable. |
