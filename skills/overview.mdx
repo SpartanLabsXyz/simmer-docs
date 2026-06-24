@@ -17,6 +17,29 @@ A skill is an OpenClaw-compatible trading strategy that:
 
 Skills are installed into your agent's skill library via ClawHub CLI and run on a schedule (cron) or on-demand.
 
+## Where does my agent run?
+
+For normal Simmer skills, you do **not** need to rent a server. The default path is managed execution:
+
+1. The skill author publishes a ClawHub skill with `automaton.managed: true`.
+2. You install the skill from [simmer.markets/skills](https://simmer.markets/skills) or ClawHub.
+3. The managed runner executes the skill's cron schedule for you.
+4. The skill uses your `SIMMER_API_KEY` to read markets, place trades, and record reasoning through the Simmer API.
+
+Use this managed path for beginners, single-skill traders, and anything where you just want the strategy to keep running without operating infrastructure.
+
+Self-hosting is the advanced path. In that model, you fork or copy the skill code onto an always-on machine, install its dependencies, set up cron or your preferred agent runtime, and run the script yourself. Self-hosting is useful when you need tighter runtime control, custom networking, local files, private data sources, or a persistent multi-skill agent process.
+
+Keep credentials split by purpose:
+
+| Credential | Where it belongs | Why |
+|---|---|---|
+| `SIMMER_API_KEY` | Managed runner or your self-hosted box | Runtime credential used by the skill to call Simmer. |
+| `WALLET_PRIVATE_KEY` | Only where signing must happen | Optional for external-wallet self-custody flows; never needed for paper trading. |
+| GitHub, ClawHub, npm, or publishing tokens | Your own development machine only | Publishing credentials are for releasing skill code, not for running a user's cron. |
+
+If you are only installing a skill, you should never need to give the runner your GitHub or ClawHub publishing credentials.
+
 ## Browse skills
 
 ### Via API
