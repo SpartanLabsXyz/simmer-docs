@@ -133,14 +133,26 @@ Once registered, the SDK signs all orders through OWS. `WALLET_PRIVATE_KEY` is n
 
 ### Activating the deposit wallet
 
-Registering the wallet (and deploying its deposit wallet) is **not** enough to trade — you also have to set on-chain approvals and cache CLOB credentials. Run both **on the host where the OWS key lives** (the SDK signs locally, gasless):
+Registering the wallet (and deploying its deposit wallet) is **not** enough to trade — you also have to set on-chain approvals and cache CLOB credentials. Run both **on the host where the key lives** (the SDK signs locally, gasless):
 
+<Tabs>
+  <Tab title="OWS wallet">
 ```python
 client.activate_polymarket_dw(agent_id="<agent_id>")          # sets on-chain approvals
 client.update_agent_wallet_creds(ows_wallet_name="<wallet>")  # caches CLOB creds
 ```
+  </Tab>
 
-Both calls are required (approvals first) and idempotent. Note: `client.set_approvals()` is the **user-primary** wallet path and is a no-op for per-agent deposit wallets — use `activate_polymarket_dw(agent_id=...)` for a per-agent wallet.
+  <Tab title="Raw-key / browser wallet">
+```python
+# WALLET_PRIVATE_KEY must be set to the agent EOA private key.
+client.activate_polymarket_dw(agent_id="<agent_id>")  # sets on-chain approvals
+client.update_agent_wallet_creds(agent_id="<agent_id>")  # caches CLOB creds
+```
+  </Tab>
+</Tabs>
+
+Both calls are required (approvals first) and idempotent. OWS wallets pass `ows_wallet_name`; raw-key and browser-backed dedicated per-agent wallets pass `agent_id` with `WALLET_PRIVATE_KEY` set. Note: `client.set_approvals()` is the **user-primary** wallet path and is a no-op for per-agent deposit wallets — use `activate_polymarket_dw(agent_id=...)` for a per-agent wallet.
 
 ## Managed wallet
 
