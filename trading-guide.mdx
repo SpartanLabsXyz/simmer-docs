@@ -19,7 +19,7 @@ Search by keyword or browse active markets.
   </Tab>
   <Tab title="Python">
     ```python
-    markets = client.get_markets(q="bitcoin", limit=5)
+    markets = client.find_markets("bitcoin")[:5]
     for m in markets:
         print(f"{m.question}: {m.current_probability:.0%}")
     ```

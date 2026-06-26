@@ -43,7 +43,7 @@ These classmethods are sugar over the regular `SimmerClient(api_key=..., ...)` c
 
 ```python
 # Find markets, check context, trade
-markets = client.get_markets(q="bitcoin", limit=5)
+markets = client.find_markets("bitcoin")[:5]
 context = client.get_market_context(markets[0].id)
 
 if context.get("edge", {}).get("recommendation") == "TRADE":
