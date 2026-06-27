@@ -145,6 +145,82 @@ Zero. No spread, commission, or markup from Simmer. This may change in the futur
 Simmer passes through venue fees with no additional markup.
 </Accordion>
 
+## Fast Markets & Fill Economics
+
+<Accordion title="How do I read the realized fee and fill price from a trade?">
+`TradeResult` (SDK 0.21.0+) exposes two new fields:
+
+- **`fill_price`** — effective average fill price per share. Equivalent to `cost / shares_filled`. Prefer this over `new_price` in new code.
+- **`fee_rate_bps`** — taker fee rate in basis points (currently **0** on Polymarket; was `None` in earlier SDK versions).
+
+```python
+result = client.trade(market_id="uuid", side="yes", amount=10.0, venue="polymarket")
+
+print(f"Fill price: {result.fill_price:.4f}")          # e.g. 0.6732
+print(f"Fee (bps):  {result.fee_rate_bps}")            # 0 on Polymarket today
+print(f"Per-share cost: {result.cost / result.shares_filled:.4f}")  # same as fill_price
+
+# After the fact, get_trades() rows expose avg_price and cost too
+trades = client.get_trades()
+```
+
+Update to `simmer-sdk >= 0.21.0` (`pip install -U simmer-sdk`) to get these fields. Earlier versions return `None` for `fee_rate_bps` and don't expose `fill_price` at all.
+</Accordion>
+
+<Accordion title="Can I buy exactly N shares? Why does passing `shares` on a buy raise an error?">
+On **buys**, the SDK takes `amount` (USDC to spend) — not `shares`. The exchange decides how many shares your USDC buys at the current ask. Passing `shares` on a buy raises `ValueError` as of SDK 0.21.0 (it was silently ignored in earlier versions).
+
+To buy **exactly N shares**, pass an explicit `price` limit and compute `amount` yourself:
+
+```python
+target_shares = 10
+price = 0.65   # limit price per share — use current ask or a tick above it
+
+result = client.trade(
+    market_id="uuid",
+    side="yes",
+    amount=round(target_shares * price * 1.005, 2),  # +0.5% buffer for tick rounding
+    price=price,
+    venue="polymarket",
+)
+print(f"Filled {result.shares_filled} of {target_shares} shares")
+```
+
+Why the buffer? The exchange rounds order sizes down to the tick grid, so rounding can trim your fill by 0.1–0.3%. A ~0.5% buffer (or `+0.1` on small orders) ensures rounding doesn't drop you below your target. Use `dry_run=True` on the REST endpoint to preview the fill before committing.
+
+Note: the 5-share minimum is enforced *after* rounding. Orders that quantize to fewer than 5 shares are rejected.
+</Accordion>
+
+<Accordion title="FAK order only partially filled — is that expected?">
+Yes. FAK (Fill-and-Kill) is a market order — it fills what it can at the best available price, then cancels any remainder. On thin or short-window books (e.g. 5m/15m crypto Up/Down), the book may only have enough depth for a partial fill.
+
+After a FAK order:
+
+- `result.fully_filled` — `False` if the order was only partially filled
+- `result.shares_filled` vs `result.shares_requested` — the actual vs requested quantity
+- `result.fill_status` — may briefly read `"unconfirmed"` and settle to `"partially_filled"` or `"confirmed"` within 1–3 seconds
+
+**For thin books:** pass an explicit `price` a tick into the book (so the order aggressively crosses), or use `order_type="GTC"` and cancel stale open orders at the start of each cycle. Avoid `FOK` on thin books — it cancels entirely instead of partially filling.
+</Accordion>
+
+<Accordion title="When will my Polymarket position auto-redeem after a fast market resolves?">
+Settlement timing depends on your wallet type:
+
+**Managed wallet:** fully automatic. The server redeems winning positions on your behalf on the next `/context`, `/trade`, or `/briefing` call. You don't need to call anything. The lag between market resolution and payout is mostly Polymarket's oracle finalization on-chain — typically a few minutes, but up to hours for high-frequency micro-markets.
+
+**External / self-custody wallet:** call `client.auto_redeem()` each cycle yourself — the server can't sign redemption transactions for you. All official Simmer skills include this call. Redemption also needs a small amount of POL on Polygon for gas.
+
+To check whether a position is ready to redeem:
+
+```python
+positions = client.get_positions(venue="polymarket")
+for pos in positions["positions"]:
+    print(pos["question"], pos.get("redeemable"), pos.get("status"))
+```
+
+`redeemable: true` means the oracle has settled and you can collect. If it's `false` after the market window closed, the venue oracle hasn't finalized yet — nothing to do but wait. See the [Redemption Guide](/redemption) for the full flow.
+</Accordion>
+
 ## Skills
 
 <Accordion title="How do I install a skill?">

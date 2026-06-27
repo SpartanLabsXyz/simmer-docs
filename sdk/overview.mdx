@@ -9,11 +9,11 @@ The `simmer-sdk` package wraps the [REST API](/api/overview) with an authenticat
 ## Installation
 
 ```bash
-pip install -U simmer-sdk   # examples on this page verified against 0.20.3
+pip install -U simmer-sdk   # examples on this page verified against 0.21.0
 ```
 
 <Note>
-Run `pip install -U simmer-sdk` to get the latest version. These examples were verified against `simmer-sdk` 0.20.3. Versions before 0.20.0 are missing several `get_markets` keyword filters (`q`, `venue`, `sort`, `tags`) and will raise `TypeError`.
+Run `pip install -U simmer-sdk` to get the latest version. These examples were verified against `simmer-sdk` 0.21.0. Versions before 0.21.0 are missing `TradeResult.fill_price` and `TradeResult.fee_rate_bps`, and silently ignore a `shares` argument on buy orders instead of raising `ValueError`.
 </Note>
 
 ## Initialization
@@ -100,8 +100,10 @@ result.shares_bought    # Shares bought (0 for sells)
 result.shares_sold      # Shares sold (0 for buys)
 result.shares_filled    # Direction-agnostic filled shares — shares_bought OR shares_sold
 result.shares_requested # Shares requested (compare with shares_filled for partial fills)
-result.cost             # Cost for buys, proceeds for sells (always positive)
-result.new_price        # Post-trade price
+result.cost             # USDC spent (buy) / received (sell) — always positive
+result.fill_price       # Effective average fill price per share — cost / shares_filled (SDK 0.21.0)
+result.new_price        # Post-trade market price (alias for fill_price; prefer fill_price in new code)
+result.fee_rate_bps     # Taker fee rate in basis points — currently 0 on Polymarket (SDK 0.21.0)
 result.fully_filled     # Boolean — shares_filled >= shares_requested
 result.fill_status      # "filled", "submitted", "unconfirmed", or "failed" (see Trading Guide)
 result.order_status     # Polymarket order status: "matched", "live", "delayed"
