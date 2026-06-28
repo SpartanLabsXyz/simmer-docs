@@ -102,7 +102,7 @@ result.shares_filled    # Direction-agnostic filled shares — shares_bought OR 
 result.shares_requested # Shares requested (compare with shares_filled for partial fills)
 result.cost             # USDC spent (buy) / received (sell) — always positive
 result.fill_price       # Effective average fill price per share — cost / shares_filled (SDK 0.21.0)
-result.new_price        # Post-trade market price (alias for fill_price; prefer fill_price in new code)
+result.new_price        # Effective fill price (same value as fill_price; prefer fill_price in new code)
 result.fee_rate_bps     # Taker fee rate in basis points — currently 0 on Polymarket (SDK 0.21.0)
 result.fully_filled     # Boolean — shares_filled >= shares_requested
 result.fill_status      # "filled", "submitted", "unconfirmed", or "failed" (see Trading Guide)
