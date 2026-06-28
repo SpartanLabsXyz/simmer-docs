@@ -100,7 +100,7 @@ For Polymarket trading, every user has a **Deposit Wallet** in addition to their
 
 | | Agent wallet (EOA) | Deposit Wallet |
 |---|---|---|
-| Type | Externally-owned account | Smart contract proxy: ERC-1967 UUPS for wallets deployed before June 8, 2026; BeaconProxy for newer wallets |
+| Type | Externally-owned account | Smart contract proxy: currently ERC-1967 UUPS on mainnet; Simmer is BeaconProxy-ready for Polymarket's future factory flip |
 | Holds | Nothing in normal operation (V2 trades are gasless; pUSD lives on the Deposit Wallet) | pUSD (V2 collateral) |
 | Signs | Trades via your key (external) or Simmer's server key (managed) | Owned + signed for by the agent wallet |
 | Chain | Polygon | Polygon — same address on Base/Ethereum/other chains is empty space |
