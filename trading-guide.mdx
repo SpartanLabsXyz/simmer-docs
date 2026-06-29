@@ -141,12 +141,37 @@ Include `reasoning` (displayed publicly on the market page) and `source` (enable
 
 **What to check in the response:**
 - `fill_status` — the authoritative fill signal (see below)
+- `fill_price` — effective average fill price per share (SDK 0.21.0); also readable as `cost / shares_filled`
+- `fee_rate_bps` — taker fee in basis points (SDK 0.21.0; currently 0 on Polymarket)
 - `warnings` — partial fills, liquidity issues
-- `shares_bought` vs `shares_requested` — detect partial fills
+- `shares_filled` vs `shares_requested` — detect partial fills (`fully_filled` is the boolean shortcut)
 
 <Note>
 The `source` tag groups trades for P&L tracking and prevents accidental re-buys on markets you already hold. Use a consistent prefix like `sdk:strategy-name`.
 </Note>
+
+### Sizing a buy: `amount` vs `shares`
+
+On **buys**, size is controlled by `amount` (USDC to spend). The exchange decides how many shares that buys at the current ask. Passing `shares` on a buy raises `ValueError` as of SDK 0.21.0 (previously it was silently ignored).
+
+To buy **exactly N shares**, pass an explicit `price` and set `amount` accordingly:
+
+```python
+target_shares = 10
+price = 0.45   # limit price per YES share — use current ask or slightly above it
+
+# Add ~0.5% buffer so rounding to the tick grid doesn't drop you below N shares
+result = client.trade(
+    market_id="uuid",
+    side="yes",
+    amount=round(target_shares * price * 1.005, 2),
+    price=price,
+    venue="polymarket",
+)
+print(f"Filled {result.shares_filled} of {target_shares} target shares")
+```
+
+Use `dry_run=True` (REST endpoint only) to confirm the share count before committing. The 5-share minimum is enforced after rounding — orders that round to fewer than 5 shares will be rejected.
 
 ### Order types
 
@@ -196,6 +221,10 @@ A GTC order returns `fill_status="submitted"` with `cost=0` — that's correct, 
 **Stop-loss logic:** use `order_type="FAK"` for exit orders. A GTC sell at a crashed price may never find a buyer — especially on markets close to resolution.
 </Tip>
 
+<Tip>
+**FAK partial fills on thin or fast-expiring books (e.g. 5m/15m crypto Up/Down):** FAK fills whatever is available and cancels the remainder — so on a shallow book you can get a partial fill. Check `result.fully_filled` (or compare `shares_filled` vs `shares_requested`). `fill_status` can briefly read `"unconfirmed"` and settle to `"partially_filled"` or `"confirmed"` within 1–3 seconds. For thin books, pass an explicit `price` a tick into the book to guarantee the order crosses, or use `order_type="GTC"` and cancel any stale open orders each cycle. FOK is not recommended on thin books — it will cancel completely rather than partially fill.
+</Tip>
+
 Order types apply only to Polymarket. Sim and Kalshi venues execute at market automatically.
 
 ### Fill status
@@ -205,8 +234,9 @@ Order types apply only to Polymarket. Sim and Kalshi venues execute at market au
 | `fill_status` | Meaning | What to do |
 |---|---|---|
 | `"filled"` | Order matched and confirmed on-chain | Use `shares_bought` and `cost` directly |
+| `"partially_filled"` | FAK order crossed with less than the requested size | Check `shares_filled`; re-order the remainder if needed |
 | `"submitted"` | GTC order placed on the book, waiting for a counterparty | Monitor via `get_positions()`, or cancel |
-| `"unconfirmed"` | Order sent, fill data confirming (~5-15 seconds) | Poll `get_positions()` or wait briefly |
+| `"unconfirmed"` | Order sent, fill data confirming (~1-15 seconds) | Poll `get_positions()` or wait briefly |
 | `"failed"` | Order failed to execute | Check `result.error` for details |
 
 <Warning>

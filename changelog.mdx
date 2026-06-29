@@ -37,6 +37,16 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-06-27 — `simmer-sdk` 0.21.0: fill price, fee field, and exact-share buy guard
+
+Released [`simmer-sdk` 0.21.0](https://pypi.org/project/simmer-sdk/0.21.0/) on PyPI. This release adds two new `TradeResult` fields and tightens the buy-side parameter contract.
+
+**`TradeResult.fill_price`** is the effective average fill price per share — equivalent to `cost / shares_filled` but now surfaced directly. Use it instead of `new_price` to compute per-share economics without the division. **`TradeResult.fee_rate_bps`** exposes the taker fee rate in basis points (currently 0 on Polymarket; previously the field returned `None`). Both fields are useful for post-trade analysis and for skills that need to verify fill quality on short-window fast markets like crypto Up/Down 5m/15m.
+
+On the buy side, passing `shares` to `client.trade()` on a buy now raises `ValueError` instead of silently ignoring the parameter. Buys are always sized by `amount` (USDC to spend); `shares` is valid only on sells. If you want to buy exactly N shares, compute `amount = N * price` (plus a small buffer for tick rounding) and pass an explicit `price` limit — see [Trading Guide > Sizing a buy](/trading-guide#sizing-a-buy-amount-vs-shares) for the exact pattern.
+
+---
+
 ## 2026-06-18 — `simmer-sdk` 0.20.3: Deposit-wallet combo trading
 
 Released [`simmer-sdk` 0.20.3](https://pypi.org/project/simmer-sdk/0.20.3/) on PyPI. Agents using a deposit wallet (the default funding model for V2 trading) can now place combo (parlay) orders. Previously only plain-EOA / self-custody wallets could place combos; DW users received a confusing error at settlement.
