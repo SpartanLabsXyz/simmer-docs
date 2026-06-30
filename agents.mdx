@@ -47,13 +47,13 @@ Each API key maps to exactly one agent. If you need multiple strategies with sep
 
 ## Multi-agent setups (Elite)
 
-Elite-tier accounts can run multiple agents under one account, each with its own wallet. Three flavors coexist:
+Elite-tier accounts can run multiple agents under one account, each with its own API key and P&L tracking; dedicated and OWS agents get their own wallet, while the primary agent shares the account's main wallet. Three flavors coexist:
 
 | Agent type | Signing | Use case |
 |---|---|---|
 | **Primary agent** | Browser-signable (managed or external) | Manual trades placed from the [Simmer dashboard](https://simmer.markets/dashboard). |
-| **Dedicated raw-key agent** | SDK-signed on your agent host via `WALLET_PRIVATE_KEY` (you hold the key; Simmer never does) | Strategy-specific trading that should keep separate wallet, API key, and P&L tracking without using OWS. |
-| **OWS agent** | Autonomous via OWS daemon on your agent host | Bot-driven trading via the SDK. Not accessible from the browser. |
+| **Dedicated raw-key agent** | SDK-signed on your agent host via `WALLET_PRIVATE_KEY` (you hold the key; Simmer never does) | Strategy-specific trading that should keep separate wallet, API key, and P&L tracking without using OWS. Requires deposit wallet activation before real-money trading — run `client.activate_polymarket_dw(agent_id=...)` + `client.update_agent_wallet_creds(...)` on first setup (see [Wallets](/wallets)). |
+| **OWS agent** | Autonomous via OWS daemon on your agent host | Bot-driven trading via the SDK. Not accessible from the browser. Requires deposit wallet activation before real-money trading — run `client.activate_polymarket_dw(agent_id=...)` + `client.update_agent_wallet_creds(...)` on first setup (see [Wallets](/wallets)). |
 
 To designate a primary agent: open the dashboard → **My Agents** → click the **star icon** on a non-OWS agent's card. The pinned agent's wallet becomes the active surface for manual trades on the dashboard.
 
