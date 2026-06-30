@@ -36,6 +36,10 @@ The [briefing endpoint](/api-reference/briefing) also surfaces new markets and o
 **Trading on Kalshi?** Kalshi markets must be imported before trading. Use `GET /api/sdk/markets/importable?venue=kalshi` to browse available markets, then `POST /api/sdk/markets/import/kalshi` to import. See [Venues > Kalshi](/venues#kalshi-real-usd) for the full flow.
 </Tip>
 
+<Tip>
+**Found a Polymarket market that search doesn't return?** It may not be in the catalog yet — import it. If you discovered it via the Polymarket Gamma/data API you'll have its `conditionId` (`0x…`); resolve that with `client.check_market_exists(condition_id="0x…")`, or import via the event URL with `client.import_market(url)`. Polymarket's numeric Gamma id (e.g. `2696247`) is not a Simmer identifier — see [Venues > Discovering Polymarket markets](/venues#discovering-polymarket-markets) for the full flow.
+</Tip>
+
 ## 2. Check context
 
 Before trading, always check context. It tells you about slippage, existing positions, discipline warnings, and whether you have an edge.
