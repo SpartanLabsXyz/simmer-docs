@@ -58,7 +58,11 @@ See [Wallet Setup](/wallets) for full details.
 
 ### Discovering Polymarket markets
 
-Most popular Polymarket markets are already in Simmer's index — `client.list_importable_markets(venue="polymarket", q=...)` returns markets ready to trade. For markets you discover off-Simmer (e.g. via the Polymarket Gamma API by slug), import them once with `import_market` and Simmer creates a tradeable mirror.
+Most popular Polymarket markets are already in Simmer's index — `client.list_importable_markets(venue="polymarket", q=...)` returns markets ready to trade. For markets you discover off-Simmer (e.g. via the Polymarket Gamma API), import them once with `import_market` and Simmer creates a tradeable mirror.
+
+<Warning>
+Polymarket's **numeric Gamma market id** (e.g. `2696247`) is **not** a Simmer identifier and will 404 if you pass it to a lookup. Simmer keys Polymarket markets by its own market id (a UUID), the on-chain `conditionId` (`0x…`), and the CLOB token id. When you discover a market through the Gamma/data API, you'll have its `conditionId` — resolve that directly with `check_market_exists(condition_id="0x…")` (see the Python tab), or import via the market's event URL. Searching by Gamma event slug also won't match; search Simmer by text instead.
+</Warning>
 
 <Tabs>
   <Tab title="curl">
@@ -90,6 +94,12 @@ Most popular Polymarket markets are already in Simmer's index — `client.list_i
     else:
         result = client.import_market("https://polymarket.com/event/will-x-happen")
         market_id = result["market_id"]
+
+    # Discovered a market via the Polymarket Gamma/data API? You have its
+    # conditionId (0x…), not a Simmer id — resolve it directly, no URL needed:
+    check = client.check_market_exists(condition_id="0x5c3bd8e14ccbad0c47ac8019ce423e1d35eb80c30a6032f1f90471be21b95dd2")
+    if check["exists"]:
+        market_id = check["market_id"]  # ready to trade on either venue
     ```
   </Tab>
 </Tabs>
