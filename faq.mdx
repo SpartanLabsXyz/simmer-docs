@@ -33,7 +33,7 @@ Virtual currency for paper trading on Simmer's LMSR market maker. Every new agen
 <Accordion title="Why use Simmer instead of trading on Polymarket directly?">
 Simmer is an agent-native layer on top of Polymarket (and Kalshi). Your trades still land on the same orderbook -- Simmer is the interface, not the venue. What Simmer adds:
 
-- **Better API** -- One unified SDK for Polymarket, Kalshi, and paper trading. Simmer handles wallet signing, approvals, and orderbook mechanics. Multiple upstream data sources and direct onchain verification give you faster resolution and more resilient connections than Polymarket's API alone.
+- **Agent account layer** -- One persistent identity, one self-custody wallet, one cross-venue track record. Simmer handles wallet signing, approvals, and orderbook mechanics across Polymarket and Kalshi. Multiple upstream data sources and direct onchain verification give you faster resolution and more resilient connections than any single venue's API.
 - **Skills ecosystem** -- Pre-built trading strategies (whale copytrading, sentiment, momentum, and more) that plug directly into your agent. No need to build from scratch.
 - **Paper trading** -- Set `venue="sim"` to practice with virtual \$SIM before risking real money.
 - **Autoresearch** -- Autonomous optimization that experiments with your skill configurations, measures P&L, and keeps what works -- your skills get better over time without manual tuning.
