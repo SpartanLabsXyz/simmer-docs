@@ -395,6 +395,9 @@
     },
     "/api/sdk/agent-wallet/register": {
       "post": {
+        "tags": [
+          "sdk-agent-wallet"
+        ],
         "summary": "Register Agent Wallet",
         "description": "Register an OWS wallet for an agent. Elite-only.\n\nAuth: either an SDK API key (`sk_live_*`) \u2014 the original SDK path, where\n`agent_id` can be inferred from an agent-specific key \u2014 OR a Dynamic JWT\nfrom the dashboard, where `agent_id` MUST be passed in the body (the\ndashboard wizard knows it from route context). Phase 5 of\n_wallet-experience-overhaul opens this to the dashboard so non-SDK Elite\nusers can register agent wallets without spinning up Python.",
         "operationId": "api_sdk_register_agent_wallet_api_sdk_agent_wallet_register_post",
@@ -1341,6 +1344,9 @@
     },
     "/api/sdk/trade": {
       "post": {
+        "tags": [
+          "sdk-trade"
+        ],
         "summary": "Trade",
         "description": "Execute a trade via SDK.\n\nVenues:\n- venue=\"sim\" (default): Execute on Simmer's LMSR market with $SIM\n- venue=\"polymarket\": Execute real trade on Polymarket via Dome API\n  (requires wallet setup with allowances)\n- venue=\"kalshi\": Execute real trade on Kalshi via DFlow\n  (requires Solana wallet setup with SOL + USDC)\n\nOptions:\n- dry_run=True: Validate and calculate without executing. Returns the exact\n  shares, projected price, and cost the live path would settle for.\n  Supported on all venues: polymarket, kalshi, and sim (LMSR \u2014 closed-form\n  cost-inversion guarantees dry_run.cost == live.cost within float\n  precision). Useful for sizing budgets without committing the trade.\n\nDeprecated: venue=\"sandbox\"/\"simmer\" are deprecated, use venue=\"sim\" instead.\n\nRequires API key in Authorization header (rate limited: 120/minute).",
         "operationId": "api_sdk_trade_api_sdk_trade_post",
@@ -1381,6 +1387,9 @@
     },
     "/api/sdk/trades/batch": {
       "post": {
+        "tags": [
+          "sdk-trade"
+        ],
         "summary": "Batch Trades",
         "description": "Execute multiple trades in a single request with PARALLEL execution.\n\nTrades are executed concurrently using asyncio.gather() for maximum speed.\nThis is NOT atomic - failures don't rollback other trades.\n\nParameters:\n- trades: List of trade items (max 30, supports 26-leg NegRisk arb)\n- venue: \"sim\" or \"polymarket\" (default: sim)\n- source: Optional source tag for all trades (e.g., \"sdk:copytrading\")\n- dry_run: If true, validate and calculate without executing (default: false)\n           Returns estimated shares, price, and cost for each trade.\n\nDeprecated: venue=\"sandbox\"/\"simmer\" are deprecated, use venue=\"sim\" instead.\n\nRequires API key in Authorization header (rate limited: 30/minute).",
         "operationId": "api_sdk_batch_trades_api_sdk_trades_batch_post",
@@ -1420,6 +1429,9 @@
     },
     "/api/sdk/redeem": {
       "post": {
+        "tags": [
+          "sdk-redeem"
+        ],
         "summary": "Redeem",
         "description": "Redeem winning Polymarket position for USDC.e on Polygon.\n\nRequires API key in Authorization header.\nRate limited: 10/minute per API key.\n\nFor managed wallets: signs and submits server-side, returns tx_hash.\nFor external wallets: returns unsigned_tx for client-side signing\n(sign locally, then broadcast via POST /api/sdk/wallet/broadcast-tx).",
         "operationId": "api_sdk_redeem_api_sdk_redeem_post",
@@ -1462,6 +1474,9 @@
     },
     "/api/sdk/redeem/report": {
       "post": {
+        "tags": [
+          "sdk-redeem"
+        ],
         "summary": "Redeem Report",
         "description": "Record an external-wallet redemption that was signed and broadcast client-side.\n\nCalled by the SDK after a successful redeem broadcast+confirmation.\nInserts a real_trades row so the position stops appearing as redeemable.\nIdempotent: silently skips if a redeem trade with the same tx_hash already exists.",
         "operationId": "api_sdk_redeem_report_api_sdk_redeem_report_post",
@@ -2889,6 +2904,9 @@
     },
     "/api/sdk/dw-redeem/prepare": {
       "post": {
+        "tags": [
+          "sdk-redeem"
+        ],
         "summary": "Dw Redeem Prepare",
         "description": "Build the EIP-712 WALLET batch for an SDK external+DW user redeeming\na resolved Polymarket position.\n\nMirror of `/api/user/wallet/external/dw-redeem/prepare` (the dashboard\nG6 endpoint) under SDK API-key auth. Body takes Simmer's `market_id`\nUUID \u2014 server resolves to `condition_id` + token IDs via DB lookup,\nsame shape as `/api/sdk/redeem`.\n\nReturns the typed-data payload the SDK signs locally with the user's\n`WALLET_PRIVATE_KEY` (or OWS-vault equivalent), then POSTs back to\n`/api/sdk/dw-redeem/submit`.\n\nAuth: SDK API key.\nGuards: real_trading_enabled, wallet_ownership='external',\nwallet_uses_deposit_wallet=true, deposit_wallet_address NOT NULL.",
         "operationId": "api_sdk_dw_redeem_prepare_api_sdk_dw_redeem_prepare_post",
@@ -2926,6 +2944,9 @@
     },
     "/api/sdk/dw-redeem/submit": {
       "post": {
+        "tags": [
+          "sdk-redeem"
+        ],
         "summary": "Dw Redeem Submit",
         "description": "Submit a user-signed redemption WALLET batch (SDK external+DW path).\n\nMirror of `/api/user/wallet/external/dw-redeem/submit` under SDK API-key\nauth. Reuses the same `validate_redeem_calls` security gate, relayer\nsubmit helper, and `_extract_usdc_from_receipt` payout-from-receipt\nextractor.\n\nRecords the redemption to `real_trades` with `source='sdk:redeem:ext-dw'`\nso it's distinguishable from the dashboard path (`dashboard:ext-dw-redeem`)\nin attribution queries.",
         "operationId": "api_sdk_dw_redeem_submit_api_sdk_dw_redeem_submit_post",
@@ -3002,6 +3023,9 @@
     },
     "/api/sdk/wallet/link/challenge": {
       "get": {
+        "tags": [
+          "sdk-wallet"
+        ],
         "summary": "Wallet Link Challenge",
         "description": "Request a challenge nonce for wallet linking.\n\nThe user must sign this challenge message to prove ownership of the wallet.\nChallenge expires in 5 minutes and can only be used once.\n\nRate limited: 5 challenges per hour per IP.",
         "operationId": "api_wallet_link_challenge_api_sdk_wallet_link_challenge_get",
@@ -3042,6 +3066,9 @@
     },
     "/api/sdk/wallet/link": {
       "post": {
+        "tags": [
+          "sdk-wallet"
+        ],
         "summary": "Wallet Link",
         "description": "Link an external wallet after proving ownership.\n\nSubmit the signed challenge message to link the wallet to your account.\nThe signature must be valid for the challenge nonce that was requested.\n\nRate limited: 3 linking attempts per day per account.",
         "operationId": "api_wallet_link_api_sdk_wallet_link_post",
@@ -3081,6 +3108,9 @@
     },
     "/api/sdk/wallet/unlink": {
       "post": {
+        "tags": [
+          "sdk-wallet"
+        ],
         "summary": "Wallet Unlink",
         "description": "Revert from self-custody back to managed wallet.\n\nRestores the user's managed wallet from legacy columns.\nUsers can switch back and forth freely between managed and self-custody.\n\nRate limited: 10 attempts per hour (IP-based via slowapi).",
         "operationId": "api_wallet_unlink_api_sdk_wallet_unlink_post",
@@ -3098,6 +3128,9 @@
     },
     "/api/sdk/wallet/broadcast-tx": {
       "post": {
+        "tags": [
+          "sdk-wallet"
+        ],
         "summary": "Wallet Broadcast Tx",
         "description": "Broadcast a signed Polygon transaction (approval + redemption relay).\n\nAccepts signed approval or redemption transactions targeting known\nPolymarket contracts, and broadcasts via our reliable Alchemy RPC.\nRejects arbitrary transactions for safety.\n\nThe transaction is signed client-side (self-custody preserved).\nWe only relay it through our RPC for reliability.",
         "operationId": "api_wallet_broadcast_tx_api_sdk_wallet_broadcast_tx_post",
@@ -3194,8 +3227,11 @@
     },
     "/api/sdk/wallet/credentials/derive-via-proxy": {
       "post": {
+        "tags": [
+          "sdk-wallet"
+        ],
         "summary": "Wallet Derive Credentials Via Proxy",
-        "description": "Forward locally-signed Polymarket L1 auth headers from Railway.\n\nFor external-wallet users whose IP is Cloudflare-blocked from\nPOST https://clob.polymarket.com/auth/api-key (commonly residential AU /\nSE Asia ranges). The SDK builds the four L1 headers locally with the\nuser's private key (key stays on user's machine), POSTs them here, we\nforward to Polymarket from a non-blocked IP, encrypt and store the\nresulting creds.\n\nAuth: SDK API key (caller must own `poly_address`).\nRate limit: 3/minute (slowapi, IP-keyed) \u2014 Polymarket's own derive routes\nare throttled and the encrypted column is per-user, not per-call.",
+        "description": "Forward locally-signed Polymarket L1 auth headers from a non-blocked IP.",
         "operationId": "api_wallet_derive_credentials_via_proxy_api_sdk_wallet_credentials_derive_via_proxy_post",
         "requestBody": {
           "content": {
@@ -6748,7 +6784,7 @@
               }
             ],
             "title": "External Price Yes",
-            "description": "Last YES price seen on the underlying venue (Polymarket / Kalshi). Null for `sim`-only markets."
+            "description": "Last YES price seen on the underlying venue (Polymarket / Kalshi / Hyperliquid). Null for `sim`-only markets."
           },
           "divergence": {
             "anyOf": [
@@ -6820,7 +6856,7 @@
               }
             ],
             "title": "Event Id",
-            "description": "ID grouping sibling markets for a multi-outcome event (e.g. \"Who will win the election?\")."
+            "description": "Legacy ID grouping sibling markets for a multi-outcome event (e.g. \"Who will win the election?\"). Prefer event_ref for grouping \u2014 event_id was not set by every import path historically."
           },
           "event_name": {
             "anyOf": [
@@ -6856,7 +6892,7 @@
               }
             ],
             "title": "Event Ref",
-            "description": "Stable cross-venue reference for the parent event."
+            "description": "Canonical parent-event ID (events-row reference), set on every import path. Use this to group sibling markets of a multi-outcome event."
           },
           "polymarket_token_id": {
             "anyOf": [
@@ -6984,6 +7020,127 @@
         ],
         "title": "SDKMarketResponse",
         "description": "A single market as returned by the SDK markets endpoints."
+      },
+      "SDKPolymarketComboLeg": {
+        "properties": {
+          "market_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Title"
+          },
+          "side": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          }
+        },
+        "type": "object",
+        "title": "SDKPolymarketComboLeg",
+        "description": "A leg inside a Polymarket Positions-Framework combo position."
+      },
+      "SDKPolymarketComboPosition": {
+        "properties": {
+          "combo_id": {
+            "type": "string",
+            "title": "Combo Id"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/SDKPolymarketComboLeg"
+            },
+            "type": "array",
+            "title": "Legs"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "filled_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filled At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "potential_payout": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Potential Payout"
+          },
+          "actual_payout": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Payout"
+          },
+          "holderAddress": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holderaddress"
+          }
+        },
+        "type": "object",
+        "required": [
+          "combo_id",
+          "status"
+        ],
+        "title": "SDKPolymarketComboPosition",
+        "description": "Read-only Polymarket Positions-Framework combo position."
       },
       "SDKPortfolioConcentration": {
         "properties": {
@@ -7121,8 +7278,21 @@
               "type": "string"
             },
             "type": "array",
-            "title": "Warnings",
-            "default": []
+            "title": "Warnings"
+          },
+          "combos": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SDKPolymarketComboPosition"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Combos"
           },
           "sim": {
             "anyOf": [
@@ -7855,6 +8025,11 @@
               }
             ],
             "title": "Price"
+          },
+          "synthetic": {
+            "type": "boolean",
+            "title": "Synthetic",
+            "default": false
           },
           "signed_order": {
             "anyOf": [
