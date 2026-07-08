@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Bind every documented SDK example against the minimum SDK version the docs claim.
+"""Bind every documented SDK example against installed SDK signatures.
 
 Why this exists
 ---------------
 Doc examples drift from the shipped package. The worst case is a code block that
 uses a kwarg (or method) the installed wheel rejects — a builder copies it, runs
 it, and gets a TypeError. Doc-vs-doc linting can't catch this; only the real
-package signature can. This gate installs ``simmer-sdk`` at the doc-declared
-floor version and checks that every ``client.<method>(...)`` call in the .mdx
-docs *binds* against the real signature.
+package signature can. CI runs this checker twice: once with ``simmer-sdk``
+installed at the doc-declared floor version, and once with the latest published
+SDK. That catches examples that need newer-than-advertised APIs and examples
+that break after a later SDK signature change.
 
 Safety
 ------
@@ -263,6 +264,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("paths", nargs="*", help="files or dirs to scan (default: cwd)")
     parser.add_argument("--floor", help="override the repo floor (default: read .sdk-doc-floor)")
+    parser.add_argument(
+        "--target",
+        choices=("floor", "latest"),
+        default="floor",
+        help="installed SDK target being checked; controls diagnostics only",
+    )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parent.parent
@@ -273,11 +280,12 @@ def main() -> int:
         floor = floor_file.read_text().strip() if floor_file.exists() else "unknown"
 
     installed = installed_version()
-    print(f"checking SDK doc examples — declared floor {floor}, installed simmer-sdk {installed}")
-    if floor != "unknown" and installed != "unknown" and installed != floor:
+    target_label = f"declared floor {floor}" if args.target == "floor" else f"latest installed SDK {installed}"
+    print(f"checking SDK doc examples — {target_label}, installed simmer-sdk {installed}")
+    if args.target == "floor" and floor != "unknown" and installed != "unknown" and installed != floor:
         print(
             f"WARNING: installed simmer-sdk {installed} != declared floor {floor}. "
-            "CI should `pip install simmer-sdk=={floor}` so this gate tests the floor.",
+            f"CI should `pip install simmer-sdk=={floor}` so this gate tests the floor.",
             file=sys.stderr,
         )
 
@@ -301,10 +309,11 @@ def main() -> int:
 
     print(f"scanned {len(files)} files, {n_blocks} python blocks")
     if not all_violations:
-        print("OK — all documented SDK calls bind against the floor signature.")
+        print(f"OK — all documented SDK calls bind against the {args.target} signature.")
         return 0
 
-    print(f"\nFAIL — {len(all_violations)} example call(s) do not bind against simmer-sdk {floor}:\n")
+    reported_version = floor if args.target == "floor" else installed
+    print(f"\nFAIL — {len(all_violations)} example call(s) do not bind against simmer-sdk {reported_version}:\n")
     for v in all_violations:
         rel = v.path.relative_to(repo_root) if v.path.is_absolute() else v.path
         print(f"  {rel}:{v.line}")

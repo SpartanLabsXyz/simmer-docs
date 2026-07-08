@@ -9,10 +9,17 @@ on:
   pull_request:
   push:
     branches: [main]
+  repository_dispatch:
+    types: [simmer-sdk-published]
 
 jobs:
   sdk-example-bind:
+    name: SDK Example Bind (${{ matrix.target }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [floor, latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -20,14 +27,22 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install simmer-sdk at the documented floor
+      - name: Install simmer-sdk for ${{ matrix.target }} bind
         run: |
           FLOOR="$(cat .sdk-doc-floor)"
-          echo "Installing simmer-sdk==$FLOOR"
-          pip install "simmer-sdk==$FLOOR" pytest
+          if [ "${{ matrix.target }}" = "floor" ]; then
+            echo "Installing simmer-sdk==$FLOOR"
+            pip install "simmer-sdk==$FLOOR" pytest
+          elif [ -n "${{ github.event.client_payload.sdk_version || '' }}" ]; then
+            echo "Installing dispatched simmer-sdk==${{ github.event.client_payload.sdk_version }}"
+            pip install "simmer-sdk==${{ github.event.client_payload.sdk_version }}" pytest
+          else
+            echo "Installing latest simmer-sdk"
+            pip install --upgrade simmer-sdk pytest
+          fi
 
       - name: Self-test the checker
         run: pytest scripts/test_check_sdk_examples.py -q
 
-      - name: Bind documented SDK examples against the floor signature
-        run: python scripts/check_sdk_examples.py
+      - name: Bind documented SDK examples against ${{ matrix.target }} signature
+        run: python scripts/check_sdk_examples.py --target "${{ matrix.target }}"
