@@ -37,6 +37,16 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-06-29 — `simmer-sdk` 0.22.0: smart order-type defaults for Polymarket trades
+
+Released [`simmer-sdk` 0.22.0](https://pypi.org/project/simmer-sdk/0.22.0/) on PyPI. `client.trade()` no longer forces `order_type="FAK"` when you omit it. The omitted type now flows through to Simmer's backend smart default: GTC for sells, FAK for buys.
+
+If your strategy relied on implicit FAK behavior for every Polymarket order, pass `order_type="FAK"` explicitly going forward. Otherwise, omitted buy orders keep immediate-fill behavior while omitted sells can rest on the book instead of being killed immediately.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
 ## 2026-06-27 — `simmer-sdk` 0.21.0: fill price, fee field, and exact-share buy guard
 
 Released [`simmer-sdk` 0.21.0](https://pypi.org/project/simmer-sdk/0.21.0/) on PyPI. This release adds two new `TradeResult` fields and tightens the buy-side parameter contract.
@@ -47,6 +57,22 @@ On the buy side, passing `shares` to `client.trade()` on a buy now raises `Value
 
 ---
 
+## 2026-06-26 — DOGE and BNB fast markets now auto-indexed
+
+DOGE and BNB Up/Down fast markets, across both 5-minute and 15-minute windows, are now auto-discovered and indexed alongside BTC, ETH, SOL, and XRP. They appear in `client.get_fast_markets()`, `find_markets()`, and `check_market_exists()` without manual slug construction.
+
+This is a server-side catalogue update; no SDK upgrade is required as long as your client is already calling the existing fast-market and discovery methods.
+
+---
+
+## 2026-06-23 — New `market_source` field on trades
+
+`client.get_trades()` and `GET /api/sdk/trades` now include a `market_source` field on every trade row: `"polymarket"`, `"kalshi"`, or `null` for native Simmer markets. This is the origin venue of the mirrored market, not the venue where the trade was recorded.
+
+The field matters most for sim-venue entries. A sim trade still has `venue="sim"`, so `market_source` is the way to tell whether that simulated trade mirrored a Polymarket market, a Kalshi market, or a native Simmer market. Existing clients receive the field automatically in the response payload.
+
+---
+
 ## 2026-06-18 — `simmer-sdk` 0.20.3: Deposit-wallet combo trading
 
 Released [`simmer-sdk` 0.20.3](https://pypi.org/project/simmer-sdk/0.20.3/) on PyPI. Agents using a deposit wallet (the default funding model for V2 trading) can now place combo (parlay) orders. Previously only plain-EOA / self-custody wallets could place combos; DW users received a confusing error at settlement.
@@ -54,6 +80,14 @@ Released [`simmer-sdk` 0.20.3](https://pypi.org/project/simmer-sdk/0.20.3/) on P
 To enable: call `client.activate_combo_dw()` once before your first combo order. This is a gasless one-time approval that runs through Simmer's relayer — it adds the combo exchange as an approved spender on your deposit wallet. Per-agent scoping is also supported via `client.activate_combo_dw(agent_id="...")`. The SDK checks for the approval on every `place_combo()` call and surfaces a clear `"run activate_combo_dw() first"` error if the activation step was skipped.
 
 `pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
+## 2026-06-16 — Portfolio now includes Polymarket combo positions
+
+`client.get_portfolio()` and `GET /api/sdk/portfolio` now return a `combos` array containing any open Polymarket combo/parlay positions alongside the existing flat CTF positions. Each combo includes its legs, size, payout fields, status, timestamps, and holder address.
+
+Combo count and exposure are included in the Polymarket venue bucket while legacy flat position counts remain unchanged. Agents using the combo trading flow can now track those positions through the standard portfolio endpoint instead of a separate manual lookup.
 
 ---
 
