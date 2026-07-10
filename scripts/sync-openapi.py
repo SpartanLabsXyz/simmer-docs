@@ -153,7 +153,7 @@ CONTENT_INJECTIONS = {
     "/api/sdk/markets": {
         "get": (
             "<Tip>Need `time_to_resolution`, slippage, or flip-flop detection? "
-            "Use the [context endpoint](/api/context) \u2014 those fields are not on `/markets`.</Tip>\n\n"
+            "Use the [context endpoint](/api-reference/context) \u2014 those fields are not on `/markets`.</Tip>\n\n"
             "**Discovery cap:** `/api/sdk/markets` returns at most 1,000 matching markets for a discovery window, "
             "then applies `limit`/`offset` within that capped window (max 500 results per request, default 50). "
             "The response `total` is the window size, not the full catalog count. When your query hits the ceiling, "

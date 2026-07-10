@@ -703,7 +703,7 @@
           }
         },
         "x-mint": {
-          "content": "<Tip>Need `time_to_resolution`, slippage, or flip-flop detection? Use the [context endpoint](/api/context) \u2014 those fields are not on `/markets`.</Tip>\n\n**Discovery cap:** `/api/sdk/markets` returns at most 1,000 matching markets for a discovery window, then applies `limit`/`offset` within that capped window (max 500 results per request, default 50). The response `total` is the window size, not the full catalog count. When your query hits the ceiling, the response includes `\"truncated\": true` and `\"capped_at_limit\": true`; use `tags`, `q`, `venue`, `sort`, or `max_hours_to_resolution` to narrow the search. Filters are applied before the cap, so `tags=world-cup&sort=volume` means \"top markets inside the World Cup slice,\" not \"filter this page.\" Market imports are not subject to this discovery-read cap.\n\n## Response fields\n\nEach entry in `markets[]` has the same shape as [`GET /api/sdk/markets/{market_id}`](/api-reference/get-market). See that page for the full field reference, including resolution fields (`status`, `resolved_at`, `outcome`)."
+          "content": "<Tip>Need `time_to_resolution`, slippage, or flip-flop detection? Use the [context endpoint](/api-reference/context) \u2014 those fields are not on `/markets`.</Tip>\n\n**Discovery cap:** `/api/sdk/markets` returns at most 1,000 matching markets for a discovery window, then applies `limit`/`offset` within that capped window (max 500 results per request, default 50). The response `total` is the window size, not the full catalog count. When your query hits the ceiling, the response includes `\"truncated\": true` and `\"capped_at_limit\": true`; use `tags`, `q`, `venue`, `sort`, or `max_hours_to_resolution` to narrow the search. Filters are applied before the cap, so `tags=world-cup&sort=volume` means \"top markets inside the World Cup slice,\" not \"filter this page.\" Market imports are not subject to this discovery-read cap.\n\n## Response fields\n\nEach entry in `markets[]` has the same shape as [`GET /api/sdk/markets/{market_id}`](/api-reference/get-market). See that page for the full field reference, including resolution fields (`status`, `resolved_at`, `outcome`)."
         }
       }
     },
@@ -3070,7 +3070,7 @@
           "sdk-wallet"
         ],
         "summary": "Wallet Link",
-        "description": "Link an external wallet after proving ownership.\n\nSubmit the signed challenge message to link the wallet to your account.\nThe signature must be valid for the challenge nonce that was requested.\n\nRate limited: 3 linking attempts per day per account.",
+        "description": "Link an external wallet after proving ownership.\n\nSubmit the signed challenge message to link the wallet to your account.\nThe signature must be valid for the challenge nonce that was requested.\n\nRate limited: 3 linking attempts per day per IP (via slowapi; linking\nadditionally requires a valid signed nonce, which self-throttles per account).",
         "operationId": "api_wallet_link_api_sdk_wallet_link_post",
         "requestBody": {
           "content": {
