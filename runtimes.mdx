@@ -4,7 +4,7 @@ description: Install and run Simmer trading skills from any agent runtime that s
 icon: arrows-left-right
 ---
 
-Simmer skills are **agent-runtime-agnostic**. Every skill is a portable folder with a `SKILL.md` file following the open [agentskills.io](https://agentskills.io) standard — the same format supported by Claude Code, Hermes, Cursor, Codex, and 30+ other clients. Pick whichever runtime fits your workflow; your skill library travels with you.
+Simmer skills are **agent-runtime-agnostic**. Every skill is a portable folder with a `SKILL.md` file following the open [agentskills.io](https://agentskills.io/home) standard — the same format supported by Claude Code, Hermes, Cursor, Codex, and 30+ other clients. Pick whichever runtime fits your workflow; your skill library travels with you.
 
 ## Install on your runtime
 
@@ -21,7 +21,7 @@ Simmer skills are **agent-runtime-agnostic**. Every skill is a portable folder w
     hermes skills install skills-sh/spartanlabsxyz/simmer-sdk/polymarket-weather-trader
     ```
 
-    Pulls the skill directly from the [skills.sh](https://skills.sh) index into your Hermes skill folder. See the [Hermes skills docs](https://hermes.ai/docs/skills) for configuration options.
+    Pulls the skill directly from the [skills.sh](https://www.skills.sh/) index into your Hermes skill folder.
   </Tab>
 </Tabs>
 
@@ -36,8 +36,8 @@ Simmer skills are **agent-runtime-agnostic**. Every skill is a portable folder w
 | **OpenClaw / ClawHub** | ✅ Supported | `clawhub install <slug>` |
 | **Hermes** | ✅ Supported | `hermes skills install skills-sh/spartanlabsxyz/simmer-sdk/<slug>` |
 | **Claude Code** | 🟡 Install syntax pending | Skills are [agentskills.io](https://agentskills.io)-compliant and load correctly once added to a project's skills directory. Official CLI-install flow pending Anthropic's registry rollout. |
-| **Cursor** | 🟡 Install syntax pending | Skills load from a project's skills directory per [Cursor's skills docs](https://cursor.com/docs/context/skills). |
-| **Codex** | 🟡 Install syntax pending | Skills compatible per [OpenAI Codex skills docs](https://developers.openai.com/codex/skills/). |
+| **Cursor** | 🟡 Install syntax pending | Skills load from a project's skills directory per [Cursor's skills docs](https://cursor.com/docs/skills). |
+| **Codex** | 🟡 Install syntax pending | Skills compatible per [OpenAI Codex skills docs](https://learn.chatgpt.com/docs/build-skills). |
 | **Cline, Goose, OpenHands, Factory, etc.** | 🟡 Install syntax pending | Most are agentskills.io-standard clients — our skills load as-is from a folder; check each runtime's skills guide. |
 
 We don't publish speculative install commands — if a runtime isn't explicitly confirmed, the syntax above gets added the moment we verify it end-to-end.

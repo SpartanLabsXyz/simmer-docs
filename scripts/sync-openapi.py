@@ -153,10 +153,14 @@ CONTENT_INJECTIONS = {
     "/api/sdk/markets": {
         "get": (
             "<Tip>Need `time_to_resolution`, slippage, or flip-flop detection? "
-            "Use the [context endpoint](/api/context) \u2014 those fields are not on `/markets`.</Tip>\n\n"
-            "**Limit:** Max 500 results per request (default 50). "
-            "When results are truncated, the response includes `\"truncated\": true` and a `total` field showing how many matched. "
-            "Use `tags`, `q`, or `venue` filters to narrow large result sets.\n\n"
+            "Use the [context endpoint](/api-reference/context) \u2014 those fields are not on `/markets`.</Tip>\n\n"
+            "**Discovery cap:** `/api/sdk/markets` returns at most 1,000 matching markets for a discovery window, "
+            "then applies `limit`/`offset` within that capped window (max 500 results per request, default 50). "
+            "The response `total` is the window size, not the full catalog count. When your query hits the ceiling, "
+            "the response includes `\"truncated\": true` and `\"capped_at_limit\": true`; use `tags`, `q`, `venue`, "
+            "`sort`, or `max_hours_to_resolution` to narrow the search. Filters are applied before the cap, so "
+            "`tags=world-cup&sort=volume` means \"top markets inside the World Cup slice,\" not \"filter this page.\" "
+            "Market imports are not subject to this discovery-read cap.\n\n"
             "## Response fields\n\n"
             "Each entry in `markets[]` has the same shape as [`GET /api/sdk/markets/{market_id}`](/api-reference/get-market). "
             "See that page for the full field reference, including resolution fields (`status`, `resolved_at`, `outcome`)."

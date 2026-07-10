@@ -37,6 +37,14 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-07-09 — `/api/sdk/markets` now signals capped discovery windows
+
+`GET /api/sdk/markets` now makes the discovery cap explicit. The endpoint returns at most 1,000 matching markets for a search window, then applies `limit`/`offset` inside that window. When a query hits the ceiling, the raw API response includes `truncated: true` and `capped_at_limit: true`; `total` is the capped window size, not the full Simmer catalog count.
+
+For broad scans, filter before paging: use `tags=`, `q=`, `venue=`, `sort=volume|recent`, and `max_hours_to_resolution=` to split the catalog into narrower slices. Each filter is applied before the cap, so `tags=world-cup&sort=volume` returns the top World Cup markets in that slice. This is a discovery-read limit only; market import flows remain uncapped by this window.
+
+---
+
 ## 2026-06-29 — `simmer-sdk` 0.22.0: smart order-type defaults for Polymarket trades
 
 Released [`simmer-sdk` 0.22.0](https://pypi.org/project/simmer-sdk/0.22.0/) on PyPI. `client.trade()` no longer forces `order_type="FAK"` when you omit it. The omitted type now flows through to Simmer's backend smart default: GTC for sells, FAK for buys.

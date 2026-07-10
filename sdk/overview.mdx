@@ -70,7 +70,11 @@ wc = client.get_markets(tags="world-cup", limit=50)       # by tag (comma-separa
 poly = client.get_markets(venue="polymarket", limit=20)   # by trading venue; venue="sim" returns all active markets
 ```
 
-Unfiltered browse returns a server-capped slice of the catalog (the ~1,000 highest-volume active markets), not the full set — a specific or lower-volume market (e.g. a long-tail weather market) can be excluded by the volume cap even though it's live on the venue. Use `q=` (keyword search, applied server-side across the full catalog), `tags=`, or `sort=` to reach it. The default ordering is liquidity-first as of 2026-06-15; pass `sort="recent"` for newest-first.
+`get_markets()` and `GET /api/sdk/markets` are discovery reads, not full-catalog dumps. The server returns at most 1,000 matching markets for the requested window, then applies `limit`/`offset` within that capped window. In the raw API response, `total` is the window size rather than the full catalog count; when the ceiling is hit, the response includes `truncated: true` and `capped_at_limit: true`.
+
+Always filter before paging. SDK filters `q=`, `tags=`, `venue=`, and `sort=` are applied server-side before the cap, so `tags="world-cup", sort="volume"` gives you the most liquid World Cup markets inside that slice. The REST endpoint also accepts `max_hours_to_resolution=` for time-window slices. To enumerate beyond 1,000, split the catalog by category, venue, keyword, or time-to-resolution windows and page each slice. Imports are uncapped: if a market is live on Polymarket or Kalshi but absent from discovery, use `check_market_exists()` / import flows rather than treating the capped browse result as authoritative.
+
+The default ordering is liquidity-first as of 2026-06-15; pass `sort="recent"` for newest-first.
 
 ## Data classes
 
