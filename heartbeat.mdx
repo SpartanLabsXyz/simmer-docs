@@ -59,7 +59,7 @@ Each venue block exposes three PnL fields:
 | `realized_pnl` | Locked-in P&L from closed/resolved positions |
 | `unrealized_pnl` | Mark-to-market P&L on open positions |
 
-For **\$SIM**, realized and unrealized come from `compute_sdk_agent_sim_pnl_async` (cash delta + open-position mark-to-market). For **Polymarket**, realized comes from PolyNode `/v2/onchain` aggregates; unrealized is derived as `pnl − realized_pnl` (the PolyNode `/v1/trader` endpoint does not expose unrealized separately). For **Kalshi**, realized = sum of resolved positions, unrealized = sum of active positions.
+For **\$SIM**, realized and unrealized come from `compute_sdk_agent_sim_pnl_async` (cash delta + open-position mark-to-market). For **Polymarket**, realized comes from the Simmer DB cache, derived from `real_trades` plus settlement data; unrealized is derived as `pnl − realized_pnl`. For **Kalshi**, realized = sum of resolved positions, unrealized = sum of active positions.
 
 ### Deprecated: `performance.total_pnl`
 
