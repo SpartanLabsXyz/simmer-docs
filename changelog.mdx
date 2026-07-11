@@ -37,6 +37,16 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-07-10 — `simmer-sdk` 0.22.2: server-side filters for `get_trades()`
+
+Released [`simmer-sdk` 0.22.2](https://pypi.org/project/simmer-sdk/0.22.2/) on PyPI. `client.get_trades()` now accepts `market_id`, `since`, `until`, and `include_failed` keyword arguments, and forwards them to `GET /api/sdk/trades` so the backend filters before paging. Existing calls keep the 0.22.1 behavior when the new filters are omitted.
+
+Use `market_id` to inspect one market's history, `since` / `until` with ISO-8601 timestamps for time-bounded reconciliation, and `include_failed=True` when you need failed, cancelled, or expired real-trade attempts in the response. Failed rows include `failure_category` and a sanitized `failure_reason`; raw venue/API error payloads are not exposed.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
 ## 2026-07-09 — `/api/sdk/markets` now signals capped discovery windows
 
 `GET /api/sdk/markets` now makes the discovery cap explicit. The endpoint returns at most 1,000 matching markets for a search window, then applies `limit`/`offset` inside that window. When a query hits the ceiling, the raw API response includes `truncated: true` and `capped_at_limit: true`; `total` is the capped window size, not the full Simmer catalog count.
