@@ -117,6 +117,8 @@ INCLUDE = [
     "GET /api/sdk/skill-rewards",
     # Trades history
     "GET /api/sdk/trades",
+    # Outcomes (metric verification for autoresearch plugin)
+    "GET /api/sdk/outcomes",
     # Kalshi
     "POST /api/sdk/trade/kalshi/quote",
     "POST /api/sdk/trade/kalshi/submit",

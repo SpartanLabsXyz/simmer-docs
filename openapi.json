@@ -49,14 +49,14 @@
           }
         },
         "x-mint": {
-          "content": "<Warning>Save your `api_key` immediately — it is only shown once.</Warning>"
+          "content": "<Warning>Save your `api_key` immediately \u2014 it is only shown once.</Warning>"
         }
       }
     },
     "/api/sdk/agents/me": {
       "get": {
         "summary": "Get Agent Me",
-        "description": "Get current agent's details (requires API key).\n\nReturns agent status, balance, P&L, and claim information.\nUses the auth cache (L1 60s TTL) — no extra DB call needed since\nvalidate_and_track_sdk_api_key_async already fetches all agent fields.\n\nQuery params:\n    include: comma-separated optional sections to include (e.g. \"pnl\").\n             PnL fetch is skipped by default to keep the endpoint fast.",
+        "description": "Get current agent's details (requires API key).\n\nReturns agent status, balance, P&L, and claim information.\nUses the auth cache (L1 60s TTL) \u2014 no extra DB call needed since\nvalidate_and_track_sdk_api_key_async already fetches all agent fields.\n\nQuery params:\n    include: comma-separated optional sections to include (e.g. \"pnl\").\n             PnL fetch is skipped by default to keep the endpoint fast.",
         "operationId": "api_get_agent_me_api_sdk_agents_me_get",
         "parameters": [
           {
@@ -178,7 +178,7 @@
     "/api/sdk/agents": {
       "get": {
         "summary": "Get User Sdk Agents",
-        "description": "Get all SDK agents owned by the current user.\n\nReturns list of agents with stats (balance, P&L, trades, etc.)\nRequires JWT authentication — identity derived from token claims.",
+        "description": "Get all SDK agents owned by the current user.\n\nReturns list of agents with stats (balance, P&L, trades, etc.)\nRequires JWT authentication \u2014 identity derived from token claims.",
         "operationId": "api_get_user_sdk_agents_api_sdk_agents_get",
         "responses": {
           "200": {
@@ -310,7 +310,7 @@
     "/api/sdk/agents/{agent_id}/settings": {
       "patch": {
         "summary": "Agent Settings Update By Id",
-        "description": "Update settings for a specific agent (JWT auth — for dashboard UI).\n\nVerifies the agent belongs to the requesting user before updating.",
+        "description": "Update settings for a specific agent (JWT auth \u2014 for dashboard UI).\n\nVerifies the agent belongs to the requesting user before updating.",
         "operationId": "api_sdk_agent_settings_update_by_id_api_sdk_agents__agent_id__settings_patch",
         "parameters": [
           {
@@ -399,7 +399,7 @@
           "sdk-agent-wallet"
         ],
         "summary": "Register Agent Wallet",
-        "description": "Register an OWS wallet for an agent. Elite-only.\n\nAuth: either an SDK API key (`sk_live_*`) — the original SDK path, where\n`agent_id` can be inferred from an agent-specific key — OR a Dynamic JWT\nfrom the dashboard, where `agent_id` MUST be passed in the body (the\ndashboard wizard knows it from route context). Phase 5 of\n_wallet-experience-overhaul opens this to the dashboard so non-SDK Elite\nusers can register agent wallets without spinning up Python.",
+        "description": "Register an OWS wallet for an agent. Elite-only.\n\nAuth: either an SDK API key (`sk_live_*`) \u2014 the original SDK path, where\n`agent_id` can be inferred from an agent-specific key \u2014 OR a Dynamic JWT\nfrom the dashboard, where `agent_id` MUST be passed in the body (the\ndashboard wizard knows it from route context). Phase 5 of\n_wallet-experience-overhaul opens this to the dashboard so non-SDK Elite\nusers can register agent wallets without spinning up Python.",
         "operationId": "api_sdk_register_agent_wallet_api_sdk_agent_wallet_register_post",
         "requestBody": {
           "content": {
@@ -493,7 +493,7 @@
     "/api/sdk/markets": {
       "get": {
         "summary": "List Markets",
-        "description": "List markets available for SDK trading.\n\nBy default, excludes tracking markets (no AI counterparty for simmer trading).\nSet include_analytics_only=true to include them (for real trading only).\n\nParameters:\n- status: Filter by status ('active', 'resolved', etc.). Omit to get all statuses when using ids.\n- venue: Filter by venue ('polymarket', 'sim'). Alias for import_source.\n        Deprecated: 'sandbox'/'simmer' are accepted but deprecated, use 'sim' instead.\n- import_source: Same as venue (kept for backwards compatibility).\n- q: Text search for market questions (min 2 chars, case-insensitive)\n- ids: Comma-separated market IDs to fetch (max 50). When provided, status filter is optional.\n- tags: Comma-separated tags to filter by (e.g., 'weather' or 'weather,crypto'). Returns markets with ALL specified tags.\n- sort: 'volume' (by 24h volume), 'recent'/'created' (by created_at), or None (default by 24h volume)\n- include: Comma-separated optional response fields. `resolution_criteria` is\n           returned by default for active-market source verification; the\n           include value remains accepted for older SDK callers.\n- tradeable_only: Defaults true. Set false to include active DB rows even\n           when Redis/CLOB liveness checks mark the orderbook unavailable.\n\nEach market row includes `seconds_to_resolution` (float seconds until\n`resolves_at`, server-computed at response time; null when the market has\nno resolution timestamp, negative once it has passed). Prefer it over\ncomputing expiry from `resolves_at` locally — it is immune to host clock\nskew and matches replay semantics.\n\nUnknown params will trigger a warning in the response (helps debug typos).\nRequires API key in Authorization header.",
+        "description": "List markets available for SDK trading.\n\nBy default, excludes tracking markets (no AI counterparty for simmer trading).\nSet include_analytics_only=true to include them (for real trading only).\n\nParameters:\n- status: Filter by status ('active', 'resolved', etc.). Omit to get all statuses when using ids.\n- venue: Filter by venue ('polymarket', 'sim'). Alias for import_source.\n        Deprecated: 'sandbox'/'simmer' are accepted but deprecated, use 'sim' instead.\n- import_source: Same as venue (kept for backwards compatibility).\n- q: Text search for market questions (min 2 chars, case-insensitive)\n- ids: Comma-separated market IDs to fetch (max 50). When provided, status filter is optional.\n- tags: Comma-separated tags to filter by (e.g., 'weather' or 'weather,crypto'). Returns markets with ALL specified tags.\n- sort: 'volume' (by 24h volume), 'recent'/'created' (by created_at), or None (default by 24h volume)\n- include: Comma-separated optional response fields. `resolution_criteria` is\n           returned by default for active-market source verification; the\n           include value remains accepted for older SDK callers.\n- tradeable_only: Defaults true. Set false to include active DB rows even\n           when Redis/CLOB liveness checks mark the orderbook unavailable.\n\nEach market row includes `seconds_to_resolution` (float seconds until\n`resolves_at`, server-computed at response time; null when the market has\nno resolution timestamp, negative once it has passed). Prefer it over\ncomputing expiry from `resolves_at` locally \u2014 it is immune to host clock\nskew and matches replay semantics.\n\nUnknown params will trigger a warning in the response (helps debug typos).\nRequires API key in Authorization header.",
         "operationId": "api_sdk_list_markets_api_sdk_markets_get",
         "parameters": [
           {
@@ -703,7 +703,7 @@
           }
         },
         "x-mint": {
-          "content": "<Tip>Need `time_to_resolution`, slippage, or flip-flop detection? Use the [context endpoint](/api-reference/context) — those fields are not on `/markets`.</Tip>\n\n**Discovery cap:** `/api/sdk/markets` returns at most 1,000 matching markets for a discovery window, then applies `limit`/`offset` within that capped window (max 500 results per request, default 50). The response `total` is the window size, not the full catalog count. When your query hits the ceiling, the response includes `\"truncated\": true` and `\"capped_at_limit\": true`; use `tags`, `q`, `venue`, `sort`, or `max_hours_to_resolution` to narrow the search. Filters are applied before the cap, so `tags=world-cup&sort=volume` means \"top markets inside the World Cup slice,\" not \"filter this page.\" Market imports are not subject to this discovery-read cap.\n\n## Response fields\n\nEach entry in `markets[]` has the same shape as [`GET /api/sdk/markets/{market_id}`](/api-reference/get-market). See that page for the full field reference, including resolution fields (`status`, `resolved_at`, `outcome`)."
+          "content": "<Tip>Need `time_to_resolution`, slippage, or flip-flop detection? Use the [context endpoint](/api-reference/context) \u2014 those fields are not on `/markets`.</Tip>\n\n**Discovery cap:** `/api/sdk/markets` returns at most 1,000 matching markets for a discovery window, then applies `limit`/`offset` within that capped window (max 500 results per request, default 50). The response `total` is the window size, not the full catalog count. When your query hits the ceiling, the response includes `\"truncated\": true` and `\"capped_at_limit\": true`; use `tags`, `q`, `venue`, `sort`, or `max_hours_to_resolution` to narrow the search. Filters are applied before the cap, so `tags=world-cup&sort=volume` means \"top markets inside the World Cup slice,\" not \"filter this page.\" Market imports are not subject to this discovery-read cap.\n\n## Response fields\n\nEach entry in `markets[]` has the same shape as [`GET /api/sdk/markets/{market_id}`](/api-reference/get-market). See that page for the full field reference, including resolution fields (`status`, `resolved_at`, `outcome`)."
         }
       }
     },
@@ -746,7 +746,7 @@
           }
         },
         "x-mint": {
-          "content": "<Note>Use `resolved_at != null` (not `status == \"resolved\"`) as the definitive signal that resolution is final. See the [resolution FAQ](/faq#how-do-i-know-when-a-market-is-truly-resolved) for the timing nuance.</Note>\n\nFor multi-outcome events (e.g. \"Who will win the election?\"), each option is its own binary market — `outcome_name` identifies the option, and `outcome: true` means that named option won. `event_id` / `event_name` / `event_ref` group sibling options."
+          "content": "<Note>Use `resolved_at != null` (not `status == \"resolved\"`) as the definitive signal that resolution is final. See the [resolution FAQ](/faq#how-do-i-know-when-a-market-is-truly-resolved) for the timing nuance.</Note>\n\nFor multi-outcome events (e.g. \"Who will win the election?\"), each option is its own binary market \u2014 `outcome_name` identifies the option, and `outcome: true` means that named option won. `event_id` / `event_name` / `event_ref` group sibling options."
         }
       }
     },
@@ -885,7 +885,7 @@
     "/api/sdk/markets/opportunities": {
       "get": {
         "summary": "Opportunities",
-        "description": "Get top trading opportunities for SDK agents.\n\nReturns markets ranked by opportunity score (edge + liquidity + urgency).\nUse this when an agent asks \"what markets should I trade?\"\n\nParameters:\n- venue: 'polymarket', 'kalshi', 'sim', or None for all\n- limit: Max markets to return (default 10, max 50)\n- min_divergence: Minimum absolute divergence threshold (default 0.03 = 3%)\n\nResponse includes recommended_side based on divergence direction:\n- divergence > 0: Simmer price > external → buy YES (Simmer thinks it's worth more)\n- divergence < 0: Simmer price < external → buy NO (Simmer thinks it's worth less)\n\nsignal_source indicates divergence origin:\n- 'oracle': AI multi-model forecast (activated markets with oracle cycles)\n- 'crowd': Crowd trading signal from sim agent activity against LMSR pool\n\nRequires API key in Authorization header.",
+        "description": "Get top trading opportunities for SDK agents.\n\nReturns markets ranked by opportunity score (edge + liquidity + urgency).\nUse this when an agent asks \"what markets should I trade?\"\n\nParameters:\n- venue: 'polymarket', 'kalshi', 'sim', or None for all\n- limit: Max markets to return (default 10, max 50)\n- min_divergence: Minimum absolute divergence threshold (default 0.03 = 3%)\n\nResponse includes recommended_side based on divergence direction:\n- divergence > 0: Simmer price > external \u2192 buy YES (Simmer thinks it's worth more)\n- divergence < 0: Simmer price < external \u2192 buy NO (Simmer thinks it's worth less)\n\nsignal_source indicates divergence origin:\n- 'oracle': AI multi-model forecast (activated markets with oracle cycles)\n- 'crowd': Crowd trading signal from sim agent activity against LMSR pool\n\nRequires API key in Authorization header.",
         "operationId": "api_sdk_opportunities_api_sdk_markets_opportunities_get",
         "parameters": [
           {
@@ -1179,7 +1179,7 @@
           }
         },
         "x-mint": {
-          "content": "<Warning>The `market_id` values in import responses are Simmer-specific UUIDs — different from Polymarket condition IDs. Use these Simmer IDs for all subsequent API calls.</Warning>\n\nResponse headers: `X-Imports-Remaining`, `X-Imports-Limit`. Re-importing an existing market does not consume quota.\n\n**Need more than 100/day?** When you hit the daily limit, the `429` response includes an `x402_url` field. Pay $0.005/import with USDC on Base for unlimited overflow."
+          "content": "<Warning>The `market_id` values in import responses are Simmer-specific UUIDs \u2014 different from Polymarket condition IDs. Use these Simmer IDs for all subsequent API calls.</Warning>\n\nResponse headers: `X-Imports-Remaining`, `X-Imports-Limit`. Re-importing an existing market does not consume quota.\n\n**Need more than 100/day?** When you hit the daily limit, the `429` response includes an `x402_url` field. Pay $0.005/import with USDC on Base for unlimited overflow."
         }
       }
     },
@@ -1219,14 +1219,14 @@
           }
         },
         "x-mint": {
-          "content": "<Warning>The `market_id` is a Simmer-specific UUID — different from the Kalshi ticker. Use this Simmer ID for all subsequent API calls.</Warning>"
+          "content": "<Warning>The `market_id` is a Simmer-specific UUID \u2014 different from the Kalshi ticker. Use this Simmer ID for all subsequent API calls.</Warning>"
         }
       }
     },
     "/api/sdk/fast-markets": {
       "get": {
         "summary": "Fast Markets",
-        "description": "List fast-resolving markets, optionally filtered by asset and time window.\n\nParameters:\n- asset: Crypto ticker to filter by (BTC, ETH, SOL, XRP, DOGE, ...).\n         Maps to a title search — e.g. asset=BTC searches for \"Bitcoin\".\n- window: Duration bucket (5m, 15m, 1h, 4h, daily). Matches Polymarket's\n          standard crypto speed-trading tiers.\n- venue: Filter by venue ('polymarket', 'kalshi', 'sim').\n- limit: Max markets to return (default 50).\n- sort: 'volume' to sort by 24h volume, 'resolves_at' for pure chronological.\n- market_status: 'live' (in settlement window now) or 'upcoming' (not yet in\n          settlement window). Omit for all. Note: this filters by the strict\n          `is_live_now` semantic below — for \"currently tradable on Polymarket\"\n          use `is_orderbook_open` instead.\n\nField semantics (frequently confused):\n- `is_orderbook_open` (bool): the market is accepting orders on Polymarket\n  right now. True for every market in this response — the `status='active'`\n  filter implies it. Equivalent to Gamma's `active && !closed`.\n- `is_live_now` (bool): the market is inside its final settlement window —\n  the last `<window>` minutes before `resolves_at`. For a fast-5m market,\n  true only in the 5 minutes before resolution. This is stricter than\n  Gamma's \"active\" flag. Use this if you only want to act on markets in\n  their immediate price-discovery window. If you want all tradable markets,\n  use `is_orderbook_open` (or just consume the full list).\n\nEquivalent to GET /api/sdk/markets?tags=fast[,fast-<window>]&q=<asset_name>",
+        "description": "List fast-resolving markets, optionally filtered by asset and time window.\n\nParameters:\n- asset: Crypto ticker to filter by (BTC, ETH, SOL, XRP, DOGE, ...).\n         Maps to a title search \u2014 e.g. asset=BTC searches for \"Bitcoin\".\n- window: Duration bucket (5m, 15m, 1h, 4h, daily). Matches Polymarket's\n          standard crypto speed-trading tiers.\n- venue: Filter by venue ('polymarket', 'kalshi', 'sim').\n- limit: Max markets to return (default 50).\n- sort: 'volume' to sort by 24h volume, 'resolves_at' for pure chronological.\n- market_status: 'live' (in settlement window now) or 'upcoming' (not yet in\n          settlement window). Omit for all. Note: this filters by the strict\n          `is_live_now` semantic below \u2014 for \"currently tradable on Polymarket\"\n          use `is_orderbook_open` instead.\n\nField semantics (frequently confused):\n- `is_orderbook_open` (bool): the market is accepting orders on Polymarket\n  right now. True for every market in this response \u2014 the `status='active'`\n  filter implies it. Equivalent to Gamma's `active && !closed`.\n- `is_live_now` (bool): the market is inside its final settlement window \u2014\n  the last `<window>` minutes before `resolves_at`. For a fast-5m market,\n  true only in the 5 minutes before resolution. This is stricter than\n  Gamma's \"active\" flag. Use this if you only want to act on markets in\n  their immediate price-discovery window. If you want all tradable markets,\n  use `is_orderbook_open` (or just consume the full list).\n\nEquivalent to GET /api/sdk/markets?tags=fast[,fast-<window>]&q=<asset_name>",
         "operationId": "api_sdk_fast_markets_api_sdk_fast_markets_get",
         "parameters": [
           {
@@ -1348,7 +1348,7 @@
           "sdk-trade"
         ],
         "summary": "Trade",
-        "description": "Execute a trade via SDK.\n\nVenues:\n- venue=\"sim\" (default): Execute on Simmer's LMSR market with $SIM\n- venue=\"polymarket\": Execute real trade on Polymarket via Dome API\n  (requires wallet setup with allowances)\n- venue=\"kalshi\": Execute real trade on Kalshi via DFlow\n  (requires Solana wallet setup with SOL + USDC)\n\nOptions:\n- dry_run=True: Validate and calculate without executing. Returns the exact\n  shares, projected price, and cost the live path would settle for.\n  Supported on all venues: polymarket, kalshi, and sim (LMSR — closed-form\n  cost-inversion guarantees dry_run.cost == live.cost within float\n  precision). Useful for sizing budgets without committing the trade.\n\nDeprecated: venue=\"sandbox\"/\"simmer\" are deprecated, use venue=\"sim\" instead.\n\nRequires API key in Authorization header (rate limited: 120/minute).",
+        "description": "Execute a trade via SDK.\n\nVenues:\n- venue=\"sim\" (default): Execute on Simmer's LMSR market with $SIM\n- venue=\"polymarket\": Execute real trade on Polymarket via Dome API\n  (requires wallet setup with allowances)\n- venue=\"kalshi\": Execute real trade on Kalshi via DFlow\n  (requires Solana wallet setup with SOL + USDC)\n\nOptions:\n- dry_run=True: Validate and calculate without executing. Returns the exact\n  shares, projected price, and cost the live path would settle for.\n  Supported on all venues: polymarket, kalshi, and sim (LMSR \u2014 closed-form\n  cost-inversion guarantees dry_run.cost == live.cost within float\n  precision). Useful for sizing budgets without committing the trade.\n\nDeprecated: venue=\"sandbox\"/\"simmer\" are deprecated, use venue=\"sim\" instead.\n\nRequires API key in Authorization header (rate limited: 120/minute).",
         "operationId": "api_sdk_trade_api_sdk_trade_post",
         "requestBody": {
           "content": {
@@ -1381,7 +1381,7 @@
           }
         },
         "x-mint": {
-          "content": "<Note>Multi-outcome markets (e.g., \"Who will win the election?\") use a different contract type on Polymarket. This is auto-detected and handled server-side — no extra parameters needed.</Note>\n\n<Warning>\n**Before selling, verify:**\n1. Market is active — resolved markets cannot be sold, use `/redeem` instead\n2. Shares >= 5 — Polymarket minimum per sell order\n3. Position exists on-chain — call `GET /positions` fresh before selling\n4. Use `shares` (not `amount`) for sells\n</Warning>\n\n<Note>The `source` tag groups trades for P&L tracking and prevents accidental re-buys on markets you already hold. Use a consistent prefix like `sdk:strategy-name`.</Note>"
+          "content": "<Note>Multi-outcome markets (e.g., \"Who will win the election?\") use a different contract type on Polymarket. This is auto-detected and handled server-side \u2014 no extra parameters needed.</Note>\n\n<Warning>\n**Before selling, verify:**\n1. Market is active \u2014 resolved markets cannot be sold, use `/redeem` instead\n2. Shares >= 5 \u2014 Polymarket minimum per sell order\n3. Position exists on-chain \u2014 call `GET /positions` fresh before selling\n4. Use `shares` (not `amount`) for sells\n</Warning>\n\n<Note>The `source` tag groups trades for P&L tracking and prevents accidental re-buys on markets you already hold. Use a consistent prefix like `sdk:strategy-name`.</Note>"
         }
       }
     },
@@ -1686,7 +1686,7 @@
     "/api/sdk/portfolio": {
       "get": {
         "summary": "Portfolio",
-        "description": "Get portfolio summary with exposure and concentration metrics.\n\nReturns aggregated portfolio data including:\n- Per-venue buckets: `sim`, `polymarket`, `kalshi` — each with balance,\n  pnl, positions_count, total_exposure\n- `total`: summed counts and exposure across venues (units are mixed —\n  use per-venue buckets for financially accurate aggregation)\n- Flat legacy fields (`balance_usdc`, `sim_balance`, `positions_count`,\n  etc.) kept populated for backwards compatibility\n\nQuery params:\n- venue: Filter which venues to compute. Default 'all'. The `total` and\n  per-venue buckets reflect this filter.\n\nRequires API key in Authorization header.",
+        "description": "Get portfolio summary with exposure and concentration metrics.\n\nReturns aggregated portfolio data including:\n- Per-venue buckets: `sim`, `polymarket`, `kalshi` \u2014 each with balance,\n  pnl, positions_count, total_exposure\n- `total`: summed counts and exposure across venues (units are mixed \u2014\n  use per-venue buckets for financially accurate aggregation)\n- Flat legacy fields (`balance_usdc`, `sim_balance`, `positions_count`,\n  etc.) kept populated for backwards compatibility\n\nQuery params:\n- venue: Filter which venues to compute. Default 'all'. The `total` and\n  per-venue buckets reflect this filter.\n\nRequires API key in Authorization header.",
         "operationId": "api_sdk_portfolio_api_sdk_portfolio_get",
         "parameters": [
           {
@@ -1732,7 +1732,7 @@
           }
         },
         "x-mint": {
-          "content": "<Tip>\n**Venue-aware response.** The `sim`, `polymarket`, `kalshi`, and `total` buckets are the preferred shape. Use `?venue=sim|polymarket|kalshi|all` to filter (default `all`).\n\nThe legacy flat fields (`balance_usdc`, `sim_balance`, `positions_count`, `total_exposure`) remain populated for backwards compatibility, but `positions_count` only counts Polymarket positions — use `portfolio.sim.positions_count`, `portfolio.total.positions_count`, or the per-venue buckets for accurate counts.\n</Tip>"
+          "content": "<Tip>\n**Venue-aware response.** The `sim`, `polymarket`, `kalshi`, and `total` buckets are the preferred shape. Use `?venue=sim|polymarket|kalshi|all` to filter (default `all`).\n\nThe legacy flat fields (`balance_usdc`, `sim_balance`, `positions_count`, `total_exposure`) remain populated for backwards compatibility, but `positions_count` only counts Polymarket positions \u2014 use `portfolio.sim.positions_count`, `portfolio.total.positions_count`, or the per-venue buckets for accurate counts.\n</Tip>"
         }
       }
     },
@@ -1879,7 +1879,7 @@
     "/api/sdk/user/sim-resolved": {
       "get": {
         "summary": "Get Sdk User Sim Resolved",
-        "description": "Get resolved $SIM markets pooled across all of the caller's claimed agents.\nAggregated per (agent, market) — same market traded by two agents shows as\ntwo cards so attribution stays clean.",
+        "description": "Get resolved $SIM markets pooled across all of the caller's claimed agents.\nAggregated per (agent, market) \u2014 same market traded by two agents shows as\ntwo cards so attribution stays clean.",
         "operationId": "api_get_sdk_user_sim_resolved_api_sdk_user_sim_resolved_get",
         "parameters": [
           {
@@ -1928,7 +1928,7 @@
     "/api/sdk/agents/{agent_id}/sim-positions": {
       "get": {
         "summary": "Get Sdk Agent Sim Positions",
-        "description": "Get $SIM positions for an SDK agent.\nRequires JWT authentication — ownership verified from token claims.",
+        "description": "Get $SIM positions for an SDK agent.\nRequires JWT authentication \u2014 ownership verified from token claims.",
         "operationId": "api_get_sdk_agent_sim_positions_api_sdk_agents__agent_id__sim_positions_get",
         "parameters": [
           {
@@ -1968,7 +1968,7 @@
     "/api/sdk/agents/{agent_id}/sim-trades": {
       "get": {
         "summary": "Get Sdk Agent Sim Trades",
-        "description": "Get $SIM trade history for an SDK agent.\nRequires JWT authentication — ownership verified from token claims.",
+        "description": "Get $SIM trade history for an SDK agent.\nRequires JWT authentication \u2014 ownership verified from token claims.",
         "operationId": "api_get_sdk_agent_sim_trades_api_sdk_agents__agent_id__sim_trades_get",
         "parameters": [
           {
@@ -2042,7 +2042,7 @@
     "/api/sdk/agents/{agent_id}/sim-resolved": {
       "get": {
         "summary": "Get Sdk Agent Sim Resolved",
-        "description": "Get resolved $SIM markets for an SDK agent, with pagination.\nReturns aggregated trade data per resolved market.\nRequires JWT authentication — ownership verified from token claims.",
+        "description": "Get resolved $SIM markets for an SDK agent, with pagination.\nReturns aggregated trade data per resolved market.\nRequires JWT authentication \u2014 ownership verified from token claims.",
         "operationId": "api_get_sdk_agent_sim_resolved_api_sdk_agents__agent_id__sim_resolved_get",
         "parameters": [
           {
@@ -2229,7 +2229,7 @@
     "/api/sdk/context/{market_id}": {
       "get": {
         "summary": "Context",
-        "description": "Get rich context for a market - gives skills \"memory\" between runs.\n\nComposes data from:\n- Market info (current price, price history, resolution time)\n- Position data (shares, cost basis, P&L) — per venue, in `positions`\n- Recent trades (last 5 trades with reasoning)\n- Trading discipline (flip-flop detection, warnings)\n- Slippage estimates (for different trade sizes)\n- Edge analysis (time-adjusted threshold, recommendation)\n- Warnings (time decay, low liquidity, etc.)\n\nOptional query params:\n- my_probability: Your probability estimate (0-1). If provided, returns edge\n  calculation and TRADE/HOLD recommendation.\n- venue: Which venue's positions to include. Default 'all'. The `positions`\n  response field always contains per-venue breakdown. The flat `position`\n  field mirrors the requested venue (or the first non-null one when\n  venue='all'), for backwards compatibility.\n\nAn agent can hold positions on the same market across multiple venues\nsimultaneously (e.g., paper-trading on sim + real trading on Polymarket).\nUse `positions.sim`, `positions.polymarket`, `positions.kalshi` to inspect\neach independently.\n\nRequires API key in Authorization header (rate limited: 300/minute).",
+        "description": "Get rich context for a market - gives skills \"memory\" between runs.\n\nComposes data from:\n- Market info (current price, price history, resolution time)\n- Position data (shares, cost basis, P&L) \u2014 per venue, in `positions`\n- Recent trades (last 5 trades with reasoning)\n- Trading discipline (flip-flop detection, warnings)\n- Slippage estimates (for different trade sizes)\n- Edge analysis (time-adjusted threshold, recommendation)\n- Warnings (time decay, low liquidity, etc.)\n\nOptional query params:\n- my_probability: Your probability estimate (0-1). If provided, returns edge\n  calculation and TRADE/HOLD recommendation.\n- venue: Which venue's positions to include. Default 'all'. The `positions`\n  response field always contains per-venue breakdown. The flat `position`\n  field mirrors the requested venue (or the first non-null one when\n  venue='all'), for backwards compatibility.\n\nAn agent can hold positions on the same market across multiple venues\nsimultaneously (e.g., paper-trading on sim + real trading on Polymarket).\nUse `positions.sim`, `positions.polymarket`, `positions.kalshi` to inspect\neach independently.\n\nRequires API key in Authorization header (rate limited: 300/minute).",
         "operationId": "api_sdk_context_api_sdk_context__market_id__get",
         "parameters": [
           {
@@ -2304,14 +2304,14 @@
           }
         },
         "x-mint": {
-          "content": "<Tip>\n**Per-venue positions.** An agent can hold positions on the same market across multiple venues simultaneously (e.g., sim paper trade + real Polymarket position). The `positions` container has `sim`, `polymarket`, and `kalshi` fields — each is either `null` or a position object.\n\nUse `?venue=sim|polymarket|kalshi|all` to filter (default `all`). The flat `position` field is preserved for backwards compatibility and mirrors the first non-null venue.\n</Tip>"
+          "content": "<Tip>\n**Per-venue positions.** An agent can hold positions on the same market across multiple venues simultaneously (e.g., sim paper trade + real Polymarket position). The `positions` container has `sim`, `polymarket`, and `kalshi` fields \u2014 each is either `null` or a position object.\n\nUse `?venue=sim|polymarket|kalshi|all` to filter (default `all`). The flat `position` field is preserved for backwards compatibility and mirrors the first non-null venue.\n</Tip>"
         }
       }
     },
     "/api/sdk/briefing": {
       "get": {
         "summary": "Briefing",
-        "description": "Single-call briefing for agent heartbeat check-ins.\n\nReturns portfolio, positions (bucketed), opportunities, and performance\nin one response. Replaces 5-6 separate API calls.\n\nParameters:\n- since: ISO timestamp — only show changes since this time. Defaults to 24h ago.\n\nRequires API key in Authorization header.",
+        "description": "Single-call briefing for agent heartbeat check-ins.\n\nReturns portfolio, positions (bucketed), opportunities, and performance\nin one response. Replaces 5-6 separate API calls.\n\nParameters:\n- since: ISO timestamp \u2014 only show changes since this time. Defaults to 24h ago.\n\nRequires API key in Authorization header.",
         "operationId": "api_sdk_briefing_api_sdk_briefing_get",
         "parameters": [
           {
@@ -2407,7 +2407,7 @@
           }
         },
         "x-mint": {
-          "content": "**Stop-loss is on by default** — every buy gets a 50% stop-loss automatically. Take-profit is off by default (prediction markets resolve naturally). Use this endpoint to set or override thresholds for a specific position."
+          "content": "**Stop-loss is on by default** \u2014 every buy gets a 50% stop-loss automatically. Take-profit is off by default (prediction markets resolve naturally). Use this endpoint to set or override thresholds for a specific position."
         }
       },
       "delete": {
@@ -2908,7 +2908,7 @@
           "sdk-redeem"
         ],
         "summary": "Dw Redeem Prepare",
-        "description": "Build the EIP-712 WALLET batch for an SDK external+DW user redeeming\na resolved Polymarket position.\n\nMirror of `/api/user/wallet/external/dw-redeem/prepare` (the dashboard\nG6 endpoint) under SDK API-key auth. Body takes Simmer's `market_id`\nUUID — server resolves to `condition_id` + token IDs via DB lookup,\nsame shape as `/api/sdk/redeem`.\n\nReturns the typed-data payload the SDK signs locally with the user's\n`WALLET_PRIVATE_KEY` (or OWS-vault equivalent), then POSTs back to\n`/api/sdk/dw-redeem/submit`.\n\nAuth: SDK API key.\nGuards: real_trading_enabled, wallet_ownership='external',\nwallet_uses_deposit_wallet=true, deposit_wallet_address NOT NULL.",
+        "description": "Build the EIP-712 WALLET batch for an SDK external+DW user redeeming\na resolved Polymarket position.\n\nMirror of `/api/user/wallet/external/dw-redeem/prepare` (the dashboard\nG6 endpoint) under SDK API-key auth. Body takes Simmer's `market_id`\nUUID \u2014 server resolves to `condition_id` + token IDs via DB lookup,\nsame shape as `/api/sdk/redeem`.\n\nReturns the typed-data payload the SDK signs locally with the user's\n`WALLET_PRIVATE_KEY` (or OWS-vault equivalent), then POSTs back to\n`/api/sdk/dw-redeem/submit`.\n\nAuth: SDK API key.\nGuards: real_trading_enabled, wallet_ownership='external',\nwallet_uses_deposit_wallet=true, deposit_wallet_address NOT NULL.",
         "operationId": "api_sdk_dw_redeem_prepare_api_sdk_dw_redeem_prepare_post",
         "requestBody": {
           "content": {
@@ -2985,7 +2985,7 @@
     "/api/sdk/fleet/summary": {
       "get": {
         "summary": "Fleet Summary",
-        "description": "Cross-agent fleet summary for the Elite Fleet dashboard tab.\n\nReturns KPIs, per-agent rollups, per-skill cross-agent rollups,\nclassified error patterns, and active cooldowns — all scoped to\nthe authenticated user's claimed agents.\n\nQuery params:\n  period: \"24h\" | \"7d\" | \"30d\" | \"all\"  (default: \"24h\")",
+        "description": "Cross-agent fleet summary for the Elite Fleet dashboard tab.\n\nReturns KPIs, per-agent rollups, per-skill cross-agent rollups,\nclassified error patterns, and active cooldowns \u2014 all scoped to\nthe authenticated user's claimed agents.\n\nQuery params:\n  period: \"24h\" | \"7d\" | \"30d\" | \"all\"  (default: \"24h\")",
         "operationId": "api_sdk_fleet_summary_api_sdk_fleet_summary_get",
         "parameters": [
           {
@@ -3367,7 +3367,7 @@
     "/api/sdk/skills/featured": {
       "get": {
         "summary": "Skill Featured",
-        "description": "Top skill for a category by install_count.\n\nPowers the per-category featured-skill banner on /markets — when a\nuser clicks a category pill, the existing PromoBannerCarousel slot\non MarketList is replaced with a banner showcasing the most popular\nskill that trades that category's markets.\n\nPublic, no auth. Cached 5 min. Returns 404 if no skill matches.",
+        "description": "Top skill for a category by install_count.\n\nPowers the per-category featured-skill banner on /markets \u2014 when a\nuser clicks a category pill, the existing PromoBannerCarousel slot\non MarketList is replaced with a banner showcasing the most popular\nskill that trades that category's markets.\n\nPublic, no auth. Cached 5 min. Returns 404 if no skill matches.",
         "operationId": "api_sdk_skill_featured_api_sdk_skills_featured_get",
         "parameters": [
           {
@@ -3460,7 +3460,7 @@
     "/api/sdk/skills/mine/metrics/{slug}/trend": {
       "get": {
         "summary": "Creator Skill Trend",
-        "description": "Trend data for a creator's skill.\n\n?metric=volume  (default) — weekly volume + win-rate from real_trades (last 12 weeks)\n?metric=installs          — daily install count from skill_install_snapshots (last 84 days)\n\nVolume metric returns: { week_start, trades, volume_usdc, win_rate_pct }\nInstalls metric returns: { snapshot_date, install_count }",
+        "description": "Trend data for a creator's skill.\n\n?metric=volume  (default) \u2014 weekly volume + win-rate from real_trades (last 12 weeks)\n?metric=installs          \u2014 daily install count from skill_install_snapshots (last 84 days)\n\nVolume metric returns: { week_start, trades, volume_usdc, win_rate_pct }\nInstalls metric returns: { snapshot_date, install_count }",
         "operationId": "api_creator_skill_trend_api_sdk_skills_mine_metrics__slug__trend_get",
         "parameters": [
           {
@@ -3546,7 +3546,7 @@
     "/api/sdk/skill-leaderboard": {
       "get": {
         "summary": "Skill Leaderboard",
-        "description": "Ranked skill leaderboard: install proxies, trade count, volume, and\ncashflow-based realized P&L. Public metrics (no per-user data).\n\nQuery params:\n  limit:   max rows (default 50, capped at 200)\n  sort:    one of volume_usdc_alltime | volume_usdc_7d | trades_alltime |\n           trades_7d | installs_from_trades | realized_pnl_cashflow |\n           profitable_user_pct  (default: volume_usdc_alltime)\n  window:  'alltime' (default) | '7d' | '30d' — filter to skills with\n           trade activity in that window.\n  min_trades: minimum trade count required (default 0)\n\nP&L here is CASHFLOW (sells - buys) on confirmed/filled trades — it is\nrealized-only and ignores the value of open positions, so active skills\nunder-report. See migrations/20260424_sdk_skill_analytics_view.sql.",
+        "description": "Ranked skill leaderboard: install proxies, trade count, volume, and\ncashflow-based realized P&L. Public metrics (no per-user data).\n\nQuery params:\n  limit:   max rows (default 50, capped at 200)\n  sort:    one of volume_usdc_alltime | volume_usdc_7d | trades_alltime |\n           trades_7d | installs_from_trades | realized_pnl_cashflow |\n           profitable_user_pct  (default: volume_usdc_alltime)\n  window:  'alltime' (default) | '7d' | '30d' \u2014 filter to skills with\n           trade activity in that window.\n  min_trades: minimum trade count required (default 0)\n\nP&L here is CASHFLOW (sells - buys) on confirmed/filled trades \u2014 it is\nrealized-only and ignores the value of open positions, so active skills\nunder-report. See migrations/20260424_sdk_skill_analytics_view.sql.",
         "operationId": "api_sdk_skill_leaderboard_api_sdk_skill_leaderboard_get",
         "responses": {
           "200": {
@@ -3580,7 +3580,7 @@
     "/api/sdk/trades": {
       "get": {
         "summary": "Get Trades",
-        "description": "Get trade history for a user's SDK trades.\n\nRequires API key in Authorization header.\n\n- venue='all' (default): merged trades across sim_trades + real_trades, sorted by created_at desc\n- venue='sim': queries sim_trades table (simulated LMSR trades)\n- venue='polymarket': queries real_trades table (real Polymarket trades)\n- venue='kalshi': queries real_trades table filtered to Kalshi trades\n\nEach trade row includes a `venue` field identifying which venue it came from.\n\nDeprecated: venue='sandbox'/'simmer' are deprecated, use venue='sim' instead.\n\nReturns trades from the user's wallet (rate limited: 300/minute).",
+        "description": "Get trade history for a user's SDK trades.\n\nRequires API key in Authorization header.\n\n- venue='all' (default): merged trades across sim_trades + real_trades, sorted by created_at desc\n- venue='sim': queries sim_trades table (simulated LMSR trades)\n- venue='polymarket': queries real_trades table (real Polymarket trades)\n- venue='kalshi': queries real_trades table filtered to Kalshi trades\n\nOptional filters (all backward-compatible):\n- market_id: restrict to one market\n- since / until: ISO-8601 datetime range filter on created_at\n- include_failed: when true, widens real_trades to also return failed/cancelled/expired rows.\n  Each such row carries failure_category (normalized bucket) and failure_reason (sanitized message).\n  superseded rows are always excluded.\n\nEach trade row includes a `venue` field identifying which venue it came from.\n\nDeprecated: venue='sandbox'/'simmer' are deprecated, use venue='sim' instead.\n\nReturns trades from the user's wallet (rate limited: 300/minute).",
         "operationId": "api_sdk_get_trades_api_sdk_trades_get",
         "parameters": [
           {
@@ -3596,11 +3596,11 @@
                   "type": "null"
                 }
               ],
-              "description": "Venue filter: 'all' (default — sim + polymarket merged), 'sim', 'polymarket', or 'kalshi'",
+              "description": "Venue filter: 'all' (default \u2014 sim + polymarket merged), 'sim', 'polymarket', or 'kalshi'",
               "default": "all",
               "title": "Venue"
             },
-            "description": "Venue filter: 'all' (default — sim + polymarket merged), 'sim', 'polymarket', or 'kalshi'"
+            "description": "Venue filter: 'all' (default \u2014 sim + polymarket merged), 'sim', 'polymarket', or 'kalshi'"
           },
           {
             "name": "limit",
@@ -3739,10 +3739,61 @@
         }
       }
     },
+    "/api/sdk/outcomes": {
+      "get": {
+        "summary": "Outcomes",
+        "description": "Return trade outcomes summary for a skill. Used by autoresearch plugin for metric verification.",
+        "operationId": "api_sdk_outcomes_api_sdk_outcomes_get",
+        "parameters": [
+          {
+            "name": "skill",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Skill slug",
+              "title": "Skill"
+            },
+            "description": "Skill slug"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "ISO timestamp, only count trades after this",
+              "title": "Since"
+            },
+            "description": "ISO timestamp, only count trades after this"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sdk/trade/kalshi/quote": {
       "post": {
         "summary": "Kalshi Quote",
-        "description": "Get an unsigned Kalshi transaction for BYOW trading.\n\nFlow: Client calls /quote → signs locally → calls /submit with signed tx.\nThe SDK handles this automatically when SOLANA_PRIVATE_KEY is set.",
+        "description": "Get an unsigned Kalshi transaction for BYOW trading.\n\nFlow: Client calls /quote \u2192 signs locally \u2192 calls /submit with signed tx.\nThe SDK handles this automatically when SOLANA_PRIVATE_KEY is set.",
         "operationId": "api_sdk_kalshi_quote_api_sdk_trade_kalshi_quote_post",
         "requestBody": {
           "content": {
@@ -4006,7 +4057,7 @@
     "/api/sdk/health": {
       "get": {
         "summary": "Health",
-        "description": "Lightweight health check — no auth, no DB, no external calls.",
+        "description": "Lightweight health check \u2014 no auth, no DB, no external calls.",
         "operationId": "api_sdk_health_api_sdk_health_get",
         "responses": {
           "200": {
@@ -4023,7 +4074,7 @@
     "/api/sdk/version-check": {
       "get": {
         "summary": "Version Check",
-        "description": "Classify an SDK version as ok / deprecated / blocked.\n\nNo authentication required — called by SimmerClient.__init__ before any\nauth handshake. Returns a JSON body with:\n  {\n    \"status\":  \"ok\" | \"deprecated\" | \"blocked\",\n    \"message\": str,\n  }\n\nQuery params:\n  sdk_version: the client's own __version__ string (e.g. \"0.9.2\")",
+        "description": "Classify an SDK version as ok / deprecated / blocked.\n\nNo authentication required \u2014 called by SimmerClient.__init__ before any\nauth handshake. Returns a JSON body with:\n  {\n    \"status\":  \"ok\" | \"deprecated\" | \"blocked\",\n    \"message\": str,\n  }\n\nQuery params:\n  sdk_version: the client's own __version__ string (e.g. \"0.9.2\")",
         "operationId": "api_sdk_version_check_api_sdk_version_check_get",
         "parameters": [
           {
@@ -4065,7 +4116,7 @@
           "wc"
         ],
         "summary": "WC Copy Leaders",
-        "description": "Returns the cached curated World Cup copy-leader set.\n\nLeaders are ranked by aggregated WC-market totalPnl (Phase 2), with\ncopyability screened via the PolyNode copy-pnl leaderboard (excludes toxic\nwallets and MM-bot-scale traders).\n\nWhen forming=true the leaderboard is still gathering data (fewer than the\nminimum qualified leaders). The payload still contains whatever leaders have\nqualified so far — clients should display the partial set with a note that\nthe leaderboard is forming.\n\nThe set is kept warm two ways: a daily 02:00 UTC curation job, and lazy\nself-heal — if this read finds the cache missing or stale, it kicks a\nsingle-flight background refresh (SIM-3090) so a missed/eaten cron fire\ndoesn't leave the cache empty for the day. Self-heal never blocks the\nresponse.\n\nFree-tier accessible — no Pro gate.\n\nReturns 503 when the cache is not yet populated (a refresh is kicked; retry\nshortly).",
+        "description": "Returns the cached curated World Cup copy-leader set.\n\nLeaders are ranked by aggregated WC-market totalPnl (Phase 2), with\ncopyability screened via the PolyNode copy-pnl leaderboard (excludes toxic\nwallets and MM-bot-scale traders).\n\nWhen forming=true the leaderboard is still gathering data (fewer than the\nminimum qualified leaders). The payload still contains whatever leaders have\nqualified so far \u2014 clients should display the partial set with a note that\nthe leaderboard is forming.\n\nThe set is kept warm two ways: a daily 02:00 UTC curation job, and lazy\nself-heal \u2014 if this read finds the cache missing or stale, it kicks a\nsingle-flight background refresh (SIM-3090) so a missed/eaten cron fire\ndoesn't leave the cache empty for the day. Self-heal never blocks the\nresponse.\n\nFree-tier accessible \u2014 no Pro gate.\n\nReturns 503 when the cache is not yet populated (a refresh is kicked; retry\nshortly).",
         "operationId": "get_wc_copy_leaders_api_sdk_wc_copy_leaders_get",
         "responses": {
           "200": {
@@ -4079,7 +4130,7 @@
             }
           },
           "503": {
-            "description": "Leader set not yet computed — daily curation job has not run yet",
+            "description": "Leader set not yet computed \u2014 daily curation job has not run yet",
             "content": {
               "application/json": {
                 "schema": {
@@ -6826,7 +6877,7 @@
           "current_probability": {
             "type": "number",
             "title": "Current Probability",
-            "description": "Current YES probability (0–1)."
+            "description": "Current YES probability (0\u20131)."
           },
           "current_price": {
             "anyOf": [
@@ -6922,7 +6973,7 @@
               }
             ],
             "title": "Event Id",
-            "description": "Legacy ID grouping sibling markets for a multi-outcome event (e.g. \"Who will win the election?\"). Prefer event_ref for grouping — event_id was not set by every import path historically."
+            "description": "Legacy ID grouping sibling markets for a multi-outcome event (e.g. \"Who will win the election?\"). Prefer event_ref for grouping \u2014 event_id was not set by every import path historically."
           },
           "event_name": {
             "anyOf": [
@@ -6994,7 +7045,7 @@
               }
             ],
             "title": "Polymarket Neg Risk",
-            "description": "Whether this is a negative-risk market — uses a different exchange contract on Polymarket."
+            "description": "Whether this is a negative-risk market \u2014 uses a different exchange contract on Polymarket."
           },
           "fee_rate_bps": {
             "anyOf": [
@@ -7420,7 +7471,7 @@
         },
         "type": "object",
         "title": "SDKPortfolioTotal",
-        "description": "Total across all venues.\n\nCounts are summed directly; exposure is summed in venue-native units\nand is not currency-normalized (since $SIM ≠ USDC). Use the per-venue\nbuckets for accurate financial aggregation."
+        "description": "Total across all venues.\n\nCounts are summed directly; exposure is summed in venue-native units\nand is not currency-normalized (since $SIM \u2260 USDC). Use the per-venue\nbuckets for accurate financial aggregation."
       },
       "SDKPortfolioVenueBucket": {
         "properties": {
@@ -8027,7 +8078,7 @@
           "execute": {
             "type": "boolean",
             "title": "Execute",
-            "description": "DEPRECATED. Legacy flag that returns Polymarket order params for client-side CLOB submission instead of executing the trade. YES side only — NO is not supported. Does not write to sim_trades and is incompatible with venue='sim'. Use venue='polymarket' for server-side execution (handles both managed and external wallets) or venue='sim' for sandbox trades.",
+            "description": "DEPRECATED. Legacy flag that returns Polymarket order params for client-side CLOB submission instead of executing the trade. YES side only \u2014 NO is not supported. Does not write to sim_trades and is incompatible with venue='sim'. Use venue='polymarket' for server-side execution (handles both managed and external wallets) or venue='sim' for sandbox trades.",
             "default": false,
             "deprecated": true
           },
@@ -9542,7 +9593,7 @@
             "type": "string",
             "pattern": "^0x[0-9a-fA-F]{40}$",
             "title": "Poly Address",
-            "description": "EOA address — must match the authenticated user's wallet_address"
+            "description": "EOA address \u2014 must match the authenticated user's wallet_address"
           },
           "poly_signature": {
             "type": "string",
@@ -9634,7 +9685,7 @@
           "confirm_orphan_deposit_wallet": {
             "type": "boolean",
             "title": "Confirm Orphan Deposit Wallet",
-            "description": "Required (true) when the user has an active Polymarket deposit wallet (`wallet_uses_deposit_wallet=true`) and the linking address differs from the current `wallet_address`. The DW is owned on-chain by the CURRENT EOA via CREATE2; relinking to a new address would orphan the DW (the new key can't sign WALLET batches against it — funds and positions get stuck). Default false so silent orphaning is impossible. SIM-1611. Surfaced after the 2026-05-07 audit found 3 already-orphaned DWs from prior relinks (da2185e0, ydir.tomas@, raynojam@). See `_dev/active/_polymarket-dw-phase-2/`.",
+            "description": "Required (true) when the user has an active Polymarket deposit wallet (`wallet_uses_deposit_wallet=true`) and the linking address differs from the current `wallet_address`. The DW is owned on-chain by the CURRENT EOA via CREATE2; relinking to a new address would orphan the DW (the new key can't sign WALLET batches against it \u2014 funds and positions get stuck). Default false so silent orphaning is impossible. SIM-1611. Surfaced after the 2026-05-07 audit found 3 already-orphaned DWs from prior relinks (da2185e0, ydir.tomas@, raynojam@). See `_dev/active/_polymarket-dw-phase-2/`.",
             "default": false
           }
         },

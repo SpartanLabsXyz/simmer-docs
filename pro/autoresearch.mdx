@@ -279,7 +279,27 @@ These endpoints power the server's sync. You don't call them directly — the MC
 | `GET /api/sdk/autoresearch/experiments` | List experiment history |
 | `GET /api/sdk/autoresearch/state` | Resume state for server startup |
 | `POST /api/sdk/autoresearch/backtest` | Replay trades against new config |
-| `GET /api/sdk/outcomes` | Trade outcome summary (metric verification) |
+| `GET /api/sdk/outcomes` | Trade outcome summary — v1 cash-flow + v2 settlement-accurate fields |
+
+### `/api/sdk/outcomes` v2 fields
+
+`GET /api/sdk/outcomes` returns both backward-compatible cash-flow fields (v1) and new settlement-accurate fields (v2). Use v2 fields for autoresearch metric verification and skill-health signals — they correctly attribute buys held to resolution.
+
+**SDK:** `client.get_outcomes(skill_slug=..., since=...)`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `trades` | int | Total executed trade count (v1 — cash-flow) |
+| `pnl` | float | Net cash-flow P&L: sell proceeds minus buy costs (v1 — cash-flow) |
+| `wins` | int | Sell rows with positive cash-flow (v1 — cash-flow) |
+| `losses` | int | Sell rows with zero or negative cash-flow (v1 — cash-flow) |
+| `settled_pnl` | float | Sum of realized P&L across all resolved markets (v2) |
+| `resolved_markets` | int | Number of resolved markets where this skill held a position (v2) |
+| `settled_wins` | int | Resolved markets with positive realized P&L (v2) |
+| `settled_losses` | int | Resolved markets with zero or negative realized P&L (v2) |
+| `confidence_breakdown` | object | Count by confidence tag: `settlement` (PolyNode v3), `native` (sim venue), `mirror` (market mirror) (v2) |
+
+**Why v2 exists:** v1 `wins` only count sell rows — a buy held to resolution and settled as a winner never appears. v2 `settled_wins` counts every resolved market correctly.
 
 ## Legacy (v1 Plugin)
 
