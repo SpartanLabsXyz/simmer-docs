@@ -37,6 +37,22 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-07-15 — Wallet-dedication safety guard for Elite users
+
+Elite users who click "Dedicate a wallet" immediately after creating an agent now see a confirmation step when the account-primary wallet holds at least $0.50 across pUSD, USDC.e, USDT, or native USDC. The step summarizes the detected balance and explains that dedicating the wallet will move those funds into the new agent's wallet before offering **Go back** or **Proceed**.
+
+Users with an unfunded or undetectable account-primary wallet continue directly without interruption. This keeps the fast path for clean setups while adding an explicit checkpoint for the case where a user might otherwise strand funds by dedicating the primary wallet to a new agent too quickly.
+
+---
+
+## 2026-07-15 — Wallet-link endpoints now enforce their documented rate limits
+
+The wallet-link challenge and wallet-link submission endpoints have always documented retry limits of 5 requests/hour and 3 requests/day respectively. Those limits are now enforced by Simmer's platform rate limiter.
+
+This closes an abuse surface in the wallet-ownership-proof flow without changing normal usage. Agents and users operating within the documented limits should see no behavior change; excessive retries now receive the same rate-limit handling as other protected SDK and dashboard endpoints.
+
+---
+
 ## 2026-07-09 — `/api/sdk/markets` now signals capped discovery windows
 
 `GET /api/sdk/markets` now makes the discovery cap explicit. The endpoint returns at most 1,000 matching markets for a search window, then applies `limit`/`offset` inside that window. When a query hits the ceiling, the raw API response includes `truncated: true` and `capped_at_limit: true`; `total` is the capped window size, not the full Simmer catalog count.
