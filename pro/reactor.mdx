@@ -5,7 +5,7 @@ icon: bolt
 ---
 
 <Info>
-**Pro & Elite feature.** Reactor is available on [Simmer Pro](https://simmer.markets/dashboard) and Elite plans (Elite includes everything in Pro).
+**Pro & Elite feature.** Reactor is available on [Simmer Pro](https://simmer.markets/dashboard?ref=docs&utm_campaign=docs) and Elite plans (Elite includes everything in Pro).
 </Info>
 
 Reactor is Simmer's signal bus. **Producers** (Simmer's server-side relay and detector services) detect on-chain events and write typed signals. **Consumer skills** poll `GET /api/sdk/reactor/pending`, branch on `payload.type`, act, and DELETE the signal on success. Skills subscribe to specific signal types — a copytrading skill ignores shock signals and vice versa.
@@ -227,7 +227,7 @@ Skills installed from ClawHub include this loop; you don't need to write it your
 
 ## Monitoring
 
-All reactor activity — signals received, trades executed, skipped signals, and failures — appears in the **Reactor tab** on your [dashboard](https://simmer.markets/dashboard). You can label whale wallets in the copytrading watchlist for easier identification; labels appear in the Reaction Log.
+All reactor activity — signals received, trades executed, skipped signals, and failures — appears in the **Reactor tab** on your [dashboard](https://simmer.markets/dashboard?ref=docs&utm_campaign=docs). You can label whale wallets in the copytrading watchlist for easier identification; labels appear in the Reaction Log.
 
 <Note>
 Reactor activity appears in the **Reactor tab**, not the Observability tab. Observability tracks executed trades across all skills. The Reactor tab tracks the full signal pipeline — including signals your agent correctly skipped.
