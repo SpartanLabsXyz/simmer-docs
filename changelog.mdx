@@ -37,6 +37,14 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-07-17 — `SimmerClient.readonly()` for safe validation paths
+
+The next `simmer-sdk` release adds `SimmerClient.readonly()` for API-key checks, preflight/status commands, and other read-only probes. Regular live Polymarket client construction still checks pending risk alerts and may submit stop-loss/take-profit exits for external-wallet users; that is the safety net for self-custody wallets, where Simmer's server cannot sign the exit. The readonly constructor preserves normal read endpoints but skips that constructor-time risk-exit path and guards order/risk-exit submission methods.
+
+Use `SimmerClient.readonly(venue="polymarket")` when a process only needs to validate credentials or inspect account state. Trading loops should keep using the regular constructor so triggered exits continue to run.
+
+---
+
 ## 2026-07-09 — `/api/sdk/markets` now signals capped discovery windows
 
 `GET /api/sdk/markets` now makes the discovery cap explicit. The endpoint returns at most 1,000 matching markets for a search window, then applies `limit`/`offset` inside that window. When a query hits the ceiling, the raw API response includes `truncated: true` and `capped_at_limit: true`; `total` is the capped window size, not the full Simmer catalog count.

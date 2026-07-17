@@ -31,6 +31,9 @@ client = SimmerClient(api_key="sk_live_...")
 # With venue default — kwargs forward through from_env()
 client = SimmerClient.from_env(venue="polymarket")
 
+# Read-only validation/status client — no constructor-time risk exits
+client = SimmerClient.readonly(venue="polymarket")
+
 # Explicit OWS-managed wallet routing
 client = SimmerClient.with_ows_wallet("my-agent-wallet")
 ```
@@ -38,6 +41,10 @@ client = SimmerClient.with_ows_wallet("my-agent-wallet")
 `SimmerClient.from_env()` reads `SIMMER_API_KEY` from the environment and auto-detects `WALLET_PRIVATE_KEY` (external EVM wallet) and `OWS_WALLET` (OWS-managed wallet) when set. It raises `RuntimeError` with a dashboard pointer if `SIMMER_API_KEY` is missing. `SimmerClient.with_ows_wallet(name)` is the same idea but takes the OWS wallet name explicitly — useful when the same agent process talks to multiple wallets.
 
 These classmethods are sugar over the regular `SimmerClient(api_key=..., ...)` constructor. They exist so skill bundles and bots never have to read `os.environ` directly — keeping `import os` out of skill code helps the [ClawHub](https://clawhub.ai) scanner.
+
+<Warning>
+For live Polymarket clients with `WALLET_PRIVATE_KEY` or `OWS_WALLET`, regular `SimmerClient(...)` construction checks pending risk alerts and may submit stop-loss/take-profit exit orders. This is intentional for self-custody safety: Simmer's server cannot sign those exits. Use `SimmerClient.readonly(...)` for API-key validation, preflight/status checks, and other non-trading paths.
+</Warning>
 
 ## Quick example
 
