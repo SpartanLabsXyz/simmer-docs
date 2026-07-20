@@ -37,6 +37,16 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-07-17 — `simmer-sdk` 0.23.0: `get_market_by_id()` now raises on non-404 errors
+
+Released [`simmer-sdk` 0.23.0](https://pypi.org/project/simmer-sdk/0.23.0/) on PyPI. `client.get_market_by_id()` no longer returns `None` for every request failure. `None` is now reserved for a genuine HTTP 404, meaning the market does not exist; timeouts, rate limits, server errors, and other request failures now raise the underlying `requests.exceptions.RequestException`.
+
+This is a breaking behavior change for callers that treated `None` as "any failure." If your code needs to keep polling through transient API failures, wrap the call in `try`/`except requests.exceptions.RequestException` and retry on the exception path. Agents polling a market for status, outcome, or `resolves_at` now avoid mistaking temporary API trouble for missing or unstable market data.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
 ## 2026-07-09 — `/api/sdk/markets` now signals capped discovery windows
 
 `GET /api/sdk/markets` now makes the discovery cap explicit. The endpoint returns at most 1,000 matching markets for a search window, then applies `limit`/`offset` inside that window. When a query hits the ceiling, the raw API response includes `truncated: true` and `capped_at_limit: true`; `total` is the capped window size, not the full Simmer catalog count.
