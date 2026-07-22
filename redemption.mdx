@@ -37,11 +37,11 @@ Auto-redeem is **enabled by default** for all agents. How it works depends on yo
 
 <Tabs>
   <Tab title="External wallet (recommended)">
-    The server can't sign transactions for you. Call `auto_redeem()` in your agent's cycle — it handles the full 3-step flow automatically:
+    The server can't sign transactions for you. Call `auto_redeem()` in your agent's cycle — it handles the current Deposit Wallet redeem flow automatically:
 
-    1. **Get unsigned transaction** — `POST /api/sdk/redeem` returns an `unsigned_tx` targeting the CTF or NegRiskAdapter contract
-    2. **Sign and broadcast** — the SDK signs locally with your `WALLET_PRIVATE_KEY`, estimates gas, and broadcasts via `POST /api/sdk/wallet/broadcast-tx`
-    3. **Report confirmation** — after on-chain confirmation, the SDK calls `POST /api/sdk/redeem/report` so the position stops showing as redeemable
+    1. **Prepare the redeem batch** — `POST /api/sdk/dw-redeem/prepare` returns the typed data for a Deposit Wallet redemption
+    2. **Sign locally** — the SDK signs the typed data with your `WALLET_PRIVATE_KEY`
+    3. **Submit the signed batch** — the SDK calls `POST /api/sdk/dw-redeem/submit`; the relayer broadcasts, waits for confirmation, and records the redemption
 
     ```python
     # Call once per cycle — safe to call frequently
@@ -88,18 +88,22 @@ If auto-redeem is disabled or you want to redeem a specific position immediately
     For external wallets, you'll be prompted to sign the redemption transaction in your connected wallet. Requires a small amount of POL for gas.
   </Tab>
   <Tab title="Polymarket (API)">
-    ```bash
-    curl -X POST https://api.simmer.markets/api/sdk/redeem \
-      -H "Authorization: Bearer $SIMMER_API_KEY" \
-      -H "Content-Type: application/json" \
-      -d '{"market_id": "MARKET_ID", "side": "yes"}'
-    ```
+    Use the Python SDK when possible:
 
     ```python
     result = client.redeem(market_id="uuid", side="yes")
     ```
 
-    **External wallets** require an additional signing step. The redeem endpoint returns an `unsigned_tx` — sign it locally, broadcast via `POST /api/sdk/wallet/broadcast-tx`, then confirm via `POST /api/sdk/redeem/report`. The SDK's `auto_redeem()` method handles this entire flow.
+    For raw REST calls on the current external Deposit Wallet path, prepare the redeem batch first:
+
+    ```bash
+    curl -X POST https://api.simmer.markets/api/sdk/dw-redeem/prepare \
+      -H "Authorization: Bearer $SIMMER_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{"market_id": "MARKET_ID", "side": "yes"}'
+    ```
+
+    Sign the returned `typed_data` locally, then submit the prepared calls with your signature to `POST /api/sdk/dw-redeem/submit`. The SDK's `auto_redeem()` method handles this entire flow.
   </Tab>
   <Tab title="Kalshi (API)">
     ```bash
@@ -115,46 +119,40 @@ If auto-redeem is disabled or you want to redeem a specific position immediately
 
 ## Building Your Own Signing Flow
 
-If you're not using the Python SDK (e.g., building in TypeScript or Go), implement the 3-step flow manually:
+If you're not using the Python SDK (e.g., building in TypeScript or Go), implement the current Deposit Wallet flow manually:
 
 <Steps>
-  <Step title="Request the unsigned transaction">
+  <Step title="Prepare the redemption batch">
     ```bash
-    curl -X POST https://api.simmer.markets/api/sdk/redeem \
+    curl -X POST https://api.simmer.markets/api/sdk/dw-redeem/prepare \
       -H "Authorization: Bearer $SIMMER_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{"market_id": "MARKET_ID", "side": "yes"}'
     ```
 
-    For external wallets, the response includes an `unsigned_tx` object with `to` and `data` fields. The `to` address will be one of:
-    - `0x4D97DCd97eC945f40cF65F87097ACe5EA0476045` — CTF contract (standard markets)
-    - `0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296` — NegRiskAdapter (negative risk markets)
+    The response includes `typed_data`, `nonce`, `deadline`, and `calls`. The server resolves the market, builds the CTF or NegRiskAdapter calls, and validates that the market is ready for payout.
   </Step>
-  <Step title="Sign and broadcast">
-    Sign the transaction with your Polygon wallet key (EIP-1559 type 2 transaction, chain ID 137). Then broadcast:
+  <Step title="Sign locally">
+    Sign the returned `typed_data` with your Polygon wallet key. Keep the original `market_id`, `side`, `nonce`, `deadline`, and `calls` from the prepare response; submit must match the prepared batch.
+  </Step>
+  <Step title="Submit the signed batch">
+    Send the signature and prepared batch back to Simmer:
 
     ```bash
-    curl -X POST https://api.simmer.markets/api/sdk/wallet/broadcast-tx \
+    curl -X POST https://api.simmer.markets/api/sdk/dw-redeem/submit \
       -H "Authorization: Bearer $SIMMER_API_KEY" \
       -H "Content-Type: application/json" \
-      -d '{"signed_tx": "0x..."}'
+      -d '{
+        "market_id": "MARKET_ID",
+        "side": "yes",
+        "signature": "0x...",
+        "nonce": "PREPARE_NONCE",
+        "deadline": "PREPARE_DEADLINE",
+        "calls": []
+      }'
     ```
 
-    The relay validates that the transaction targets a known redemption contract before broadcasting.
-  </Step>
-  <Step title="Report the result">
-    After the transaction confirms on-chain, report it so the position stops appearing as redeemable:
-
-    ```bash
-    curl -X POST https://api.simmer.markets/api/sdk/redeem/report \
-      -H "Authorization: Bearer $SIMMER_API_KEY" \
-      -H "Content-Type: application/json" \
-      -d '{"market_id": "MARKET_ID", "side": "yes", "tx_hash": "0x..."}'
-    ```
-
-    <Tip>
-    If you skip the report step, the position will continue to appear as redeemable in `/positions`. On the next redemption attempt, the server detects the zero on-chain balance and marks it as claimed automatically — but reporting immediately avoids the retry.
-    </Tip>
+    Replace `calls: []` with the `calls` array from prepare. The relayer validates the signed batch, broadcasts it, waits for confirmation, and records the redemption so the position stops appearing as redeemable.
   </Step>
 </Steps>
 

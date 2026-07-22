@@ -357,7 +357,7 @@ Sells default to **GTC** (limit). Pass `order_type="FAK"` for a market sell — 
 
 ### Redeem (resolved markets)
 
-After a market resolves, redeem winning positions to collect your payout. For external wallets, the SDK handles a 3-step flow (get unsigned tx, sign locally, broadcast, report) — see the full [Redemption guide](/redemption) for details.
+After a market resolves, redeem winning positions to collect your payout. For external Deposit Wallets, the SDK handles the prepare, local-sign, and submit flow through `POST /api/sdk/dw-redeem/prepare` and `POST /api/sdk/dw-redeem/submit` — see the full [Redemption guide](/redemption) for details.
 
 <Tabs>
   <Tab title="Python (recommended)">
@@ -369,13 +369,15 @@ After a market resolves, redeem winning positions to collect your payout. For ex
             print(f"Redeemed {r['market_id']}: tx={r['tx_hash']}")
     ```
   </Tab>
-  <Tab title="curl (managed wallets only)">
+  <Tab title="curl (external Deposit Wallet)">
     ```bash
-    curl -X POST https://api.simmer.markets/api/sdk/redeem \
+    curl -X POST https://api.simmer.markets/api/sdk/dw-redeem/prepare \
       -H "Authorization: Bearer \$SIMMER_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{"market_id": "MARKET_ID", "side": "yes"}'
     ```
+
+    Sign the returned `typed_data`, then submit the prepared `calls`, `nonce`, `deadline`, and `signature` to `POST /api/sdk/dw-redeem/submit`.
   </Tab>
 </Tabs>
 
