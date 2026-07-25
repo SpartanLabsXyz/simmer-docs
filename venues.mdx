@@ -38,7 +38,7 @@ client.trade(market_id, "yes", 10.0, venue="sim")
 
 ## Polymarket (real USDC)
 
-Real trading on Polymarket's orderbook. Requires a self-custody wallet with USDC.e on Polygon.
+Real trading on Polymarket's orderbook. Uses the V2 Deposit Wallet (DW) — fund via the dashboard bridge wizard or a managed wallet.
 
 - Orders go directly to Polymarket's CLOB
 - Supports GTC, FAK, and FOK order types
@@ -48,13 +48,16 @@ Real trading on Polymarket's orderbook. Requires a self-custody wallet with USDC
 client.trade(market_id, "yes", 10.0, venue="polymarket")
 ```
 
-**Setup requirements:**
-1. Self-custody wallet with `WALLET_PRIVATE_KEY` set
-2. USDC.e (bridged USDC) on Polygon -- not native USDC
-3. Small POL balance for gas
-4. One-time: `client.link_wallet()` and `client.set_approvals()`
+**Setup requirements (V2 Deposit Wallet — default):**
+1. `WALLET_PRIVATE_KEY` — a Polygon/EVM EOA private key (or use a managed wallet with API key only)
+2. One-time: `client.link_wallet()` then click **Fund & activate trading** in the dashboard Wallet tab
+3. Fund via the dashboard bridge wizard — accepts USDC, USDT, or USDC.e from Ethereum, Polygon, Base, Arbitrum, or Solana
 
-See [Wallet Setup](/wallets) for full details.
+V2 trades are gasless — no POL balance is needed. See [Wallet Setup](/wallets) for full details.
+
+<Note>
+**Legacy Cohort A path:** Accounts set up before the V2 Deposit Wallet migration use `client.set_approvals()` directly (requires USDC.e on Polygon and a small POL balance for gas) instead of the dashboard wizard. To upgrade to the V2 path, open the **Wallets** tab in the dashboard and follow the upgrade prompt.
+</Note>
 
 ### Discovering Polymarket markets
 
