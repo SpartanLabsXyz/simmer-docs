@@ -102,14 +102,13 @@ If auto-redeem is disabled or you want to redeem a specific position immediately
     **External wallets** require an additional signing step. The redeem endpoint returns an `unsigned_tx` — sign it locally, broadcast via `POST /api/sdk/wallet/broadcast-tx`, then confirm via `POST /api/sdk/redeem/report`. The SDK's `auto_redeem()` method handles this entire flow.
   </Tab>
   <Tab title="Kalshi (API)">
-    ```bash
-    curl -X POST https://api.simmer.markets/api/user/kalshi-positions/redeem \
-      -H "Authorization: Bearer $SIMMER_API_KEY" \
-      -H "Content-Type: application/json" \
-      -d '{"market_ticker": "MARKET_TICKER", "side": "yes"}'
-    ```
+    <Warning>
+    `POST /api/user/kalshi-positions/redeem` requires a **Dynamic JWT (browser session token)** — not an SDK API key. It cannot be called with `$SIMMER_API_KEY` from curl or automated scripts.
+    </Warning>
 
-    The Python SDK's `client.redeem()` method is for Polymarket positions. Kalshi redemption currently uses this HTTP endpoint directly.
+    To redeem a resolved Kalshi position, go to your [Simmer dashboard](https://simmer.markets/dashboard) and use the Redeem button on the position. The dashboard handles authentication automatically.
+
+    The Python SDK's `client.redeem()` method is for Polymarket positions only and does not cover Kalshi redemption.
   </Tab>
 </Tabs>
 
