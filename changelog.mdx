@@ -37,6 +37,16 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-07-13 — `simmer-sdk` 0.22.3: `client.get_outcomes()` for settlement-accurate skill metrics
+
+Released [`simmer-sdk` 0.22.3](https://pypi.org/project/simmer-sdk/0.22.3/) on PyPI. New `client.get_outcomes()` method returns settlement-accurate skill outcome summaries for autoresearch metric verification and skill-health signals.
+
+The method returns v1 cash-flow fields (`trades`, `pnl`, `wins`, `losses`) for backward compatibility, plus new v2 settlement-accurate fields sourced from venue-dispatch realized outcomes: `settled_pnl` (sum of realized P&L across resolved markets), `resolved_markets`, `settled_wins`, `settled_losses`, and `confidence_breakdown` by data source (`settlement`, `native`, `mirror`). The v2 fields correctly attribute buys held to resolution — a buy-and-hold winner now appears in `settled_wins` where v1 `wins` only counted sell rows. Accepts optional `skill_slug` (defaults to the running skill's slug) and `since` (ISO-8601 datetime range filter).
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
 ## 2026-07-09 — `/api/sdk/markets` now signals capped discovery windows
 
 `GET /api/sdk/markets` now makes the discovery cap explicit. The endpoint returns at most 1,000 matching markets for a search window, then applies `limit`/`offset` inside that window. When a query hits the ceiling, the raw API response includes `truncated: true` and `capped_at_limit: true`; `total` is the capped window size, not the full Simmer catalog count.
