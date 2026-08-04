@@ -52,8 +52,57 @@ Elite-tier accounts can run multiple agents under one account, each with its own
 | Agent type | Signing | Use case |
 |---|---|---|
 | **Primary agent** | Browser-signable (managed or external) | Manual trades placed from the [Simmer dashboard](https://simmer.markets/dashboard?ref=docs&utm_campaign=docs). |
-| **Dedicated raw-key agent** | SDK-signed on your agent host via `WALLET_PRIVATE_KEY` (you hold the key; Simmer never does) | Strategy-specific trading that should keep separate wallet, API key, and P&L tracking without using OWS. Requires deposit wallet activation before real-money trading — run `client.activate_polymarket_dw(agent_id=...)` + `client.update_agent_wallet_creds(...)` on first setup (see [Wallets](/wallets)). |
-| **OWS agent** | Autonomous via OWS daemon on your agent host | Bot-driven trading via the SDK. Not accessible from the browser. Requires deposit wallet activation before real-money trading — run `client.activate_polymarket_dw(agent_id=...)` + `client.update_agent_wallet_creds(...)` on first setup (see [Wallets](/wallets)). |
+| **Dedicated raw-key agent** | SDK-signed on your agent host via `WALLET_PRIVATE_KEY` (you hold the key; Simmer never does) | Strategy-specific trading that should keep separate wallet, API key, and P&L tracking without using OWS. Register it in the dashboard first, then complete the raw-key activation steps below. |
+| **OWS agent** | Autonomous via OWS daemon on your agent host | Bot-driven trading via the SDK. Not accessible from the browser. Register and activate it through the OWS-specific SDK flow below. |
+
+### Dedicated raw-key agent setup
+
+Raw-key dedicated agents are not registered with `client.register_agent_wallet()`. That SDK method is for OWS wallets because it takes an `ows_wallet_name`.
+
+1. Open the dashboard → **My Agents** → **Add wallet** for the agent.
+2. Configure the agent host with that wallet's private key:
+
+```bash
+export WALLET_PRIVATE_KEY="<agent-wallet-private-key>"
+```
+
+3. Run the per-agent deposit wallet activation from the SDK:
+
+```python
+client.activate_polymarket_dw(agent_id="<agent-id>")
+```
+
+4. Cache Polymarket CLOB credentials for that existing agent wallet:
+
+```python
+client.update_agent_wallet_creds(agent_id="<agent-id>")
+```
+
+You can also pass the key directly with `client.update_agent_wallet_creds(agent_id="<agent-id>", private_key="...")`. Both the deposit wallet approvals and cached CLOB credentials are required before real-money trading.
+
+### OWS agent setup
+
+OWS agents use the OWS-only registration method and then complete deposit wallet activation:
+
+```python
+wallet = client.register_agent_wallet(ows_wallet_name="<your-ows-wallet-name>")
+```
+
+Then follow the [Wallets activation flow](/wallets#activating-the-deposit-wallet). The complete OWS order is:
+
+1. Register the OWS wallet with `client.register_agent_wallet(ows_wallet_name=...)`.
+2. Deploy the deposit wallet with the external upgrade flow in [Wallets](/wallets).
+3. Activate Polymarket approvals:
+
+```python
+client.activate_polymarket_dw(agent_id=wallet["agent_id"])
+```
+
+4. Cache CLOB credentials:
+
+```python
+client.update_agent_wallet_creds(ows_wallet_name="<your-ows-wallet-name>")
+```
 
 To designate a primary agent: open the dashboard → **My Agents** → click the **star icon** on a non-OWS agent's card. The pinned agent's wallet becomes the active surface for manual trades on the dashboard.
 
