@@ -115,7 +115,12 @@ For Polymarket trading, every user has a **Deposit Wallet** in addition to their
 
 ## OWS wallet (per-agent self-custody)
 
-OWS ([Open Wallet Standard](https://openwallet.sh)) is a third option for self-custody — instead of holding `WALLET_PRIVATE_KEY` in your environment, an OWS daemon manages keys in a local vault and signs orders on the SDK's behalf. Each agent can have its own OWS wallet, which is useful when one process runs multiple agents.
+<Warning>
+  **Elite tier required.** Per-agent OWS wallets require an Elite subscription.
+  Upgrade in the dashboard before following the OWS setup steps.
+</Warning>
+
+OWS ([Open Wallet Standard](https://openwallet.sh)) is an Elite self-custody option — instead of holding `WALLET_PRIVATE_KEY` in your environment, an OWS daemon manages keys in a local vault and signs orders on the SDK's behalf. Each agent can have its own OWS wallet, which is useful when one process runs multiple agents.
 
 ```python
 from simmer_sdk import SimmerClient
