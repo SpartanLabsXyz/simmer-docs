@@ -66,13 +66,15 @@ Raw-key dedicated agents are not registered with `client.register_agent_wallet()
 export WALLET_PRIVATE_KEY="<agent-wallet-private-key>"
 ```
 
-3. Run the per-agent deposit wallet activation from the SDK:
+3. Deploy the agent's deposit wallet with the dashboard activation wizard. This dashboard step creates the per-agent DW contract; the SDK activation below only sets approval allowances on an existing DW.
+
+4. Run the per-agent deposit wallet approvals from the SDK:
 
 ```python
 client.activate_polymarket_dw(agent_id="<agent-id>")
 ```
 
-4. Cache Polymarket CLOB credentials for that existing agent wallet:
+5. Cache Polymarket CLOB credentials for that existing agent wallet:
 
 ```python
 client.update_agent_wallet_creds(agent_id="<agent-id>")
