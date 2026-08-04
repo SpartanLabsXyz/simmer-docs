@@ -71,7 +71,7 @@ curl -X PATCH "https://api.simmer.markets/api/sdk/reactor/config" \
 | `min_size` | `number` | Minimum whale trade size to consider (shares) |
 | `max_size` | `number` | Cap on your mirror trade size (shares) |
 | `mirror_fraction` | `number` | Fraction of whale size to mirror (e.g. 0.01 = 1%) |
-| `daily_cap` | `number` | Max total spend per day (venue-native units) |
+| `daily_cap` | `number` | Max total spend per day (venue-native units). Enforced by your skill at execution time; the server additionally stops proposing new signals once a day's proposed total exceeds 3x this value (runaway guard) |
 | `venue` | `string` | `sim`, `polymarket`, or `kalshi` |
 | `enabled` | `boolean` | Pause copytrading signals by setting `false` |
 | `price_buffer` | `number` | Fraction added above whale's fill price for your buy order (default 0.02 = 2%). Prevents order failures on thin books. Range 0–0.2. |
@@ -238,7 +238,7 @@ Reactor activity appears in the **Reactor tab**, not the Observability tab. Obse
 - **Circuit breaker** — 5 consecutive trade failures triggers a pause. Signals are skipped until the issue is resolved. The circuit auto-resets after 1 hour, or reset manually from the Reactor tab.
 - **Signal expiry** — Unprocessed signals expire after 120s. No stale trades.
 - **Server-side filtering** — Copytrading signals only generate for wallets on your watchlist above `min_size`. Shock signals only generate when you've opted in. Your skill doesn't see noise.
-- **Per-config caps** — `max_size` and `daily_cap` (copytrading) limit exposure.
+- **Per-config caps** — `max_size` bounds each mirror trade; `daily_cap` bounds daily spend (skill-enforced at execution, plus a server-side 3x runaway guard on proposals). Check `GET /api/sdk/reactor/status` → `skips_24h` to see if you're being capped.
 
 ## Cross-runtime
 
