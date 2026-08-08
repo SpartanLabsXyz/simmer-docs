@@ -61,7 +61,7 @@ This is the path for anyone who hasn't explicitly set up an external wallet on S
    - 1 USDC.e approve (so the Onramp can pull it)
    - 1 wrap (USDC.e → pUSD)
    - 1 Deposit Wallet deployment or activation step, if your account does not already have one
-   - 5 pUSD approvals (4 trading spenders + 1 V2 Fee Escrow)
+   - 6 pUSD approvals (4 trading spenders + 1 V2 Fee Escrow + 1 CTF Collateral Adapter)
    - 6 ERC-1155 setApprovalForAll (4 trading spenders + 2 redemption adapters)
 
    No wallet popups, no extra clicks.
@@ -93,12 +93,12 @@ Works on both desktop (browser extensions) and mobile (WalletConnect / in-app wa
 **Stage 3 — Activate V2 trading:**
 
 6. The banner switches to **"Activate V2 trading"** with an approval checklist
-7. **Click "Activate Trading"** and sign **~11 more transactions**:
-   - 5 pUSD approvals (4 trading spenders + 1 V2 Fee Escrow)
+7. **Click "Activate Trading"** and sign **~12 more transactions**:
+   - 6 pUSD approvals (4 trading spenders + 1 V2 Fee Escrow + 1 CTF Collateral Adapter)
    - 6 setApprovalForAll on the ConditionalTokens contract (4 trading spenders + 2 redemption adapters)
 8. **The banner turns green** — "Migrated to V2 — ready to trade"
 
-Total: ~13–14 wallet signatures, depending on whether the dashboard needs to deploy your Deposit Wallet, ~1–2 minutes including transaction confirmations. Your **agent wallet** (the EOA — not the Deposit Wallet) needs at least **0.1 POL** for gas across all transactions (0.5 POL gives comfortable headroom across the ~13–14 signatures).
+Total: ~14–15 wallet signatures, depending on whether the dashboard needs to deploy your Deposit Wallet, ~1–2 minutes including transaction confirmations. Your **agent wallet** (the EOA — not the Deposit Wallet) needs at least **0.1 POL** for gas across all transactions (0.5 POL gives comfortable headroom across the ~14–15 signatures).
 
 **If you migrated under the old wrap-only flow**, your wallet has pUSD but the V2 approvals weren't set. The banner re-appears as "Polymarket V2 — activate trading" — click it to render the approval checklist for Stage 3.
 
