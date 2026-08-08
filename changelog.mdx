@@ -37,6 +37,14 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-08-06 — `simmer-sdk` 0.24.1: NegRiskAdapter approval restored for neg-risk markets
+
+Released [`simmer-sdk` 0.24.1](https://pypi.org/project/simmer-sdk/0.24.1/) on PyPI. A fix to `set_approvals()` restores the NegRiskAdapter to the V2 trading spender set. After Polymarket's 2026-07-18 adapter retirement, a prior SDK version incorrectly removed the NegRiskAdapter pUSD allowance from the approval set — wallets that ran `set_approvals()` without it were silently rejected on neg-risk market orders. The 12-transaction V2 approval set is now fully restored. If you ran approvals with 0.23.x or 0.24.0, run `client.set_approvals()` again after upgrading to pick up the missing grant.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
 ## 2026-07-13 — `simmer-sdk` 0.22.3: `client.get_outcomes()` for settlement-accurate skill metrics
 
 Released [`simmer-sdk` 0.22.3](https://pypi.org/project/simmer-sdk/0.22.3/) on PyPI. New `client.get_outcomes()` method returns settlement-accurate skill outcome summaries for autoresearch metric verification and skill-health signals.
