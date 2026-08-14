@@ -57,13 +57,13 @@ If your account is on the legacy direct-EOA path, you set Polymarket contract ap
 
 ```python
 # Set Polymarket contract approvals -- requires: pip install eth-account
-result = client.set_approvals()  # 9 on-chain txs
+result = client.set_approvals()  # up to 12 on-chain txs
 print(f"Set {result['set']} approvals, skipped {result['skipped']}")
 ```
 
 Legacy requirements:
 - **USDC.e** (bridged USDC, contract `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`) on Polygon -- not native USDC
-- Small **POL** balance on Polygon for gas (~$0.01 per approval, 9 approvals total)
+- Small **POL** balance on Polygon for gas (~$0.01 per approval, up to 12 approvals total)
 
 To upgrade to the V2 Deposit Wallet path (gasless trades, multi-chain bridge funding), open the **Wallets** tab in the dashboard and follow the upgrade prompt.
 
