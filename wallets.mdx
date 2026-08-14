@@ -73,7 +73,7 @@ If not using the Python SDK on the legacy path:
 
 1. `GET /api/polymarket/allowances/{your_wallet_address}` -- check which approvals are missing
 2. Sign the missing approval transactions locally with your private key
-3. `POST /api/sdk/wallet/broadcast-tx` with `{"signed_tx": "0x..."}` -- broadcast each signed tx
+3. `POST /api/sdk/wallet/broadcast-tx` with `{"signed_tx": "0x..."}` -- legacy Cohort A approval broadcasts only; current Deposit Wallet redemptions use `POST /api/sdk/dw-redeem/prepare` and `POST /api/sdk/dw-redeem/submit`
 
 ### Risk exits for external wallets
 
@@ -81,7 +81,7 @@ Stop-loss and take-profit are monitored in real time. For external wallets, your
 
 ### Auto-redeem for external wallets
 
-The server cannot sign redemptions for you — your private key never leaves your machine. The SDK's `auto_redeem()` method handles the full 3-step flow (unsigned tx → local signing → broadcast → report) automatically:
+The server cannot sign redemptions for you — your private key never leaves your machine. The SDK's `auto_redeem()` method handles the current Deposit Wallet flow (prepare typed data → local signing → submit signed batch) automatically:
 
 ```python
 # Call once per cycle -- safe to call frequently
