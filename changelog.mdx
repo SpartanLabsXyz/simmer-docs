@@ -45,11 +45,57 @@ Released [`simmer-sdk` 0.24.1](https://pypi.org/project/simmer-sdk/0.24.1/) on P
 
 ---
 
+## 2026-07-22 — `simmer-sdk` 0.24.0: token-light read outputs and read-only clients
+
+Released [`simmer-sdk` 0.24.0](https://pypi.org/project/simmer-sdk/0.24.0/) on PyPI. `client.get_markets()`, `client.get_positions()`, and `client.get_trades()` now accept `response_mode="summary"` or `"compact"` for smaller, agent-friendly responses. Use `response_mode="toon"` when you want a TOON string for token-light transcripts, and add `include_hints=True` when the response should include suggested next calls. Trade failures can now also carry structured `TradeResult.error_code`, `TradeResult.error_hint`, and `TradeResult.next_steps` fields without changing existing success/error semantics.
+
+This release also adds `SimmerClient.readonly()` for validation, preflight, and status scripts. It preserves normal venue selection for read endpoints, but skips the live Polymarket constructor's init-time risk-exit processing and guards order/risk-exit submission methods, so API-key checks and account probes can inspect state without submitting orders.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
+## 2026-07-17 — `simmer-sdk` 0.23.0: `get_market_by_id()` now raises on non-404 errors
+
+Released [`simmer-sdk` 0.23.0](https://pypi.org/project/simmer-sdk/0.23.0/) on PyPI. `client.get_market_by_id()` no longer returns `None` for every request failure. `None` is now reserved for a genuine HTTP 404, meaning the market does not exist; timeouts, rate limits, server errors, and other request failures now raise the underlying `requests.exceptions.RequestException`.
+
+This is a breaking behavior change for callers that treated `None` as "any failure." If your code needs to keep polling through transient API failures, wrap the call in `try`/`except requests.exceptions.RequestException` and retry on the exception path. Agents polling a market for status, outcome, or `resolves_at` now avoid mistaking temporary API trouble for missing or unstable market data.
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
+## 2026-07-15 — Wallet-dedication safety guard for Elite users
+
+Elite users who click "Dedicate a wallet" immediately after creating an agent now see a confirmation step when the account-primary wallet holds at least $0.50 across pUSD, USDC.e, USDT, or native USDC. The step summarizes the detected balance and explains that dedicating the wallet will move those funds into the new agent's wallet before offering **Go back** or **Proceed**.
+
+Users with an unfunded or undetectable account-primary wallet continue directly without interruption. This keeps the fast path for clean setups while adding an explicit checkpoint for the case where a user might otherwise strand funds by dedicating the primary wallet to a new agent too quickly.
+
+---
+
+## 2026-07-15 — Wallet-link endpoints now enforce their documented rate limits
+
+The wallet-link challenge and wallet-link submission endpoints have always documented retry limits of 5 requests/hour and 3 requests/day respectively. Those limits are now enforced by Simmer's platform rate limiter.
+
+This closes an abuse surface in the wallet-ownership-proof flow without changing normal usage. Agents and users operating within the documented limits should see no behavior change; excessive retries now receive the same rate-limit handling as other protected SDK and dashboard endpoints.
+
+---
+
 ## 2026-07-13 — `simmer-sdk` 0.22.3: `client.get_outcomes()` for settlement-accurate skill metrics
 
 Released [`simmer-sdk` 0.22.3](https://pypi.org/project/simmer-sdk/0.22.3/) on PyPI. New `client.get_outcomes()` method returns settlement-accurate skill outcome summaries for autoresearch metric verification and skill-health signals.
 
 The method returns v1 cash-flow fields (`trades`, `pnl`, `wins`, `losses`) for backward compatibility, plus new v2 settlement-accurate fields sourced from venue-dispatch realized outcomes: `settled_pnl` (sum of realized P&L across resolved markets), `resolved_markets`, `settled_wins`, `settled_losses`, and `confidence_breakdown` by data source (`settlement`, `native`, `mirror`). The v2 fields correctly attribute buys held to resolution — a buy-and-hold winner now appears in `settled_wins` where v1 `wins` only counted sell rows. Accepts optional `skill_slug` (defaults to the running skill's slug) and `since` (ISO-8601 datetime range filter).
+
+`pip install --upgrade simmer-sdk` to pick it up.
+
+---
+
+## 2026-07-10 — `simmer-sdk` 0.22.2: server-side filters for `get_trades()`
+
+Released [`simmer-sdk` 0.22.2](https://pypi.org/project/simmer-sdk/0.22.2/) on PyPI. `client.get_trades()` now accepts `market_id`, `since`, `until`, and `include_failed` keyword arguments, and forwards them to `GET /api/sdk/trades` so the backend filters before paging. Existing calls keep the 0.22.1 behavior when the new filters are omitted.
+
+Use `market_id` to inspect one market's history, `since` / `until` with ISO-8601 timestamps for time-bounded reconciliation, and `include_failed=True` when you need failed, cancelled, or expired real-trade attempts in the response. Failed rows include `failure_category` and a sanitized `failure_reason`; raw venue/API error payloads are not exposed.
 
 `pip install --upgrade simmer-sdk` to pick it up.
 
