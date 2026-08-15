@@ -263,7 +263,7 @@ if result.fill_status == "filled":
 
 elif result.fill_status == "submitted":
     # GTC order on the book — hasn't filled yet
-    # Check back later or cancel with client.cancel_order(result.trade_id)
+    # Check back later or cancel with client.cancel_order(result.order_id)
     print(f"Order live on book, waiting for match")
 
 elif result.fill_status == "unconfirmed":
