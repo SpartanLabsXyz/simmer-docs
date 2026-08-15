@@ -300,9 +300,8 @@ Check your positions and portfolio periodically — or use the [heartbeat patter
   </Tab>
   <Tab title="Python">
     ```python
-    data = client.get_positions()
-    for pos in data["positions"]:
-        print(f"{pos['question'][:50]}: {pos['pnl']:+.2f} {pos['currency']}")
+    for pos in client.get_positions():
+        print(f"{pos.question[:50]}: {pos.pnl:+.2f} ({pos.venue})")
 
     # Or use briefing for a complete check-in
     briefing = client.get_briefing()
