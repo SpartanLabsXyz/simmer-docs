@@ -21,6 +21,12 @@ Set `WALLET_PRIVATE_KEY=0x...` in your environment. The SDK signs trades locally
 export WALLET_PRIVATE_KEY="0x..."
 ```
 
+<Tip>
+**Key storage:** prefer a key store over a bare env var. [OWS](https://openwallet.sh) keeps the key encrypted at rest — the SDK picks it up via `OWS_WALLET` — and its policy engine can scope the agent's signing token to Polymarket orders only.
+
+**Funding tip:** a wallet born on polymarket.com arrives at Simmer already funded and approved — see [Import Your Polymarket Wallet](/polymarket-import).
+</Tip>
+
 ### One-time setup
 
 ```python
@@ -113,51 +119,36 @@ For Polymarket trading, every user has a **Deposit Wallet** in addition to their
 
 **External vs managed:** Both modes have a Deposit Wallet on Polymarket. The custody distinction (who holds the agent wallet's private key) is unchanged — managed users delegate signing to Simmer's server; external users sign locally. The Deposit Wallet is owned by the agent wallet either way.
 
-## OWS wallet (per-agent self-custody)
+## Dedicated per-agent wallets (Elite)
 
 <Warning>
-  **Elite tier required.** Per-agent OWS wallets require an Elite subscription.
-  Upgrade in the dashboard before following the OWS setup steps.
+  **Elite tier required.** Dedicated per-agent wallets require an Elite subscription.
 </Warning>
 
-OWS ([Open Wallet Standard](https://openwallet.sh)) is an Elite self-custody option — instead of holding `WALLET_PRIVATE_KEY` in your environment, an OWS daemon manages keys in a local vault and signs orders on the SDK's behalf. Each agent can have its own OWS wallet, which is useful when one process runs multiple agents.
-
-```python
-from simmer_sdk import SimmerClient
-
-# SDK 0.13.0+ — explicit OWS wallet routing
-client = SimmerClient.with_ows_wallet("my-agent-wallet")
-
-# Or via env var (OWS_WALLET=my-agent-wallet)
-client = SimmerClient.from_env()
-```
-
-Setup is covered by the `simmer-wallet-setup` skill on [ClawHub](https://clawhub.ai/skills/simmer-wallet-setup) — install the skill in your agent and follow its OWS path. The skill walks through OWS daemon installation, wallet creation, and `client.register_agent_wallet()` (Elite-tier gated).
-
-Once registered, the SDK signs all orders through OWS. `WALLET_PRIVATE_KEY` is not used.
+Elite accounts can give each agent its own wallet — its own EOA, its own deposit wallet, and clean per-agent P&L. **Register the wallet from the dashboard** (My Agents → your agent → Add wallet). The agent host then signs with that wallet's `WALLET_PRIVATE_KEY` — stored as an env var or in a key store like OWS (see the key-storage tip above).
 
 ### Activating the deposit wallet
 
 Registering the wallet (and deploying its deposit wallet) is **not** enough to trade — you also have to set on-chain approvals and cache CLOB credentials. Run both **on the host where the key lives** (the SDK signs locally, gasless):
 
-<Tabs>
-  <Tab title="OWS wallet">
-```python
-client.activate_polymarket_dw(agent_id="<agent_id>")          # sets on-chain approvals
-client.update_agent_wallet_creds(ows_wallet_name="<wallet>")  # caches CLOB creds
-```
-  </Tab>
-
-  <Tab title="Raw-key / browser wallet">
 ```python
 # WALLET_PRIVATE_KEY must be set to the agent EOA private key.
 client.activate_polymarket_dw(agent_id="<agent_id>")  # sets on-chain approvals
 client.update_agent_wallet_creds(agent_id="<agent_id>")  # caches CLOB creds
 ```
-  </Tab>
-</Tabs>
 
-Both calls are required (approvals first) and idempotent. OWS wallets pass `ows_wallet_name`; raw-key and browser-backed dedicated per-agent wallets pass `agent_id` with `WALLET_PRIVATE_KEY` set. Note: `client.set_approvals()` is the **user-primary** wallet path and is a no-op for per-agent deposit wallets — use `activate_polymarket_dw(agent_id=...)` for a per-agent wallet.
+Both calls are required (approvals first) and idempotent. Note: `client.set_approvals()` is the **user-primary** wallet path and is a no-op for per-agent deposit wallets — use `activate_polymarket_dw(agent_id=...)` for a per-agent wallet.
+
+### Existing OWS per-agent wallets
+
+New OWS per-agent registrations are closed (`register_agent_wallet()` is deprecated and the server rejects it). Existing OWS-registered agent wallets keep working unchanged — activation and credential calls with `ows_wallet_name` remain supported:
+
+```python
+client.activate_polymarket_dw(agent_id="<agent_id>")          # sets on-chain approvals
+client.update_agent_wallet_creds(ows_wallet_name="<wallet>")  # caches CLOB creds
+```
+
+OWS itself is not going anywhere as a **key store**: `OWS_WALLET` remains a fully supported signer for the standard external path (`link_wallet()` and trade signing).
 
 ## Managed wallet
 

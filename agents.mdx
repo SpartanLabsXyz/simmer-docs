@@ -47,17 +47,18 @@ Each API key maps to exactly one agent. If you need multiple strategies with sep
 
 ## Multi-agent setups (Elite)
 
-Elite-tier accounts can run multiple agents under one account, each with its own API key and P&L tracking; dedicated and OWS agents get their own wallet, while the primary agent shares the account's main wallet. Three flavors coexist:
+Elite-tier accounts can run multiple agents under one account, each with its own API key and P&L tracking; dedicated agents get their own wallet, while the primary agent shares the account's main wallet. Two flavors:
 
 | Agent type | Signing | Use case |
 |---|---|---|
 | **Primary agent** | Browser-signable (managed or external) | Manual trades placed from the [Simmer dashboard](https://simmer.markets/dashboard?ref=docs&utm_campaign=docs). |
-| **Dedicated raw-key agent** | SDK-signed on your agent host via `WALLET_PRIVATE_KEY` (you hold the key; Simmer never does) | Strategy-specific trading that should keep separate wallet, API key, and P&L tracking without using OWS. **Register the wallet from the dashboard** (My Agents → your agent → Add wallet) — `register_agent_wallet()` is OWS-only and does not apply here. Then activate before real-money trading: `client.activate_polymarket_dw(agent_id=...)` followed by `client.update_agent_wallet_creds(agent_id=...)` with the agent's key in `WALLET_PRIVATE_KEY` (or passed as `private_key=...`). See [Wallets](/wallets). |
-| **OWS agent** | Autonomous via OWS daemon on your agent host | Bot-driven trading via the SDK. Not accessible from the browser. Register via `client.register_agent_wallet(ows_wallet_name=...)`, then activate before real-money trading: `client.activate_polymarket_dw(agent_id=...)` + `client.update_agent_wallet_creds(ows_wallet_name=...)` on first setup (see [Wallets](/wallets)). |
+| **Dedicated agent** | SDK-signed on your agent host via `WALLET_PRIVATE_KEY` — stored as an env var or in a key store like OWS (you hold the key; Simmer never does) | Strategy-specific trading that should keep separate wallet, API key, and P&L tracking. **Register the wallet from the dashboard** (My Agents → your agent → Add wallet). Then activate before real-money trading: `client.activate_polymarket_dw(agent_id=...)` followed by `client.update_agent_wallet_creds(agent_id=...)` with the agent's key in `WALLET_PRIVATE_KEY` (or passed as `private_key=...`). See [Wallets](/wallets). |
 
-To designate a primary agent: open the dashboard → **My Agents** → click the **star icon** on a non-OWS agent's card. The pinned agent's wallet becomes the active surface for manual trades on the dashboard.
+Agents registered on the legacy OWS per-agent path keep working — new OWS per-agent registrations are closed, but existing ones activate and trade unchanged (see [Wallets](/wallets#existing-ows-per-agent-wallets)).
 
-Constraints: exactly one primary agent at a time; it must not be an OWS agent. OWS agents continue running autonomously regardless of which agent is pinned — the pin only affects browser-initiated manual trades.
+To designate a primary agent: open the dashboard → **My Agents** → click the **star icon** on an agent card (autonomous-only agents excluded). The pinned agent's wallet becomes the active surface for manual trades on the dashboard.
+
+Constraints: exactly one primary agent at a time. Dedicated agents continue running autonomously regardless of which agent is pinned — the pin only affects browser-initiated manual trades.
 
 ## Next steps
 
