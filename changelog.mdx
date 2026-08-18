@@ -45,6 +45,24 @@ Released [`simmer-sdk` 0.24.3](https://pypi.org/project/simmer-sdk/0.24.3/) on P
 
 ---
 
+## 2026-08-09 — `simmer-mcp` v3.4.9: MCP tool annotations for read-only clients
+
+Released [`simmer-mcp` v3.4.9](https://www.npmjs.com/package/simmer-mcp/v/3.4.9) on npm. All 21 MCP tools now emit `readOnlyHint` and `destructiveHint` annotations from the existing `mutates` metadata. MCP clients that enforce plan mode or read-only mode were previously falling back to name-based heuristics; because Simmer tools use the `simmer_` prefix rather than `get` or `list`, five safe read tools were misclassified as writes and blocked.
+
+The write-capable paths remain gated. Tools that can place live orders or modify the local experiment workspace carry explicit destructive annotations, while simulated backtests and ordinary read tools are annotated as read-only. Upgrade with `npm install -g simmer-mcp` or keep using `npx -y simmer-mcp` to pick up the latest package on launch.
+
+---
+
+## 2026-08-07 — `simmer-sdk` 0.24.2: deposit-wallet approvals warning fixed
+
+Released [`simmer-sdk` 0.24.2](https://pypi.org/project/simmer-sdk/0.24.2/) on PyPI. The SDK no longer fires a spurious approvals warning every session for healthy deposit-wallet users. `_warn_approvals_once()` was checking the signer EOA instead of the deposit wallet, so deposit-wallet accounts looked unapproved even when their live trading approvals were already set.
+
+The warning now checks the deposit wallet when the client is using one, and the remediation text points that cohort to `activate_polymarket_dw()` instead of `set_approvals()`, which cannot fix deposit-wallet approvals. If you saw repeated approval warnings on a deposit-wallet setup, upgrade and restart the agent.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
 ## 2026-08-06 — `simmer-sdk` 0.24.1: NegRiskAdapter approval restored for neg-risk markets
 
 Released [`simmer-sdk` 0.24.1](https://pypi.org/project/simmer-sdk/0.24.1/) on PyPI. A fix to `set_approvals()` restores the NegRiskAdapter to the V2 trading spender set. After Polymarket's 2026-07-18 adapter retirement, a prior SDK version incorrectly removed the NegRiskAdapter pUSD allowance from the approval set — wallets that ran `set_approvals()` without it were silently rejected on neg-risk market orders. The 12-transaction V2 approval set is now fully restored. If you ran approvals with 0.23.x or 0.24.0, run `client.set_approvals()` again after upgrading to pick up the missing grant.
