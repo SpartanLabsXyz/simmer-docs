@@ -3268,7 +3268,7 @@
     "/api/sdk/skills": {
       "get": {
         "summary": "Skills",
-        "description": "List available skills (trading strategies) that can be installed via ClawHub.\n\nParameters:\n- category: Filter by category (weather, copytrading, news, analytics, trading, utility)\n\nNo authentication required.",
+        "description": "List available skills (trading strategies) that can be installed via ClawHub.\n\nParameters:\n- category: Filter by category (weather, copytrading, news, analytics, trading, utility)\n- q: Optional text search over skill name, slug, description, category, author, and tags\n- source: Optional discovery surface label for product telemetry (for example: api, mcp)\n\nNo authentication required.",
         "operationId": "api_sdk_skills_api_sdk_skills_get",
         "parameters": [
           {
@@ -3285,6 +3285,40 @@
                 }
               ],
               "title": "Category"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
             }
           }
         ],
@@ -3742,7 +3776,7 @@
     "/api/sdk/outcomes": {
       "get": {
         "summary": "Outcomes",
-        "description": "Return trade outcomes summary for a skill. Used by autoresearch plugin for metric verification.",
+        "description": "Return trade outcomes summary for a skill. Used by autoresearch plugin for metric verification.\n\nReturns both v1 cash-flow fields (back-compat) and v2 settlement-accurate fields:\n  - trades / pnl / wins / losses  \u2014 cash-flow aggregates (v1, back-compat)\n  - settled_pnl / resolved_markets / settled_wins / settled_losses / confidence_breakdown\n    \u2014 per-market resolution-based outcomes via the D4 venue-dispatch helper (v2)",
         "operationId": "api_sdk_outcomes_api_sdk_outcomes_get",
         "parameters": [
           {
@@ -4103,44 +4137,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/sdk/wc/copy-leaders": {
-      "get": {
-        "tags": [
-          "wc"
-        ],
-        "summary": "WC Copy Leaders",
-        "description": "Returns the cached curated World Cup copy-leader set.\n\nLeaders are ranked by aggregated WC-market totalPnl (Phase 2), with\ncopyability screened via the PolyNode copy-pnl leaderboard (excludes toxic\nwallets and MM-bot-scale traders).\n\nWhen forming=true the leaderboard is still gathering data (fewer than the\nminimum qualified leaders). The payload still contains whatever leaders have\nqualified so far \u2014 clients should display the partial set with a note that\nthe leaderboard is forming.\n\nThe set is kept warm two ways: a daily 02:00 UTC curation job, and lazy\nself-heal \u2014 if this read finds the cache missing or stale, it kicks a\nsingle-flight background refresh (SIM-3090) so a missed/eaten cron fire\ndoesn't leave the cache empty for the day. Self-heal never blocks the\nresponse.\n\nFree-tier accessible \u2014 no Pro gate.\n\nReturns 503 when the cache is not yet populated (a refresh is kicked; retry\nshortly).",
-        "operationId": "get_wc_copy_leaders_api_sdk_wc_copy_leaders_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WCCopyLeadersResponse"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Leader set not yet computed \u2014 daily curation job has not run yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "leader set not yet computed"
-                    }
-                  },
-                  "type": "object"
                 }
               }
             }
@@ -4723,6 +4719,17 @@
             ],
             "title": "Deposit Wallet Address"
           },
+          "hyperliquid_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hyperliquid Wallet Address"
+          },
           "per_agent_wallet_address": {
             "anyOf": [
               {
@@ -4976,7 +4983,7 @@
           "wallet_address"
         ],
         "title": "AgentWalletRegisterRequest",
-        "description": "Register a dedicated wallet for an agent."
+        "description": "Register a dedicated wallet for an agent.\n\n`ows_wallet_name` is a display label for ALL registrations (the raw-key\ndashboard wizard synthesizes one) \u2014 presence does not mean OWS.\n`wallet_source='ows'` is kept in the Literal so closed-entrance callers\nget the explicit 410 from the endpoint guard (SIM-4646) instead of an\nopaque 422 validation error."
       },
       "AgentWalletResponse": {
         "properties": {
@@ -7899,6 +7906,17 @@
             ],
             "title": "Kalshi Usdc Balance"
           },
+          "hyperliquid_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hyperliquid Wallet Address"
+          },
           "last_sdk_version": {
             "anyOf": [
               {
@@ -8005,6 +8023,17 @@
               }
             ],
             "title": "Sdk Daily Limit"
+          },
+          "hyperliquid_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hyperliquid Wallet Address"
           }
         },
         "type": "object",
@@ -8289,6 +8318,17 @@
               }
             ],
             "title": "Sdk Real Trading Enabled"
+          },
+          "hyperliquid_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hyperliquid Wallet Address"
           }
         },
         "type": "object",
@@ -8450,6 +8490,17 @@
               }
             ],
             "title": "Bot Solana Wallet"
+          },
+          "hyperliquid_wallet_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hyperliquid Wallet Address"
           }
         },
         "type": "object",
@@ -9517,76 +9568,6 @@
         "type": "object",
         "title": "VenuesBlock"
       },
-      "WCCopyLeadersResponse": {
-        "properties": {
-          "refreshed_at": {
-            "type": "string",
-            "title": "Refreshed At"
-          },
-          "forming": {
-            "type": "boolean",
-            "title": "Forming",
-            "default": false
-          },
-          "qualified_count": {
-            "type": "integer",
-            "title": "Qualified Count",
-            "default": 0
-          },
-          "leaders": {
-            "items": {
-              "$ref": "#/components/schemas/WCLeader"
-            },
-            "type": "array",
-            "title": "Leaders"
-          }
-        },
-        "type": "object",
-        "required": [
-          "refreshed_at",
-          "leaders"
-        ],
-        "title": "WCCopyLeadersResponse"
-      },
-      "WCLeader": {
-        "properties": {
-          "wallet": {
-            "type": "string",
-            "title": "Wallet"
-          },
-          "wc_total_pnl": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Wc Total Pnl"
-          },
-          "backtest_copy_pnl_usdc": {
-            "type": "number",
-            "title": "Backtest Copy Pnl Usdc"
-          },
-          "slippage_cost_rate_pct": {
-            "type": "number",
-            "title": "Slippage Cost Rate Pct"
-          },
-          "trade_count": {
-            "type": "integer",
-            "title": "Trade Count"
-          }
-        },
-        "type": "object",
-        "required": [
-          "wallet",
-          "backtest_copy_pnl_usdc",
-          "slippage_cost_rate_pct",
-          "trade_count"
-        ],
-        "title": "WCLeader"
-      },
       "WalletCredentialsDeriveRequest": {
         "properties": {
           "poly_address": {
@@ -9687,6 +9668,18 @@
             "title": "Confirm Orphan Deposit Wallet",
             "description": "Required (true) when the user has an active Polymarket deposit wallet (`wallet_uses_deposit_wallet=true`) and the linking address differs from the current `wallet_address`. The DW is owned on-chain by the CURRENT EOA via CREATE2; relinking to a new address would orphan the DW (the new key can't sign WALLET batches against it \u2014 funds and positions get stuck). Default false so silent orphaning is impossible. SIM-1611. Surfaced after the 2026-05-07 audit found 3 already-orphaned DWs from prior relinks (da2185e0, ydir.tomas@, raynojam@). See `_dev/active/_polymarket-dw-phase-2/`.",
             "default": false
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source",
+            "description": "How this wallet arrived, for onboarding-funnel attribution (SIM-4646). One of the WALLET_LINKED_VIA_ALL values in simmer_v3/constants.py ('browser' | 'sdk-link' | 'polymarket-import'). Omit to let the server infer from the auth mode: SDK API key \u2192 'sdk-link', Dynamic JWT \u2192 'browser'. The SDK's import_polymarket_wallet() wrapper declares 'polymarket-import' explicitly."
           }
         },
         "type": "object",
