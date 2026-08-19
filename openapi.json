@@ -4587,6 +4587,28 @@
             ],
             "title": "Polymarket Pnl"
           },
+          "polymarket_pnl_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Pnl Source"
+          },
+          "polymarket_pnl_as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Pnl As Of"
+          },
           "polymarket_win_count": {
             "anyOf": [
               {
@@ -7375,6 +7397,28 @@
             ],
             "title": "Pnl Total"
           },
+          "pnl_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl Source"
+          },
+          "pnl_as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl As Of"
+          },
           "concentration": {
             "anyOf": [
               {
@@ -7503,6 +7547,28 @@
               }
             ],
             "title": "Pnl"
+          },
+          "pnl_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl Source"
+          },
+          "pnl_as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl As Of"
           },
           "positions_count": {
             "type": "integer",
@@ -7660,6 +7726,28 @@
               }
             ],
             "title": "Error"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "retryable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retryable"
           }
         },
         "type": "object",
@@ -8654,11 +8742,25 @@
             "default": false
           },
           "total_pnl": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Total Pnl"
           },
           "pnl_percent": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Pnl Percent"
           },
           "trades_count": {
@@ -8705,8 +8807,6 @@
           "id",
           "name",
           "status",
-          "total_pnl",
-          "pnl_percent",
           "trades_count",
           "win_count",
           "loss_count",
@@ -9468,18 +9568,37 @@
             "default": false
           },
           "total_pnl": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Total Pnl"
           },
           "unrealized_pnl": {
-            "type": "number",
-            "title": "Unrealized Pnl",
-            "default": 0
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unrealized Pnl"
           },
           "realized_pnl": {
-            "type": "number",
-            "title": "Realized Pnl",
-            "default": 0
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Realized Pnl"
           },
           "total_trades": {
             "type": "integer",
@@ -9494,8 +9613,7 @@
         },
         "type": "object",
         "required": [
-          "trader_id",
-          "total_pnl"
+          "trader_id"
         ],
         "title": "VenueLeaderboardEntry",
         "description": "Leaderboard entry for a venue (Polymarket/Kalshi)."
