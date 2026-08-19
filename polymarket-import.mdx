@@ -1,0 +1,74 @@
+---
+title: Import Your Polymarket Wallet
+description: Bring a funded Polymarket account to Simmer — export the key, hand it to your agent, and it arrives funded and approved.
+icon: file-import
+---
+
+Polymarket accounts come with the easiest funding in prediction markets — card and exchange onramps, no crypto bridging. And every Polymarket account already has the deposit wallet and core exchange approval that Simmer trades through. So the fastest way to get an agent trading with real money is often: create a Polymarket account, fund it there, export its private key, and hand that key to your agent. One SDK call makes it trading-ready.
+
+This path works for every Simmer login method, including email — your agent proves wallet ownership by signing with the key, so no browser wallet is involved.
+
+## Step 1 — Create and fund a Polymarket account
+
+1. Sign up at [polymarket.com](https://polymarket.com).
+2. Deposit using their onramps — card, exchange transfer, or crypto. Funds land as pUSD on the account's deposit wallet.
+
+<Note>
+Polymarket's own geo-restrictions apply to creating and funding accounts there. If Polymarket is unavailable in your region, use the standard [external wallet path](/wallets#external-wallet) with the multi-chain bridge instead.
+</Note>
+
+## Step 2 — Export the private key
+
+On polymarket.com, open your profile menu → **Settings** → **Export Private Key**. This is the key to the wallet that owns your deposit wallet and funds.
+
+## Step 3 — Hand the key to your agent
+
+Put the key in the environment of the machine where your agent runs:
+
+```bash
+# read -s keeps the key out of your shell history and clipboard pipes
+read -s -p 'WALLET_PRIVATE_KEY: ' K && export WALLET_PRIVATE_KEY=$K
+```
+
+<Warning>
+**Key safety — this is the whole security model, so follow it exactly.**
+
+- The key goes in **one place**: the agent host's environment, or a local key store. Anyone holding this key controls the funds.
+- A key store like [OWS](https://openwallet.sh) is preferable to a bare env var — the SDK picks it up via `OWS_WALLET`, the key stays encrypted at rest, and OWS's policy engine can scope the agent's signing token to Polymarket orders only.
+- **Never** paste the key into a chat, a shared config file, a ticket, or a second browser extension "just to sign something". If the key touches any of those, treat it as compromised: withdraw the funds to a fresh wallet and start over.
+</Warning>
+
+## Step 4 — Import
+
+```python
+from simmer_sdk import SimmerClient
+
+client = SimmerClient.from_env()  # reads SIMMER_API_KEY + WALLET_PRIVATE_KEY
+result = client.import_polymarket_wallet()
+print(result)
+```
+
+One call (simmer-sdk ≥ 0.24.4) does everything:
+
+1. **Links the wallet** to your Simmer account — the SDK signs a server challenge with the local key to prove ownership. The key never leaves your machine.
+2. **Adopts your existing deposit wallet** — Polymarket already deployed it, so Simmer recognizes it on-chain and registers it without a redeploy. Your balance comes with it.
+3. **Tops up approvals** — Polymarket pre-sets the core exchange allowance; the extended spender set is added through a gasless, server-relayed batch you sign locally.
+4. **Derives trading credentials** and reports your balance.
+
+On older SDK versions, the same flow is three calls: `client.link_wallet()`, then `POST /api/user/wallet/external-upgrade-to-deposit-wallet`, then `client.activate_polymarket_dw()`.
+
+## Step 5 — Trade
+
+```python
+client.trade(market_id="uuid", side="yes", amount=5.0, venue="polymarket")
+```
+
+## Bringing your own key instead
+
+The same flow works for a wallet you generated yourself (not born on Polymarket): `import_polymarket_wallet()` deploys a fresh deposit wallet instead of adopting one, and you fund it afterwards via the dashboard's multi-chain bridge. See [Wallet Setup](/wallets) for the full external-wallet reference.
+
+## Good to know
+
+- **One wallet, two surfaces.** After importing, the wallet is shared between your agent and polymarket.com. Positions show on both, and manual trades you place on Polymarket's site can collide with your agent's positions — treat the account as agent-operated once imported.
+- **Withdrawals** work from either surface: Simmer's dashboard bridge-withdraw, or Polymarket's own withdrawal flow.
+- **Switching wallets:** if your Simmer account already has an active deposit wallet on a different address, the import is refused by default so you can't strand it silently. Re-run with `client.import_polymarket_wallet(confirm_orphan_deposit_wallet=True)` to switch explicitly — the previous setup stays withdrawable from the dashboard's Legacy wallet card.
