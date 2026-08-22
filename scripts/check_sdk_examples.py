@@ -182,10 +182,28 @@ def bind_check(cls: type, method: str, node: ast.Call) -> str | None:
 FOREIGN_CLIENT_RE = re.compile(r"\bpy_clob_client\w*\b")
 
 
+def _numeric_version(value: str) -> tuple[int, ...] | None:
+    m = re.match(r"^(\d+(?:\.\d+)*)", value)
+    if not m:
+        return None
+    return tuple(int(part) for part in m.group(1).split("."))
+
+
+def _version_lt(left: str, right: str) -> bool:
+    left_parts = _numeric_version(left)
+    right_parts = _numeric_version(right)
+    if left_parts is None or right_parts is None:
+        return False
+    width = max(len(left_parts), len(right_parts))
+    return left_parts + (0,) * (width - len(left_parts)) < right_parts + (0,) * (width - len(right_parts))
+
+
 def check_block(
-    block: Block, classes: dict[str, type], default_floor: str, seed_defaults: bool
+    block: Block, classes: dict[str, type], default_floor: str, seed_defaults: bool, installed_sdk: str | None = None
 ) -> list[Violation]:
     floor = block.floor_override or default_floor
+    if block.floor_override and installed_sdk and _version_lt(installed_sdk, block.floor_override):
+        return []
     try:
         tree = ast.parse(block.code)
     except SyntaxError:
@@ -305,7 +323,7 @@ def main() -> int:
         seed_defaults = bool(establishes_re.search(f.read_text(encoding="utf-8")))
         for block in extract_blocks(f):
             n_blocks += 1
-            all_violations.extend(check_block(block, classes, floor, seed_defaults))
+            all_violations.extend(check_block(block, classes, floor, seed_defaults, installed))
 
     print(f"scanned {len(files)} files, {n_blocks} python blocks")
     if not all_violations:

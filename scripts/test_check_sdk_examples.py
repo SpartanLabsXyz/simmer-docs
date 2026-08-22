@@ -15,9 +15,16 @@ SimmerClient = pytest.importorskip("simmer_sdk").SimmerClient
 CLASSES = {"SimmerClient": SimmerClient}
 
 
-def _violations(code: str, *, seed_defaults: bool = True, floor: str = "0.20.0"):
-    block = chk.Block(path=Path("test.mdx"), start_line=1, code=code, floor_override=None)
-    return chk.check_block(block, CLASSES, floor, seed_defaults)
+def _violations(
+    code: str,
+    *,
+    seed_defaults: bool = True,
+    floor: str = "0.20.0",
+    floor_override: str | None = None,
+    installed_sdk: str = "0.20.0",
+):
+    block = chk.Block(path=Path("test.mdx"), start_line=1, code=code, floor_override=floor_override)
+    return chk.check_block(block, CLASSES, floor, seed_defaults, installed_sdk)
 
 
 def test_good_trade_binds():
@@ -32,6 +39,16 @@ def test_unexpected_kwarg_is_flagged():
 
 def test_missing_method_is_flagged():
     v = _violations("client.no_such_method()")
+    assert len(v) == 1
+    assert "no attribute" in v[0].reason
+
+
+def test_newer_floor_override_is_skipped_for_older_sdk():
+    assert _violations("client.no_such_method()", floor_override="0.24.4", installed_sdk="0.20.0") == []
+
+
+def test_floor_override_is_checked_for_matching_sdk():
+    v = _violations("client.no_such_method()", floor_override="0.24.4", installed_sdk="0.24.4")
     assert len(v) == 1
     assert "no attribute" in v[0].reason
 
