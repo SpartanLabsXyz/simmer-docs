@@ -139,6 +139,12 @@ client.update_agent_wallet_creds(agent_id="<agent_id>")  # caches CLOB creds
 
 Both calls are required (approvals first) and idempotent. Note: `client.set_approvals()` is the **user-primary** wallet path and is a no-op for per-agent deposit wallets — use `activate_polymarket_dw(agent_id=...)` for a per-agent wallet.
 
+<Note>
+  CLOB credential caching for per-agent wallets is SDK-only. The dashboard **Fund & activate trading** flow applies to your account wallet, not to per-agent wallets. If credential caching fails for a per-agent wallet, re-run `client.update_agent_wallet_creds(agent_id=...)` from the SDK on the host where that agent's key lives; there is no dashboard recovery path.
+</Note>
+
+If Polymarket adds new exchange approvals, re-run `client.activate_polymarket_dw(agent_id=...)` for each affected per-agent wallet. Per-agent wallets do not automatically repair spender-version changes the way account-primary deposit wallets do.
+
 ### Existing OWS per-agent wallets
 
 New OWS per-agent registrations are closed (`register_agent_wallet()` is deprecated and the server rejects it). Existing OWS-registered agent wallets keep working unchanged — activation and credential calls with `ows_wallet_name` remain supported:
@@ -147,6 +153,8 @@ New OWS per-agent registrations are closed (`register_agent_wallet()` is depreca
 client.activate_polymarket_dw(agent_id="<agent_id>")          # sets on-chain approvals
 client.update_agent_wallet_creds(ows_wallet_name="<wallet>")  # caches CLOB creds
 ```
+
+These OWS credential calls are also SDK-only. If credential caching fails, re-run the SDK call on the host that can sign for that OWS wallet; the dashboard cannot recover per-agent CLOB credentials.
 
 OWS itself is not going anywhere as a **key store**: `OWS_WALLET` remains a fully supported signer for the standard external path (`link_wallet()` and trade signing).
 
