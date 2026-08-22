@@ -4,7 +4,13 @@ description: Copy the top World Cup traders on Polymarket — auto-curated daily
 icon: futbol
 ---
 
-The `polymarket-worldcup-copytrader` skill copies the top World Cup traders on Polymarket using Simmer's auto-curated leader set. Unlike [`polymarket-copytrading`](/pro/reactor#signal-type-catalog), there is no wallet list to configure — Simmer's daily curation job screens the top WC traders for *copyability* (slippage-adjusted copy P&L via PolyNode) and serves the qualified set through the `GET /api/sdk/wc/copy-leaders` endpoint.
+<Warning>
+**Retired.** This skill was deprecated on 2026-07-24 and the leader-set endpoint it depended on (`GET /api/sdk/wc/copy-leaders`) is no longer served. Existing installs will not fetch new leaders. This page is kept for reference.
+
+For general copytrading, use [`polymarket-copytrading`](/pro/reactor#signal-type-catalog), which takes a wallet list you configure and is not World Cup scoped.
+</Warning>
+
+The `polymarket-worldcup-copytrader` skill copied the top World Cup traders on Polymarket using Simmer's auto-curated leader set. Unlike [`polymarket-copytrading`](/pro/reactor#signal-type-catalog), there is no wallet list to configure — Simmer's daily curation job screened the top WC traders for *copyability* (slippage-adjusted copy P&L via PolyNode) and served the qualified set through the `GET /api/sdk/wc/copy-leaders` endpoint, which has since been withdrawn.
 
 <Info>
 **Free tier.** No Pro subscription required. Works with managed and self-custody wallets, on `$SIM` (paper) or Polymarket (real USDC).
@@ -16,7 +22,7 @@ This skill executes trades automatically when run with `--live`. Dry-run is the 
 
 ## What it does
 
-1. Fetches the daily-curated World Cup leader set from `GET /api/sdk/wc/copy-leaders`.
+1. Fetched the daily-curated World Cup leader set from `GET /api/sdk/wc/copy-leaders` (endpoint withdrawn).
 2. Runs the leaders' wallets through Simmer's copytrading engine to compute a portfolio-level rebalance: size-weighted aggregation across all leaders, conflict detection, Top-N filtering, drift/stale checks.
 3. Executes the rebalance trades via your Simmer wallet.
 
