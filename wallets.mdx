@@ -169,9 +169,18 @@ For a newly created account that has not linked a self-custody wallet, just use 
 
 ## Switching modes
 
-Both directions are supported and there is no penalty for switching. Open positions stay on-chain regardless of mode.
+Both directions are supported, but switching changes which key can authorize new trades. Open positions stay on-chain in the wallet that created them.
 
 **Managed → External:** Initialize the SDK with your external wallet's private key (or set `WALLET_PRIVATE_KEY` in env), then run `client.link_wallet()` once. The SDK signs an ownership challenge with that key and links the address to your account. Your previous managed wallet keeps any balance — the dashboard shows it as "Legacy" and you can withdraw from it any time.
+
+<Warning>
+  If the managed wallet already has a deposit wallet, switching to External does
+  not transfer that deposit wallet to your new EOA. Polymarket deposit wallets
+  are bound to the owner EOA that deployed them, so the old managed deposit
+  wallet becomes a legacy wallet for withdrawals only. Withdraw or bridge out
+  any funds and resolved positions from the Legacy card before relying on the
+  external wallet for new trading.
+</Warning>
 
 ```python
 from simmer_sdk import SimmerClient
