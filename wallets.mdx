@@ -143,7 +143,9 @@ Both calls are required (approvals first) and idempotent. Note: `client.set_appr
   CLOB credential caching for per-agent wallets is SDK-only. The dashboard **Fund & activate trading** flow applies to your account wallet, not to per-agent wallets. If credential caching fails for a per-agent wallet, re-run `client.update_agent_wallet_creds(agent_id=...)` from the SDK on the host where that agent's key lives; there is no dashboard recovery path.
 </Note>
 
-If Polymarket adds new exchange approvals, re-run `client.activate_polymarket_dw(agent_id=...)` for each affected per-agent wallet. Per-agent wallets do not automatically repair spender-version changes the way account-primary deposit wallets do.
+<Warning>
+  Per-agent wallets do **not** automatically detect new Polymarket spender requirements. They can remain marked ready after Polymarket adds a required approval, and Simmer will not warn you before the next trade attempt. Watch the Simmer changelog for spender-version announcements and proactively re-run `client.activate_polymarket_dw(agent_id=...)` for each affected per-agent wallet after any such announcement. Account-primary deposit wallets can self-heal this kind of spender-version drift; per-agent wallets cannot.
+</Warning>
 
 ### Existing OWS per-agent wallets
 
