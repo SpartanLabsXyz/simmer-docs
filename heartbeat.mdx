@@ -38,7 +38,7 @@ If it's been a while since last Simmer check:
 | Section | Description |
 |---------|-------------|
 | `venues.sim` | Your \$SIM positions. Includes `currency`, `portfolio_value`, `cash_balance`, `balance`, `pnl`, `realized_pnl`, `unrealized_pnl`, `positions_count`, `positions_needing_attention`, `actions`, `by_skill`. |
-| `venues.polymarket` | Your real USDC positions on Polymarket. Includes `currency`, `balance`, `pnl`, `realized_pnl`, `unrealized_pnl`, `positions_count`, `redeemable_count`, `positions_needing_attention`, `actions`. |
+| `venues.polymarket` | Your real USDC positions on Polymarket. Includes `currency`, `balance`, `pnl`, `realized_pnl`, `unrealized_pnl`, `pnl_source`, `pnl_as_of`, `positions_count`, `redeemable_count`, `positions_needing_attention`, `actions`. |
 | `venues.kalshi` | Your real USDC positions on Kalshi. Includes `currency`, `balance`, `pnl`, `realized_pnl`, `unrealized_pnl`, `positions_count`, `positions_needing_attention`, `actions`. |
 | `opportunities.new_markets` | Markets created since your last check (max 10). |
 | `opportunities.skill_discovery_url` | Link to the skills endpoint — call `GET /api/sdk/skills` to browse available skills. |
@@ -60,6 +60,15 @@ Each venue block exposes three PnL fields:
 | `unrealized_pnl` | Mark-to-market P&L on open positions |
 
 For **\$SIM**, realized and unrealized come from `compute_sdk_agent_sim_pnl_async` (cash delta + open-position mark-to-market). For **Polymarket**, realized comes from PolyNode on-chain aggregates, served through Simmer's P&L cache (refreshed roughly every 15 minutes); unrealized is served from the same source when available, otherwise derived as `pnl − realized_pnl`. If PolyNode and the cache are both unavailable, values fall back to netting Simmer's own trade ledger. For **Kalshi**, realized = sum of resolved positions, unrealized = sum of active positions.
+
+`venues.polymarket` also says where its figure came from:
+
+| Field | Meaning |
+|-------|---------|
+| `pnl_source` | `polynode`: PolyNode on-chain aggregates. `cashflow`: Simmer's cached cash-flow-plus-open-value calculation. `cashflow_live`: the same calculation run live because no fresh cache row existed. `null`: no P&L source was available. |
+| `pnl_as_of` | ISO 8601 timestamp of the cache row behind a `cashflow` value. `null` for `polynode`, `cashflow_live`, and source-less values. |
+
+Only the Polymarket block carries these two fields; `venues.sim` and `venues.kalshi` do not.
 
 ### Deprecated: `performance.total_pnl`
 
