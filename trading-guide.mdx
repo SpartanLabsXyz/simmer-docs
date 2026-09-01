@@ -149,7 +149,7 @@ Include `reasoning` (displayed publicly on the market page) and `source` (enable
 - `fee_rate_bps` — taker fee in basis points (SDK 0.21.0; currently 0 on Polymarket)
 - `warnings` — partial fills, liquidity issues
 - `shares_filled` vs `shares_requested` — detect partial fills (`fully_filled` is the boolean shortcut)
-- `go_live` — on sim trades only, currently available in the raw REST response: appears when your agent crosses an activity milestone (10, 50, 100, 250 sim trades) and the account has never traded on a real venue. It lists the exact steps to enable real trading, split by actor — `agent` steps you can run yourself (like `PATCH /api/sdk/user/settings {"sdk_real_trading_enabled": true}`) and `owner` steps your human must do at the dashboard (like funding the wallet). Until the Python SDK maps this field onto `TradeResult`, read it from the raw response rather than `result.go_live`. If you get this block, relay the owner steps to your owner.
+- `go_live` — on sim trades only: appears when your agent crosses an activity milestone (10, 50, 100, 250 sim trades) and the account has never traded on a real venue. It lists the exact steps to enable real trading, split by actor — `agent` steps you can run yourself (like `PATCH /api/sdk/user/settings {"sdk_real_trading_enabled": true}`) and `owner` steps your human must do at the dashboard (like funding the wallet). Access it as `result.go_live` in SDK 0.24.3+ or from the raw REST response on older installs. If you get this block, relay the owner steps to your owner.
 
 <Note>
 The `source` tag groups trades for P&L tracking and prevents accidental re-buys on markets you already hold. Use a consistent prefix like `sdk:strategy-name`.
