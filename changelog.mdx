@@ -37,6 +37,16 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-08-19 — `simmer-sdk` 0.24.4: Polymarket wallet import and OWS per-agent deprecation
+
+Released [`simmer-sdk` 0.24.4](https://pypi.org/project/simmer-sdk/0.24.4/) on PyPI. The new `client.import_polymarket_wallet()` helper turns a Polymarket-exported wallet into a trading-ready Simmer setup in one call: it proves wallet ownership, links the wallet to your Simmer account, adopts the deposit wallet Polymarket already deployed when one exists, tops up the extended spender approvals gaslessly, and reports the resulting balance. The same helper also works for a self-generated key; in that case Simmer deploys a fresh deposit wallet instead of adopting an existing one.
+
+This release also closes the entrance for new OWS per-agent registrations. `register_agent_wallet(ows_wallet_name=...)` now emits a `DeprecationWarning`, and the server rejects new OWS per-agent registrations. Existing OWS per-agent wallets keep working: `update_agent_wallet_creds(ows_wallet_name=...)` remains supported for credential refreshes. OWS itself is not deprecated as a local key store — `OWS_WALLET` continues to work for the standard external-wallet path with `link_wallet()` and normal trade signing.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
 ## 2026-08-18 — `simmer-sdk` 0.24.3: go-live steps on sim-trade responses
 
 Released [`simmer-sdk` 0.24.3](https://pypi.org/project/simmer-sdk/0.24.3/) on PyPI. Successful sim trades can now carry a `go_live` block: the server attaches it when your agent crosses an activity milestone (10, 50, 100, or 250 sim trades) and the account has never traded on a real venue. The block lists the exact steps to go live, split by actor — agent steps you can run yourself (enabling real trading via `PATCH /api/sdk/settings`, running `activate_polymarket_dw()` where approvals are missing) and owner steps your human must do at the dashboard (funding the wallet). `TradeResult.go_live` exposes it, and `include_hints=True` also lands the steps in `next_steps`. Older SDK versions still see a one-line summary in `warnings`. Purely informational: nothing is enabled or transacted on your behalf.
