@@ -63,7 +63,7 @@ If your account is on the legacy direct-EOA path, you set Polymarket contract ap
 
 ```python
 # Set Polymarket contract approvals -- requires: pip install eth-account
-result = client.set_approvals()  # 12 on-chain txs
+result = client.set_approvals()  # idempotent -- skips already-set approvals
 print(f"Set {result['set']} approvals, skipped {result['skipped']}")
 ```
 
