@@ -1348,7 +1348,7 @@
           "sdk-trade"
         ],
         "summary": "Trade",
-        "description": "Execute a trade via SDK.\n\nVenues:\n- venue=\"sim\" (default): Execute on Simmer's LMSR market with $SIM\n- venue=\"polymarket\": Execute real trade on Polymarket via Dome API\n  (requires wallet setup with allowances)\n- venue=\"kalshi\": Execute real trade on Kalshi via DFlow\n  (requires Solana wallet setup with SOL + USDC)\n\nOptions:\n- dry_run=True: Validate and calculate without executing. Returns the exact\n  shares, projected price, and cost the live path would settle for.\n  Supported on all venues: polymarket, kalshi, and sim (LMSR \u2014 closed-form\n  cost-inversion guarantees dry_run.cost == live.cost within float\n  precision). Useful for sizing budgets without committing the trade.\n\nDeprecated: venue=\"sandbox\"/\"simmer\" are deprecated, use venue=\"sim\" instead.\n\nRequires API key in Authorization header (rate limited: 120/minute).",
+        "description": "Execute a trade via SDK.\n\nVenues:\n- venue=\"sim\" (default): Execute on Simmer's LMSR market with $SIM\n- venue=\"polymarket\": Execute real trade on Polymarket via Dome API\n  (requires wallet setup with allowances)\n- venue=\"kalshi\": Execute real trade on Kalshi via DFlow\n  (requires Solana wallet setup with SOL + USDC)\n\nOptions:\n- dry_run=True: Validate and price the trade without executing it.\n  Supported on all venues. Two limits on how far you can trust the answer:\n\n  On sim it is exact \u2014 LMSR closed-form cost-inversion guarantees\n  dry_run.cost == live.cost within float precision. On polymarket it is an\n  executable-book estimate: the dry-run branch resolves the requested\n  side/action with get_executable_price(), then applies the same tick-size\n  buffer convention used by the live path. If the book is empty or cannot\n  be queried, dry_run returns the same kind of pricing failure instead of\n  inventing a price from external_price_yes.\n\n  It is also not a permission check: the trading-limit enforcement below\n  is gated on `not dry_run`, so a trade that dry-runs clean can still be\n  rejected live by a daily buy cap, a spend cap, or a cooldown.\n\nDeprecated: venue=\"sandbox\"/\"simmer\" are deprecated, use venue=\"sim\" instead.\n\nRequires an API key in the Authorization header.\n\nRate limits. Two independent systems apply, and grepping for one and\nconcluding absence is how this docstring was wrong twice:\n\n1. A per-minute cap, enforced by the API-key middleware in\n   scripts/local_dev_server.py \u2014 NOT by a @limiter.limit decorator, which\n   this route does not carry. Limits live in SDK_RATE_LIMITS\n   (simmer_v3/rate_limit.py), keyed on the normalized path, counted per\n   API-key hash in a fixed Redis window, and multiplied by tier\n   (PRO_RATE_LIMIT_MULTIPLIER 3x, ELITE_RATE_LIMIT_MULTIPLIER 10x). This\n   route is 60/min base, so 180 Pro and 600 Elite. Exceeding it returns a\n   real 429 with retry_after, not a trade rejection. Unlisted /api/sdk/\n   paths fall back to SDK_DEFAULT_RATE_LIMIT.\n\n2. The trading limits below, which live in the service and surface as a\n   rejected trade with success=false \u2014 never as a 429:\n\n- A daily BUY cap, counted across all venues by\n  `_get_unified_daily_trade_count`. Sells and redeems are exempt: the cap\n  rails opening positions, not closing them, so hitting it never stops you\n  exiting. (Two consumers had lost that exemption and rejected sells at the\n  cap \u2014 restored in #2137. Keep the `trade.action != 'sell'` test on any\n  new consumer of that counter.)\n  Values: DEFAULT_MAX_TRADES_PER_DAY / _PRO / _ELITE, overridden per user\n  by sdk_user_settings.max_trades_per_day.\n- SDK_FAILED_TRADE_COOLDOWN_MINUTES per (wallet, market, side) after a\n  failed buy.\n- The account's own sdk_max_trade_amount and sdk_daily_limit.\n- On sim only, and exempt for Pro: SDK_TRADE_COOLDOWN_SECONDS per market\n  per side.",
         "operationId": "api_sdk_trade_api_sdk_trade_post",
         "requestBody": {
           "content": {
@@ -1391,7 +1391,7 @@
           "sdk-trade"
         ],
         "summary": "Batch Trades",
-        "description": "Execute multiple trades in a single request with PARALLEL execution.\n\nTrades are executed concurrently using asyncio.gather() for maximum speed.\nThis is NOT atomic - failures don't rollback other trades.\n\nParameters:\n- trades: List of trade items (max 30, supports 26-leg NegRisk arb)\n- venue: \"sim\" or \"polymarket\" (default: sim)\n- source: Optional source tag for all trades (e.g., \"sdk:copytrading\")\n- dry_run: If true, validate and calculate without executing (default: false)\n           Returns estimated shares, price, and cost for each trade.\n\nDeprecated: venue=\"sandbox\"/\"simmer\" are deprecated, use venue=\"sim\" instead.\n\nRequires API key in Authorization header (rate limited: 30/minute).",
+        "description": "Execute multiple trades in a single request with PARALLEL execution.\n\nTrades are executed concurrently using asyncio.gather() for maximum speed.\nThis is NOT atomic - failures don't rollback other trades.\n\nParameters:\n- trades: List of trade items (max 30, supports 26-leg NegRisk arb)\n- venue: \"sim\" or \"polymarket\" (default: sim)\n- source: Optional source tag for all trades (e.g., \"sdk:copytrading\")\n- dry_run: If true, validate and calculate without executing (default: false)\n           Returns estimated shares, price, and cost for each trade.\n\nDeprecated: venue=\"sandbox\"/\"simmer\" are deprecated, use venue=\"sim\" instead.\n\nRequires an API key in the Authorization header.\n\nRate limit: 2/min base (6 Pro, 20 Elite) \u2014 SDK_RATE_LIMITS keys\n\"/api/sdk/trades/batch\" at 2, and the normalizer leaves that path intact,\nso it does NOT inherit the 30 on \"/api/sdk/trades\". The docstring said\n30/minute; it was never that. Batch is deliberately the tightest limit in\nthe table because one call fans out to 30 trades.",
         "operationId": "api_sdk_batch_trades_api_sdk_trades_batch_post",
         "requestBody": {
           "content": {
@@ -2120,7 +2120,7 @@
     "/api/sdk/orders/{order_id}": {
       "delete": {
         "summary": "Cancel Order",
-        "description": "Cancel a single open order by ID (managed wallets only).",
+        "description": "Cancel a single open order by ID via PolyNode relay.",
         "operationId": "api_sdk_cancel_order_api_sdk_orders__order_id__delete",
         "parameters": [
           {
@@ -2158,7 +2158,7 @@
     "/api/sdk/markets/{market_id}/orders": {
       "delete": {
         "summary": "Cancel Market Orders",
-        "description": "Cancel all open orders on a market (managed wallets only).",
+        "description": "Cancel all open orders on a market via PolyNode relay.",
         "operationId": "api_sdk_cancel_market_orders_api_sdk_markets__market_id__orders_delete",
         "parameters": [
           {
@@ -2212,7 +2212,7 @@
     "/api/sdk/orders": {
       "delete": {
         "summary": "Cancel All Orders",
-        "description": "Cancel all open orders across all markets (managed wallets only).",
+        "description": "Cancel all open orders across all markets via PolyNode relay.",
         "operationId": "api_sdk_cancel_all_orders_api_sdk_orders_delete",
         "responses": {
           "200": {
@@ -3477,7 +3477,7 @@
     "/api/sdk/skills/mine/metrics": {
       "get": {
         "summary": "Creator Metrics",
-        "description": "Headline stats for all skills owned by the authenticated creator.\n\nReturns one entry per skill with the full sdk_skill_analytics columns\nplus the registry status and created_at.",
+        "description": "Headline stats for all skills owned by the authenticated creator.\n\nReturns one entry per skill with the full sdk_skill_analytics columns\nplus the registry status and created_at.\nrealized_pnl_cashflow is retained only as a deprecated compatibility alias\nfor settled_realized_pnl.",
         "operationId": "api_creator_metrics_api_sdk_skills_mine_metrics_get",
         "responses": {
           "200": {
@@ -3542,7 +3542,7 @@
     "/api/sdk/skills/mine/metrics/{slug}/insights": {
       "get": {
         "summary": "Creator Skill Insights",
-        "description": "Computed insight bundle for a creator's skill.\n\nInsights (only shown when wallets_with_pnl_data >= 10):\n  - win_rate: {value, platform_avg, below_avg}\n  - dormancy: median trades per wallet before going dormant (no trade in 14d)\n  - top_errors: top 3 error buckets by count (last 30d)\n  - top_markets: top 5 markets by trade volume (all time)",
+        "description": "Computed insight bundle for a creator's skill.\n\nInsights (only shown when settled_wallets_with_pnl_data >= 10):\n  - win_rate: {value, platform_avg, below_avg}\n  - dormancy: median trades per wallet before going dormant (no trade in 14d)\n  - top_errors: top 3 error buckets by count (last 30d)\n  - top_markets: top 5 markets by trade volume (all time)",
         "operationId": "api_creator_skill_insights_api_sdk_skills_mine_metrics__slug__insights_get",
         "parameters": [
           {
@@ -3580,7 +3580,7 @@
     "/api/sdk/skill-leaderboard": {
       "get": {
         "summary": "Skill Leaderboard",
-        "description": "Ranked skill leaderboard: install proxies, trade count, volume, and\ncashflow-based realized P&L. Public metrics (no per-user data).\n\nQuery params:\n  limit:   max rows (default 50, capped at 200)\n  sort:    one of volume_usdc_alltime | volume_usdc_7d | trades_alltime |\n           trades_7d | installs_from_trades | realized_pnl_cashflow |\n           profitable_user_pct  (default: volume_usdc_alltime)\n  window:  'alltime' (default) | '7d' | '30d' \u2014 filter to skills with\n           trade activity in that window.\n  min_trades: minimum trade count required (default 0)\n\nP&L here is CASHFLOW (sells - buys) on confirmed/filled trades \u2014 it is\nrealized-only and ignores the value of open positions, so active skills\nunder-report. See migrations/20260424_sdk_skill_analytics_view.sql.",
+        "description": "Ranked skill leaderboard: install proxies, trade count, volume, and\nsettlement-outcome P&L. Public metrics (no per-user data).\n\nQuery params:\n  limit:   max rows (default 50, capped at 200)\n  sort:    one of volume_usdc_alltime | volume_usdc_7d | trades_alltime |\n           trades_7d | installs_from_trades | settled_realized_pnl |\n           profitable_user_pct | net_cashflow_excl_settlements\n           (default: volume_usdc_alltime)\n  window:  'alltime' (default) | '7d' | '30d' \u2014 filter to skills with\n           trade activity in that window.\n  min_trades: minimum trade count required (default 0)\n\nP&L here is settlement-outcome-aware for Polymarket/Kalshi skills and is computed\nfrom attributed real_trades rows against markets.outcome.\nrealized_pnl_cashflow is retained only as a deprecated compatibility alias\nfor settled_realized_pnl.\nnet_cashflow_excl_settlements is still exposed as a legacy diagnostic for\nsell-exit skills, but it excludes settlement/redemption money.",
         "operationId": "api_sdk_skill_leaderboard_api_sdk_skill_leaderboard_get",
         "responses": {
           "200": {
@@ -4586,6 +4586,28 @@
               }
             ],
             "title": "Polymarket Pnl"
+          },
+          "polymarket_pnl_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Pnl Source"
+          },
+          "polymarket_pnl_as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polymarket Pnl As Of"
           },
           "polymarket_win_count": {
             "anyOf": [
@@ -7375,6 +7397,28 @@
             ],
             "title": "Pnl Total"
           },
+          "pnl_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl Source"
+          },
+          "pnl_as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl As Of"
+          },
           "concentration": {
             "anyOf": [
               {
@@ -7396,6 +7440,28 @@
               }
             ],
             "title": "By Source"
+          },
+          "by_source_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "By Source Status"
+          },
+          "by_source_as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "By Source As Of"
           },
           "warnings": {
             "items": {
@@ -7503,6 +7569,28 @@
               }
             ],
             "title": "Pnl"
+          },
+          "pnl_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl Source"
+          },
+          "pnl_as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl As Of"
           },
           "positions_count": {
             "type": "integer",
@@ -7660,6 +7748,28 @@
               }
             ],
             "title": "Error"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "retryable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retryable"
           }
         },
         "type": "object",
@@ -8212,6 +8322,20 @@
               }
             ],
             "title": "Wallet Address"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key",
+            "description": "Client-supplied dedup key; Redis-backed 24h, fail-closed. 1\u2013255 chars when present."
           }
         },
         "type": "object",
@@ -8654,11 +8778,25 @@
             "default": false
           },
           "total_pnl": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Total Pnl"
           },
           "pnl_percent": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Pnl Percent"
           },
           "trades_count": {
@@ -8705,8 +8843,6 @@
           "id",
           "name",
           "status",
-          "total_pnl",
-          "pnl_percent",
           "trades_count",
           "win_count",
           "loss_count",
@@ -9468,18 +9604,37 @@
             "default": false
           },
           "total_pnl": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Total Pnl"
           },
           "unrealized_pnl": {
-            "type": "number",
-            "title": "Unrealized Pnl",
-            "default": 0
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unrealized Pnl"
           },
           "realized_pnl": {
-            "type": "number",
-            "title": "Realized Pnl",
-            "default": 0
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Realized Pnl"
           },
           "total_trades": {
             "type": "integer",
@@ -9494,8 +9649,7 @@
         },
         "type": "object",
         "required": [
-          "trader_id",
-          "total_pnl"
+          "trader_id"
         ],
         "title": "VenueLeaderboardEntry",
         "description": "Leaderboard entry for a venue (Polymarket/Kalshi)."
