@@ -1,6 +1,6 @@
 ---
 title: Wallet Setup
-description: Set up a Simmer wallet for real-money trading — choose between custodial and self-custody modes and understand who signs transactions on Polymarket and Kalshi.
+description: Set up a Simmer wallet for real-money trading — choose custodial or self-custody mode and learn who signs transactions on Polymarket and Kalshi.
 icon: wallet
 ---
 
@@ -63,13 +63,13 @@ If your account is on the legacy direct-EOA path, you set Polymarket contract ap
 
 ```python
 # Set Polymarket contract approvals -- requires: pip install eth-account
-result = client.set_approvals()  # 9 on-chain txs
+result = client.set_approvals()  # idempotent -- skips already-set approvals
 print(f"Set {result['set']} approvals, skipped {result['skipped']}")
 ```
 
 Legacy requirements:
 - **USDC.e** (bridged USDC, contract `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`) on Polygon -- not native USDC
-- Small **POL** balance on Polygon for gas (~$0.01 per approval, 9 approvals total)
+- Small **POL** balance on Polygon for gas (~$0.01 per approval, 12 approvals total)
 
 To upgrade to the V2 Deposit Wallet path (gasless trades, multi-chain bridge funding), open the **Wallets** tab in the dashboard and follow the upgrade prompt.
 
@@ -106,7 +106,7 @@ For Polymarket trading, every user has a **Deposit Wallet** in addition to their
 
 | | Agent wallet (EOA) | Deposit Wallet |
 |---|---|---|
-| Type | Externally-owned account | Smart contract proxy: ERC-1967 UUPS for deposit wallets deployed before June 2026; BeaconProxy for wallets deployed June 2026 onward. Simmer automatically detects and handles both shapes. |
+| Type | Externally-owned account | Smart contract proxy: ERC-1967 UUPS for deposit wallets deployed before June 8, 2026; BeaconProxy for wallets deployed on or after June 8, 2026. Simmer automatically detects and handles both shapes. |
 | Holds | Nothing in normal operation (V2 trades are gasless; pUSD lives on the Deposit Wallet) | pUSD (V2 collateral) |
 | Signs | Trades via your key (external) or Simmer's server key (managed) | Owned + signed for by the agent wallet |
 | Chain | Polygon | Polygon — same address on Base/Ethereum/other chains is empty space |
@@ -139,6 +139,14 @@ client.update_agent_wallet_creds(agent_id="<agent_id>")  # caches CLOB creds
 
 Both calls are required (approvals first) and idempotent. Note: `client.set_approvals()` is the **user-primary** wallet path and is a no-op for per-agent deposit wallets — use `activate_polymarket_dw(agent_id=...)` for a per-agent wallet.
 
+<Note>
+  CLOB credential caching for per-agent wallets is SDK-only. The dashboard **Fund & activate trading** flow applies to your account wallet, not to per-agent wallets. If credential caching fails for a per-agent wallet, re-run `client.update_agent_wallet_creds(agent_id=...)` from the SDK on the host where that agent's key lives; there is no dashboard recovery path.
+</Note>
+
+<Warning>
+  Per-agent wallets do **not** automatically detect new Polymarket spender requirements. They can remain marked ready after Polymarket adds a required approval, and Simmer will not warn you before the next trade attempt. Watch the Simmer changelog for spender-version announcements and proactively re-run `client.activate_polymarket_dw(agent_id=...)` for each affected per-agent wallet after any such announcement. Account-primary deposit wallets can self-heal this kind of spender-version drift; per-agent wallets cannot.
+</Warning>
+
 ### Existing OWS per-agent wallets
 
 New OWS per-agent registrations are closed (`register_agent_wallet()` is deprecated and the server rejects it). Existing OWS-registered agent wallets keep working unchanged — activation and credential calls with `ows_wallet_name` remain supported:
@@ -147,6 +155,8 @@ New OWS per-agent registrations are closed (`register_agent_wallet()` is depreca
 client.activate_polymarket_dw(agent_id="<agent_id>")          # sets on-chain approvals
 client.update_agent_wallet_creds(ows_wallet_name="<wallet>")  # caches CLOB creds
 ```
+
+These OWS credential calls are also SDK-only. If credential caching fails, re-run the SDK call on the host that can sign for that OWS wallet; the dashboard cannot recover per-agent CLOB credentials.
 
 OWS itself is not going anywhere as a **key store**: `OWS_WALLET` remains a fully supported signer for the standard external path (`link_wallet()` and trade signing).
 
@@ -161,9 +171,18 @@ For a newly created account that has not linked a self-custody wallet, just use 
 
 ## Switching modes
 
-Both directions are supported and there is no penalty for switching. Open positions stay on-chain regardless of mode.
+Both directions are supported, but switching changes which key can authorize new trades. Open positions stay on-chain in the wallet that created them.
 
 **Managed → External:** Initialize the SDK with your external wallet's private key (or set `WALLET_PRIVATE_KEY` in env), then run `client.link_wallet()` once. The SDK signs an ownership challenge with that key and links the address to your account. Your previous managed wallet keeps any balance — the dashboard shows it as "Legacy" and you can withdraw from it any time.
+
+<Warning>
+  If the managed wallet already has a deposit wallet, switching to External does
+  not transfer that deposit wallet to your new EOA. Polymarket deposit wallets
+  are bound to the owner EOA that deployed them, so the old managed deposit
+  wallet becomes a legacy wallet for withdrawals only. Withdraw or bridge out
+  any funds and resolved positions from the Legacy card before relying on the
+  external wallet for new trading.
+</Warning>
 
 ```python
 from simmer_sdk import SimmerClient

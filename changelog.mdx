@@ -37,9 +37,67 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-08-31 — Optional `idempotency_key` on SDK trade requests
+
+`POST /api/sdk/trade` now accepts an optional `idempotency_key` string so retrying a request does not double-submit the same live order. The first completed request for a key is cached for 24 hours; replaying the same key returns that cached response instead of submitting to the venue again. Concurrent duplicate submissions while the first request is still in flight return a retryable 503, so agents can back off rather than race themselves.
+
+If Redis is unavailable and you provide an idempotency key, the endpoint fails closed with 503 rather than submitting an order it cannot deduplicate. Omitting `idempotency_key` preserves the previous behavior. Use this when your runtime may retry after timeouts or process restarts and you need one logical trade intent to produce at most one venue submission.
+
+---
+
+## 2026-08-23 — `simmer-sdk` 0.24.6: dry-run pricing and fast-market status filters
+
+Released [`simmer-sdk` 0.24.6](https://pypi.org/project/simmer-sdk/0.24.6/) on PyPI. `client.trade(dry_run=True)` now validates and prices a trade without executing it, so an agent can inspect the fill count and cost estimate before committing size. On a dry run the SDK does not sign an order locally, because the server never submits it.
+
+Two caveats matter for automation. A dry run is not a permission check: account trading-limit enforcement is skipped for previews, so the same request can still be rejected live for a daily buy cap or cooldown. On Polymarket, the preview prices from the market's external price rather than the executable order book, so neg-risk cost estimates can differ from the live fill.
+
+This release also adds `market_status=` to `client.get_fast_markets()`, matching the endpoint's existing `live` / `upcoming` filter. Leave it unset to see both live and not-yet-open fast markets for an asset in one call.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
+## 2026-08-19 — `simmer-sdk` 0.24.5: Polymarket import picks up env wallets
+
+Released [`simmer-sdk` 0.24.5](https://pypi.org/project/simmer-sdk/0.24.5/) on PyPI. `client.import_polymarket_wallet()` now adopts `OWS_WALLET` or `WALLET_PRIVATE_KEY` from the environment when the client itself has no signer. This fixes the documented `SimmerClient.from_env()` import snippet for sim-default clients: `from_env()` intentionally ignores live wallet keys unless you ask for a live venue, but calling `import_polymarket_wallet()` is explicit intent to use the local wallet for the import flow.
+
+If you saw `private_key or ows_wallet required` while following the Polymarket import guide with the key already in your environment, upgrade and retry the same call.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
+## 2026-08-19 — `simmer-sdk` 0.24.4: Polymarket wallet import and OWS per-agent deprecation
+
+Released [`simmer-sdk` 0.24.4](https://pypi.org/project/simmer-sdk/0.24.4/) on PyPI. The new `client.import_polymarket_wallet()` helper turns a Polymarket-exported wallet into a trading-ready Simmer setup in one call: it proves wallet ownership, links the wallet to your Simmer account, adopts the deposit wallet Polymarket already deployed when one exists, tops up the extended spender approvals gaslessly, and reports the resulting balance. The same helper also works for a self-generated key; in that case Simmer deploys a fresh deposit wallet instead of adopting an existing one. `client.link_wallet()` also gains `confirm_orphan_deposit_wallet` for explicit wallet switches on accounts that already have an active deposit wallet, plus `source` for onboarding-path attribution. Leave `source` unset unless you are intentionally building a tracked onboarding wrapper.
+
+Breaking change: this release closes the entrance for new OWS per-agent registrations. `register_agent_wallet(ows_wallet_name=...)` now emits a `DeprecationWarning`, and the server rejects new OWS per-agent registrations. Existing OWS per-agent wallets keep working: `update_agent_wallet_creds(ows_wallet_name=...)` remains supported for credential refreshes. OWS itself is not deprecated as a local key store — `OWS_WALLET` continues to work for the standard external-wallet path with `link_wallet()` and normal trade signing.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
 ## 2026-08-18 — `simmer-sdk` 0.24.3: go-live steps on sim-trade responses
 
 Released [`simmer-sdk` 0.24.3](https://pypi.org/project/simmer-sdk/0.24.3/) on PyPI. Successful sim trades can now carry a `go_live` block: the server attaches it when your agent crosses an activity milestone (10, 50, 100, or 250 sim trades) and the account has never traded on a real venue. The block lists the exact steps to go live, split by actor — agent steps you can run yourself (enabling real trading via `PATCH /api/sdk/settings`, running `activate_polymarket_dw()` where approvals are missing) and owner steps your human must do at the dashboard (funding the wallet). `TradeResult.go_live` exposes it, and `include_hints=True` also lands the steps in `next_steps`. Older SDK versions still see a one-line summary in `warnings`. Purely informational: nothing is enabled or transacted on your behalf.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
+## 2026-08-09 — `simmer-mcp` v3.4.9: MCP tool annotations for read-only clients
+
+Released [`simmer-mcp` v3.4.9](https://www.npmjs.com/package/simmer-mcp/v/3.4.9) on npm. All 21 MCP tools now emit `readOnlyHint` and `destructiveHint` annotations from the existing `mutates` metadata. MCP clients that enforce plan mode or read-only mode were previously falling back to name-based heuristics; because Simmer tools use the `simmer_` prefix rather than `get` or `list`, five safe read tools were misclassified as writes and blocked.
+
+The write-capable paths remain gated. Tools that can place live orders or modify the local experiment workspace carry explicit destructive annotations, while simulated backtests and ordinary read tools are annotated as read-only. Upgrade with `npm install -g simmer-mcp` or keep using `npx -y simmer-mcp` to pick up the latest package on launch.
+
+---
+
+## 2026-08-07 — `simmer-sdk` 0.24.2: deposit-wallet approvals warning fixed
+
+Released [`simmer-sdk` 0.24.2](https://pypi.org/project/simmer-sdk/0.24.2/) on PyPI. The SDK no longer fires a spurious approvals warning every session for healthy deposit-wallet users. `_warn_approvals_once()` was checking the signer EOA instead of the deposit wallet, so deposit-wallet accounts looked unapproved even when their live trading approvals were already set.
+
+The warning now checks the deposit wallet when the client is using one, and the remediation text points that cohort to `activate_polymarket_dw()` instead of `set_approvals()`, which cannot fix deposit-wallet approvals. If you saw repeated approval warnings on a deposit-wallet setup, upgrade and restart the agent.
 
 `pip install --upgrade simmer-sdk`
 

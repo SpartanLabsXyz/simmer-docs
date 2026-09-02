@@ -209,12 +209,6 @@
             ]
           },
           {
-            "group": "World Cup Copytrader",
-            "pages": [
-              "GET /api/sdk/wc/copy-leaders"
-            ]
-          },
-          {
             "group": "Utilities",
             "pages": [
               "POST /api/sdk/troubleshoot",

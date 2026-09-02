@@ -152,7 +152,7 @@ for t in plan.get("trades", []):
     print(f"{t['market_id']}: success={result.success}")
 ```
 
-**World Cup variant:** `polymarket-worldcup-copytrader` uses `GET /api/sdk/wc/copy-leaders` to fetch a daily-curated leader set, then passes those wallets into the same `POST /api/sdk/copytrading/execute` flow. See [World Cup Copytrader](/skills/worldcup-copytrader).
+**World Cup variant (retired):** `polymarket-worldcup-copytrader` fetched a daily-curated leader set from `GET /api/sdk/wc/copy-leaders` and passed those wallets into the same `POST /api/sdk/copytrading/execute` flow. The skill was deprecated on 2026-07-24 and the endpoint is no longer served; the page is kept for reference at [World Cup Copytrader](/skills/worldcup-copytrader). The `polymarket-copytrading` flow above is unaffected.
 
 ### `shock_ladder` — Soccer in-play shock fader
 
