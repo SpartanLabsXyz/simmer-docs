@@ -38,7 +38,7 @@ Consumer skill (your agent, any runtime)
 
 ## Signal type catalog
 
-Reactor currently delivers copytrading signals. Your skill should still filter by `payload.type` on every poll so older or future signal types are ignored unless you explicitly support them.
+Reactor delivers two signal types: `copytrading` (always on) and `shock_ladder` (seasonal — see below). Your skill should filter by `payload.type` on every poll so signal types it does not handle are ignored.
 
 ### `copytrading` — Whale trade mirroring
 
@@ -155,6 +155,39 @@ for t in plan.get("trades", []):
 ### Retired signal types
 
 The former World Cup `shock_ladder` flow and `polymarket-soccer-shock-ladder` skill are deprecated. They are not current install or run targets, and this page no longer documents their old arming endpoint as a live setup path.
+
+### `shock_ladder` — Soccer in-play shock fader (seasonal)
+
+Emitted by Simmer's shock detector when a Polymarket World Cup market's price drops sharply during a live match. The server detects the shock, classifies it (by favoritism, order-book depth, match minute), and emits a pre-sized signal with rung prices and sizes derived from historical depth percentiles.
+
+<Note>
+  **This signal is seasonal, not retired.** It is scoped to **World Cup markets during live match windows**, so it emits nothing between tournaments. The 2026 tournament produced 10,401 signals between 12 June and 18 July 2026; none have been emitted since because there are no live matches, not because the detector was switched off. The arming endpoint below still works and takes effect the next time World Cup markets are live.
+
+  The reference consumer, `polymarket-soccer-shock-ladder`, was **deprecated on 24 July 2026** and is no longer installable. Existing installs keep running. To consume this signal today, handle `payload.type == "shock_ladder"` in your own reactor loop using the payload shape below.
+</Note>
+
+**Arm shock-ladder signals** (opt-in, Pro required):
+
+```bash
+curl -X PATCH https://api.simmer.markets/api/sdk/shock-ladder/config \
+  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true}'
+```
+
+Returns `{"shock_ladder_enabled": true}`. When World Cup markets are live, the server delivers shock signals to your reactor pending feed within ~5 minutes. Check or disarm anytime:
+
+```bash
+# Check status
+curl https://api.simmer.markets/api/sdk/shock-ladder/config \
+  -H "Authorization: Bearer $SIMMER_API_KEY"
+
+# Disarm
+curl -X PATCH https://api.simmer.markets/api/sdk/shock-ladder/config \
+  -H "Authorization: Bearer $SIMMER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
 
 ## Risk alerts: a sibling mechanism
 
