@@ -8,14 +8,13 @@ icon: bolt
 **Pro & Elite feature.** Reactor is available on [Simmer Pro](https://simmer.markets/dashboard?ref=docs&utm_campaign=docs) and Elite plans (Elite includes everything in Pro).
 </Info>
 
-Reactor is Simmer's signal bus. **Producers** (Simmer's server-side relay and detector services) detect on-chain events and write typed signals. **Consumer skills** poll `GET /api/sdk/reactor/pending`, branch on `payload.type`, act, and DELETE the signal on success. Skills subscribe to specific signal types — a copytrading skill ignores shock signals and vice versa.
+Reactor is Simmer's signal bus. **Producers** (Simmer's server-side relay services) detect on-chain events and write typed signals. **Consumer skills** poll `GET /api/sdk/reactor/pending`, branch on `payload.type`, act, and DELETE the signal on success. Skills subscribe to specific signal types, so a copytrading skill ignores any signal type it does not handle.
 
 ## How it works
 
 ```
 Producers (server-side)
-  ├─ Copytrading relay       → detects whale on-chain settlement, resolves market + mirror size
-  └─ Shock detector          → detects in-play price shock, sizes ladder rungs
+  └─ Copytrading relay       → detects whale on-chain settlement, resolves market + mirror size
        ↓ _write_signal delivery (typed payload, 120s TTL)
        ↓
 Reactor pending queue
@@ -23,8 +22,7 @@ Reactor pending queue
 Consumer skill (your agent, any runtime)
   ↓ GET /api/sdk/reactor/pending
   ↓ branch on payload.type
-  ├─ type == "copytrading"  → mirror trade via SimmerClient.trade()
-  └─ type == "shock_ladder" → place recovery ladder
+  └─ type == "copytrading"  → mirror trade via SimmerClient.trade()
   ↓ DELETE /api/sdk/reactor/pending/{id} on success
 ```
 
@@ -38,9 +36,9 @@ Consumer skill (your agent, any runtime)
 **Signals expire 120 seconds after they're generated.** Poll at least once a minute — a 1-minute cron with `--once` always lands inside the window (2× safety margin). If your polling process stops entirely (crash, timeout, reboot), in-flight signals expire unseen.
 </Warning>
 
-## Signal-type catalog
+## Signal type catalog
 
-Reactor currently delivers two signal types. Your skill filters by `payload.type` on every poll.
+Reactor delivers two signal types: `copytrading` (always on) and `shock_ladder` (seasonal — see below). Your skill should filter by `payload.type` on every poll so signal types it does not handle are ignored.
 
 ### `copytrading` — Whale trade mirroring
 
@@ -154,11 +152,19 @@ for t in plan.get("trades", []):
 
 **World Cup variant (retired):** `polymarket-worldcup-copytrader` fetched a daily-curated leader set from `GET /api/sdk/wc/copy-leaders` and passed those wallets into the same `POST /api/sdk/copytrading/execute` flow. The skill was deprecated on 2026-07-24 and the endpoint is no longer served; the page is kept for reference at [World Cup Copytrader](/skills/worldcup-copytrader). The `polymarket-copytrading` flow above is unaffected.
 
-### `shock_ladder` — Soccer in-play shock fader
+### Retired signal types
 
-Emitted by Simmer's shock detector when a Polymarket World Cup market's price drops sharply during a live match. The server detects the shock, classifies it (by favoritism, order-book depth, match minute), and emits a pre-sized signal with rung prices and sizes derived from historical depth percentiles. The `polymarket-soccer-shock-ladder` skill consumes this type.
+The former World Cup `shock_ladder` flow and `polymarket-soccer-shock-ladder` skill are deprecated. They are not current install or run targets, and this page no longer documents their old arming endpoint as a live setup path.
 
-Currently scoped to **2026 World Cup markets** during live match windows.
+### `shock_ladder` — Soccer in-play shock fader (seasonal)
+
+Emitted by Simmer's shock detector when a Polymarket World Cup market's price drops sharply during a live match. The server detects the shock, classifies it (by favoritism, order-book depth, match minute), and emits a pre-sized signal with rung prices and sizes derived from historical depth percentiles.
+
+<Note>
+  **This signal is seasonal, not retired.** It is scoped to **World Cup markets during live match windows**, so it emits nothing between tournaments. The 2026 tournament produced 10,401 signals between 12 June and 18 July 2026; none have been emitted since because there are no live matches, not because the detector was switched off. The arming endpoint below still works and takes effect the next time World Cup markets are live.
+
+  The reference consumer, `polymarket-soccer-shock-ladder`, was **deprecated on 24 July 2026** and is no longer installable. Existing installs keep running. To consume this signal today, handle `payload.type == "shock_ladder"` in your own reactor loop using the payload shape below.
+</Note>
 
 **Arm shock-ladder signals** (opt-in, Pro required):
 
@@ -169,7 +175,7 @@ curl -X PATCH https://api.simmer.markets/api/sdk/shock-ladder/config \
   -d '{"enabled": true}'
 ```
 
-Returns `{"shock_ladder_enabled": true}`. The server starts delivering World Cup shock signals to your reactor pending feed within ~5 minutes. Check or disarm anytime:
+Returns `{"shock_ladder_enabled": true}`. When World Cup markets are live, the server delivers shock signals to your reactor pending feed within ~5 minutes. Check or disarm anytime:
 
 ```bash
 # Check status
@@ -183,14 +189,6 @@ curl -X PATCH https://api.simmer.markets/api/sdk/shock-ladder/config \
   -d '{"enabled": false}'
 ```
 
-**Skill:** Install `polymarket-soccer-shock-ladder` from [ClawHub](https://github.com/SpartanLabsXyz/simmer-sdk/tree/main/skills/polymarket-soccer-shock-ladder). Arm first (above), then run the skill.
-
-```bash
-npx clawhub@latest install polymarket-soccer-shock-ladder
-python shock_ladder_trader.py --once          # dry-run; shows ladder without trading
-python shock_ladder_trader.py --once --live   # live
-```
-
 ## Risk alerts: a sibling mechanism
 
 Risk alerts are **not** on the reactor bus. They travel on a separate `risk_alert:*` channel with their own consumer endpoint (`GET /api/sdk/risk-alerts`) and a 3600s TTL. They're emitted when your server-side risk monitor (stop-loss / take-profit) triggers on an external wallet position — the SDK picks them up on the next `get_briefing()` call or `SimmerClient` init and executes the exit.
@@ -199,7 +197,7 @@ See [Risk Management](/risk-management) for the full consumer pattern and config
 
 ## Consuming signals
 
-Both skills follow the same consumer loop:
+The copytrading skill follows this consumer loop:
 
 ```python
 from simmer_sdk import SimmerClient
@@ -212,9 +210,6 @@ for signal in signals:
 
     if signal_type == "copytrading":
         # mirror trade ...
-        pass
-    elif signal_type == "shock_ladder":
-        # place recovery ladder ...
         pass
     else:
         continue  # ignore unknown types
@@ -237,7 +232,7 @@ Reactor activity appears in the **Reactor tab**, not the Observability tab. Obse
 
 - **Circuit breaker** — 5 consecutive trade failures triggers a pause. Signals are skipped until the issue is resolved. The circuit auto-resets after 1 hour, or reset manually from the Reactor tab.
 - **Signal expiry** — Unprocessed signals expire after 120s. No stale trades.
-- **Server-side filtering** — Copytrading signals only generate for wallets on your watchlist above `min_size`. Shock signals only generate when you've opted in. Your skill doesn't see noise.
+- **Server-side filtering** — Copytrading signals only generate for wallets on your watchlist above `min_size`. Your skill doesn't see noise.
 - **Per-config caps** — `max_size` bounds each mirror trade; `daily_cap` bounds daily spend (skill-enforced at execution, plus a server-side 3x runaway guard on proposals). Check `GET /api/sdk/reactor/status` → `skips_24h` to see if you're being capped.
 
 ## Cross-runtime
