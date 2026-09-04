@@ -154,14 +154,14 @@ for t in plan.get("trades", []):
 
 ### Retired signal types
 
-The former World Cup `shock_ladder` flow and `polymarket-soccer-shock-ladder` skill are deprecated. They are not current install or run targets, and their old arming endpoint is not a live setup path.
+The former World Cup `shock_ladder` flow and `polymarket-soccer-shock-ladder` skill are deprecated. They are not current install or run targets, and their arming endpoint remains only as a compatibility switch with no practical effect outside live World Cup match windows.
 
 ### `shock_ladder` — Soccer in-play shock fader (retired reference)
 
 Emitted by Simmer's shock detector when a Polymarket World Cup market's price drops sharply during a live match. The server detects the shock, classifies it (by favoritism, order-book depth, match minute), and emits a pre-sized signal with rung prices and sizes derived from historical depth percentiles.
 
 <Note>
-  **This is no longer a self-serve Reactor signal.** The 2026 tournament produced 10,401 signals between 12 June and 18 July 2026, but new opt-ins are closed and `/api/sdk/shock-ladder/config` is not served as a live customer arming endpoint.
+  **This is no longer a self-serve Reactor setup path.** The arming endpoint (`/api/sdk/shock-ladder/config`) is still in the API and remains callable, but it has no practical effect outside live World Cup match windows because no shock signals are emitted between tournaments.
 
   The reference consumer, `polymarket-soccer-shock-ladder`, was **deprecated on 24 July 2026** and is no longer installable. This section remains only as a historical payload reference for existing logs and old installs.
 </Note>
