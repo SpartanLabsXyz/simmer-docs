@@ -37,6 +37,18 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-09-05 — `simmer-sdk` 0.24.7: tag search, dry-run cache, and sell guidance fixes
+
+Released [`simmer-sdk` 0.24.7](https://pypi.org/project/simmer-sdk/0.24.7/) on PyPI. `find_markets()` was silently discarding tag-only matches: the server's `q` filter matches a search term against the market question OR its tags, but `find_markets()` re-filtered those results on question text alone, so `find_markets("weather")` returned nothing even though `get_markets(q="weather")` returned a full page of markets titled like "Austin 82-83F on Sep 7" that only carried `weather` as a tag. The server's matches are now returned as-is.
+
+`trade(dry_run=True)` no longer blocks the real trade that follows it. A dry run was updating the client-side held-markets cache exactly as a real fill would, so the next real buy on that market was refused with "Already hold position on this market. Pass allow_rebuy=True to override." — even though `get_positions()` was empty and the server held nothing. This is the exact preview-then-place sequence shown in our own docs, so anyone following that pattern hit it directly. A dry run now leaves the cache untouched on the sim and Polymarket paths. It does not yet cover the Kalshi bring-your-own-wallet path, which is tracked separately.
+
+The `simmer` skill's exit guidance (skill 1.25.1) has also been corrected. It previously described selling as `client.trade(side="no", ...)`, which the API treats as a buy of the opposite side and rejects with "amount required for buy orders." To sell, use `action="sell"` with a share count — `side` names the side you hold, not the action you're taking.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
 ## 2026-08-31 — Optional `idempotency_key` on SDK trade requests
 
 `POST /api/sdk/trade` now accepts an optional `idempotency_key` string so retrying a request does not double-submit the same live order. The first completed request for a key is cached for 24 hours; replaying the same key returns that cached response instead of submitting to the venue again. Concurrent duplicate submissions while the first request is still in flight return a retryable 503, so agents can back off rather than race themselves.
