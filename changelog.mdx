@@ -37,11 +37,25 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-09-06 — `simmer-sdk` 0.25.0: backtests now charge fees by default
+
+Released [`simmer-sdk` 0.25.0](https://pypi.org/project/simmer-sdk/0.25.0/) on PyPI. `simmer backtest` now charges fees, and your numbers will change. `--fee-rate` follows the replay engine's base rate (currently `0.05`) instead of `0`, applied as `notional × rate × (1 - price)`; resting limit orders that fill as makers pay nothing. Pass `--fee-rate 0` for the previous fee-free behaviour.
+
+Two consequences worth planning for. Every run now carries cost drag, so a strategy that beat its baselines before may not. And every `config_hash` changed, so re-running a saved backtest will not reproduce its stored report — that is expected, not a bug.
+
+Reports now say what they charged: `summary.fee_rate`, `summary.fees_paid`, `reproducibility.fee_rate`, and a `fee` on every entry in `fills[]`. Baselines pay the same fee as the strategy's own fills and are derived from executed fills rather than logged decisions, so a limit order that never crossed no longer counts as a buy-and-hold entry.
+
+A worthless position can also be closed again: `sell()` briefly rejected a price of exactly 0 — the case where YES prints 1.0 and a NO position is worth nothing — leaving it on the book to be marked and settled instead of exited.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
 ## 2026-09-05 — `simmer-sdk` 0.24.7: tag search, dry-run cache, and sell guidance fixes
 
 Released [`simmer-sdk` 0.24.7](https://pypi.org/project/simmer-sdk/0.24.7/) on PyPI. `find_markets()` was silently discarding tag-only matches: the server's `q` filter matches a search term against the market question OR its tags, but `find_markets()` re-filtered those results on question text alone, so `find_markets("weather")` returned nothing even though `get_markets(q="weather")` returned a full page of markets titled like "Austin 82-83F on Sep 7" that only carried `weather` as a tag. The server's matches are now returned as-is.
 
-`trade(dry_run=True)` no longer blocks the real trade that follows it. A dry run was updating the client-side held-markets cache exactly as a real fill would, so the next real buy on that market was refused with "Already hold position on this market. Pass allow_rebuy=True to override." — even though `get_positions()` was empty and the server held nothing. This is the exact preview-then-place sequence shown in our own docs, so anyone following that pattern hit it directly. A dry run now leaves the cache untouched on the sim and Polymarket paths. It does not yet cover the Kalshi bring-your-own-wallet path, which is tracked separately.
+`trade(dry_run=True)` no longer blocks the real trade that follows it. A dry run was updating the client-side held-markets cache exactly as a real fill would, so the next real buy on that market was refused with "Already hold position on this market. Pass allow_rebuy=True to override." — even though `get_positions()` was empty and the server held nothing. This is the exact preview-then-place sequence shown in our own docs, so anyone following that pattern hit it directly. A dry run now leaves the cache untouched on the sim and Polymarket paths. It does not cover the Kalshi bring-your-own-wallet path, which ignores `dry_run` altogether and submits a real order (SIM-5041). Preview Kalshi trades with `POST /api/sdk/trade/kalshi/quote` and simply don't submit — nothing reaches the venue until you sign the returned transaction.
 
 The `simmer` skill's exit guidance (skill 1.25.1) has also been corrected. It previously described selling as `client.trade(side="no", ...)`, which the API treats as a buy of the opposite side and rejects with "amount required for buy orders." To sell, use `action="sell"` with a share count — `side` names the side you hold, not the action you're taking.
 
