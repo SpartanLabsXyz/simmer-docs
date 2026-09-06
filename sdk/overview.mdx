@@ -114,7 +114,8 @@ result.shares_requested # Shares requested (compare with shares_filled for parti
 result.cost             # USDC spent (buy) / received (sell) — always positive
 result.fill_price       # Effective average fill price per share — cost / shares_filled (SDK 0.21.0)
 result.new_price        # Effective fill price (same value as fill_price; prefer fill_price in new code)
-result.fee_rate_bps     # Taker fee rate in basis points — currently 0 on Polymarket (SDK 0.21.0)
+result.fee_rate_bps     # Fee rate in the signed order, bps (SDK 0.21.0). Always 0 on
+                        # Polymarket V2 — that means "unknown", not "free". See /faq#fees.
 result.fully_filled     # Boolean — shares_filled >= shares_requested
 result.fill_status      # "filled", "submitted", "unconfirmed", or "failed" (see Trading Guide)
 result.order_status     # Polymarket order status: "matched", "live", "delayed"

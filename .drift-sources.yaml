@@ -9,6 +9,7 @@
 #
 # Path conventions:
 #   simmer/...      → ~/Documents/code/active/simmer/...
+#   simmer-sdk/...  → ~/Documents/code/active/simmer-sdk/...
 #   simmer-docs/... → ~/Documents/code/active/simmer-docs/...
 #   simmer-labs/... → ~/simmer-labs/...   (Trinity's cwd, separate clone)
 #
@@ -52,3 +53,84 @@ heartbeat.mdx:
   notes: |
     Briefing API shape was migrated 2026-05-21 (SIM-1965 deprecated `performance.total_pnl`).
     Authoritative source: the actual `/api/sdk/briefing` endpoint code at local_dev_server.py.
+
+trading-guide.mdx:
+  canonical_sources:
+    - simmer-sdk/simmer_sdk/client.py
+    - simmer/simmer_v3/sdk_trade.py
+    - simmer/simmer_v3/polymarket_client.py
+  notes: |
+    `trade()` in client.py is authoritative for SDK arguments and defaults. SERVER
+    behaviour is sdk_trade.py, NOT the client docstring -- the two disagree today and
+    a 2026-09-06 doc edit shipped the client's stale account of the server. Check both.
+    Three traps this page has drifted on: `dry_run` is keyword-only from 0.24.6 but is
+    ignored on BOTH Kalshi paths (SDK signs and submits, SIM-5041; REST returns an
+    error) -- the only Kalshi preview is /api/sdk/trade/kalshi/quote; Polymarket dry
+    runs price from the EXECUTABLE BOOK since simmer#2151 (2026-08-25), not the market
+    external price, which only the synthetic-sell branch still uses; and `fee_rate_bps`
+    is 0 on Polymarket V2 as an "unknown" sentinel, not a zero fee.
+
+venues.mdx:
+  canonical_sources:
+    - simmer-sdk/simmer_sdk/client.py
+    - simmer/simmer_v3/sdk_trade.py
+  notes: |
+    The Practice modes table must match what `trade()` actually does per venue.
+    `dry_run` is handled in exactly two places in sdk_trade.py -- the polymarket
+    block and the sim LMSR block. Kalshi has neither, so the "no position is
+    created" row does not hold there by either route.
+
+faq.mdx:
+  canonical_sources:
+    - https://docs.polymarket.com/trading/fees
+    - simmer/simmer_v3/polymarket_client.py
+  notes: |
+    Fee copy only. The VENUE's published schedule is canonical -- link it, do not
+    restate the per-category rates, because Polymarket changes them (sports moved
+    0.04 -> 0.05 and "other" 0.02 -> 0.04/0.05 between our 2026-05 reading and
+    2026-09-06). Only the formula shape is stable: fee = shares x rate x p x (1-p),
+    i.e. rate x (1-p) as a share of cost. Simmer itself charges zero; keep that
+    separate from venue fees. `fee_rate_bps` is a 0-means-unknown sentinel under V2
+    (polymarket_client.py get_polymarket_fee_rate) -- that part is ours to maintain.
+
+sdk/backtest.mdx:
+  canonical_sources:
+    - simmer-sdk/simmer_sdk/cli.py
+    - simmer-sdk/simmer_sdk/backtest/replay/engine.py
+  notes: |
+    Flag table mirrors cli.py's backtest subparser. The demo output block is real
+    output -- regenerate with `simmer backtest --demo`, never hand-edit. Any
+    ENGINE_VERSION bump changes every config_hash in these pages.
+
+backtesting.mdx:
+  canonical_sources:
+    - simmer-sdk/simmer_sdk/backtest/replay/engine.py
+  notes: |
+    Same demo-output rule as sdk/backtest.mdx. REALISM_GAPS in engine.py is the
+    authoritative list of what the model does not capture.
+
+sdk/position-sizing.mdx:
+  canonical_sources:
+    - simmer/scripts/local_dev_server.py
+  notes: |
+    The bankroll read must use a field the portfolio response actually returns.
+    `available_balance` was documented for months and never existed. Every venue
+    bucket is nullable -- null means "not visible to this key", never zero.
+
+skills/building.mdx:
+  canonical_sources:
+    - simmer/scripts/local_dev_server.py
+    - simmer/_dev/reference/sim-position-dust-semantics.md
+  notes: |
+    Portfolio-reading section. Buckets are nullable (unclaimed agents get sim only).
+    The legacy flat `positions_count` has TWO branches: the no-wallet early return
+    reports the SIM count, the wallet-linked path follows the requested venue and can
+    be null. Describing only one branch is the 2026-09-06 defect. It also disagrees
+    with /positions by design on sim dust -- the dust reference doc is authoritative.
+
+plugins/mcp-tools.mdx:
+  canonical_sources:
+    - simmer-sdk/mcp/src/mcp-server.ts
+  notes: |
+    Tool tables mirror the server's registrations. The keyless count is asserted in
+    mcp-server.ts near the startup banner -- check it when editing the Free tools table.
