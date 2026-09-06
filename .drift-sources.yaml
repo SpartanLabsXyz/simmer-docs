@@ -82,12 +82,16 @@ venues.mdx:
 
 faq.mdx:
   canonical_sources:
+    - https://docs.polymarket.com/trading/fees
     - simmer/simmer_v3/polymarket_client.py
-    - simmer-sdk/simmer_sdk/backtest/replay/engine.py
   notes: |
-    Fee copy only. The measured-fee figure (median 246 bps effective across 6,812
-    back-filled V2 trades) lives in the engine.py ReplayConfig comment; update both
-    together or they diverge.
+    Fee copy only. The VENUE's published schedule is canonical -- link it, do not
+    restate the per-category rates, because Polymarket changes them (sports moved
+    0.04 -> 0.05 and "other" 0.02 -> 0.04/0.05 between our 2026-05 reading and
+    2026-09-06). Only the formula shape is stable: fee = shares x rate x p x (1-p),
+    i.e. rate x (1-p) as a share of cost. Simmer itself charges zero; keep that
+    separate from venue fees. `fee_rate_bps` is a 0-means-unknown sentinel under V2
+    (polymarket_client.py get_polymarket_fee_rate) -- that part is ours to maintain.
 
 sdk/backtest.mdx:
   canonical_sources:
