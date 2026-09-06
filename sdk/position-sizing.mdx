@@ -19,7 +19,15 @@ from simmer_sdk import SimmerClient
 from simmer_sdk.sizing import size_position
 
 client = SimmerClient()
-bankroll = client.get_portfolio()["available_balance"]
+
+# Bankroll comes from the venue bucket you trade on: sim, polymarket, or kalshi.
+# A bucket is None when that venue isn't visible to this key -- an unclaimed
+# agent has no real venues, and balance_usdc reads None when the RPC is down.
+# Never fall back to 0: that sizes a trade against a balance you cannot see.
+bucket = client.get_portfolio(venue="sim").get("sim")
+if not bucket or bucket.get("balance") is None:
+    raise SystemExit("No visible balance for this venue -- skipping the cycle.")
+bankroll = bucket["balance"]
 
 amount = size_position(
     p_win=0.70,         # your model's probability the outcome resolves YES

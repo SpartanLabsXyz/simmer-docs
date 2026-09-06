@@ -40,13 +40,14 @@ simmer backtest --demo
 ── backtest summary ─────────────────────────────────────────
   skill        backtest-demo-favorites@1.0.0
   window       2026-04-28 → 2026-05-05 @ 43200s
-  pnl          -29.54   (final equity 970.46 on 1,000)
+  pnl          -34.09   (final equity 965.91 on 1,000)
   hit rate     50.0%   (10 settled)
   max drawdown 5.8%
   activity     10 decisions · 10 trades · 10 markets · 15 ticks
-  baselines    buy&hold YES -29.54 · random +269.34
+  baselines    buy&hold YES -34.09 · random +261.94
   realism gaps no slippage, no market impact at size, no queue position, ...
-  config_hash  4995db6204207cda
+  ℹ  known leaks: bundle-local wall clock (e.g. daily-spend reset cadence)
+  config_hash  51b58b2b7a590292
 ─────────────────────────────────────────────────────────────
 ```
 
@@ -88,6 +89,7 @@ anything that calls `/api/sdk/*` can be backtested. State files the skill writes
 | `--min-volume` | Minimum market volume to include (default `1000`). |
 | `--cadence` | Tick spacing: `15m` / `12h` / `30d` / minutes (default `15m`). |
 | `--balance` | Starting balance (default `1000`). |
+| `--fee-rate` | Base taker fee rate, charged as `notional x rate x (1 - price)`. Defaults to the engine's rate (currently `0.05`); pass `0` to run fee-free. |
 | `--tape` | Use a local tape slice instead of fetching (BYO — see [Getting a tape](#getting-a-tape)). |
 | `--args` | Entrypoint CLI args, space-separated (default `--live --quiet`). |
 | `--out` | Write the full report JSON here. |
@@ -113,14 +115,16 @@ print(report["summary"]["pnl"], report["summary"]["hit_rate"])
 
 The report (stdout summary + full JSON via `--out`) includes:
 
-- **`summary`** — pnl, hit rate, max drawdown, trades, decisions, settlements, ticks.
+- **`summary`** — pnl, hit rate, max drawdown, trades, decisions, settlements, ticks,
+  plus `fee_rate` (the base rate charged) and `fees_paid` (the total).
 - **`baselines`** — the same entries/notionals under *buy-and-hold-YES* and a
   seeded *random* side rule, so you can tell skill from luck.
-- **`decisions`** / **`fills`** / **`equity_curve`** — the full per-tick trace.
+- **`decisions`** / **`fills`** / **`equity_curve`** — the full per-tick trace. Each
+  fill carries its own `fee`.
 - **`realism_gaps`** — what the model does **not** capture (see below).
 - **`reproducibility.config_hash`** — a deterministic hash of the run inputs.
   Same `(bundle, tape, window, cadence, args)` → same `config_hash` → identical
-  results.
+  results. `reproducibility.fee_rate` records the fee assumption behind the P&L.
 
 ## What backtests do and don't model
 

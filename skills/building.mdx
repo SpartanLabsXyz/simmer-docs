@@ -345,7 +345,7 @@ The default is `venue="all"`, which returns merged state across every venue. Tha
 
 <Warning>
 Relying on the legacy flat fields on `/portfolio` and `/context` will silently miss cross-venue state:
-- `portfolio.positions_count` counts only Polymarket positions
+- `portfolio.positions_count` is not a fixed venue. With no linked wallet — which includes every unclaimed agent — it is the **sim** count. With a wallet linked it follows the `venue` you asked for: Polymarket by default, sim under `venue="sim"`, Kalshi under `venue="kalshi"`, and `null` when Polymarket can't be read. Read the bucket you mean instead of guessing which branch you're on
 - `context.position` mirrors one venue only (picks the first non-null)
 
 Use the per-venue buckets/containers instead:
@@ -373,9 +373,14 @@ for trade in client.get_trades(limit=20)["trades"]:
 
 ```python
 portfolio = client.get_portfolio()  # default venue=all
-print(f"Sim exposure: {portfolio['sim']['total_exposure']} $SIM")
-print(f"Polymarket exposure: ${portfolio['polymarket']['total_exposure']}")
-print(f"Total position count: {portfolio['total']['positions_count']}")
+
+# Every bucket is nullable. `None` means "not visible to this key", which is not
+# the same as zero -- an unclaimed agent gets its sim bucket and null real-venue
+# buckets by design, so an agent never sizes a real trade against a fake 0.
+sim = portfolio.get("sim")
+poly = portfolio.get("polymarket")
+print(f"Sim exposure: {sim['total_exposure']} $SIM" if sim else "Sim: not visible")
+print(f"Polymarket exposure: ${poly['total_exposure']}" if poly else "Polymarket: not visible")
 
 ctx = client.get_market_context(market_id)
 sim_pos = ctx["positions"]["sim"]
@@ -384,6 +389,10 @@ if sim_pos and sim_pos["has_position"]:
 ```
 
 All legacy flat fields (`portfolio.sim_balance`, `context.position`, etc.) remain populated for backwards compatibility, but new skills should prefer the bucketed fields.
+
+<Warning>
+**`positions_count` will not always match what `/positions` returns.** On the `$SIM` venue the two surfaces apply different dust filters, so the portfolio can report six positions where the list returns one — the other five are share fragments too small to list. Treat `positions_count` as an **upper bound** and drive every decision off `client.get_positions()`, which is the surface that decides what you actually hold.
+</Warning>
 
 ### Recommended: redeem winning positions
 
