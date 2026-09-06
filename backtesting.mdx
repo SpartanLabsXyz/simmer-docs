@@ -36,15 +36,24 @@ simmer backtest --demo
 ── backtest summary ─────────────────────────────────────────
   skill        backtest-demo-favorites@1.0.0
   window       2026-04-28 → 2026-05-05 @ 43200s
-  pnl          -29.54   (final equity 970.46 on 1,000)
+  pnl          -34.09   (final equity 965.91 on 1,000)
   hit rate     50.0%   (10 settled)
-  baselines    buy&hold YES -29.54 · random +269.34
+  baselines    buy&hold YES -34.09 · random +261.94
   realism gaps no slippage, no market impact at size, ...
-  config_hash  4995db6204207cda
+  config_hash  51b58b2b7a590292
 ─────────────────────────────────────────────────────────────
 ```
 
 If that prints, your install is good. Now point it at a real skill.
+
+<Warning>
+**Backtests charge fees by default from `simmer-sdk` 0.25.0.** `--fee-rate` now
+follows the replay engine's base rate (currently `0.05`) instead of `0`, applied as
+`notional x rate x (1 - price)`; resting limit fills that cross pay nothing, as makers.
+Pass `--fee-rate 0` for the old fee-free behaviour. Two consequences: every run now
+carries cost drag, and every `config_hash` changed — a re-run of a saved backtest will
+not match its stored report.
+</Warning>
 
 ## 2. Backtest your own skill
 
@@ -89,6 +98,9 @@ The summary prints to stdout; `--out` writes the full JSON. The numbers that mat
 - **`realism_gaps`** — what the model does **not** capture (see below).
 - **`reproducibility.config_hash`** — a deterministic hash of the run inputs. Same
   `(bundle, window, cadence, args)` → same hash → identical results.
+- **`summary.fee_rate` / `summary.fees_paid`** — the fee assumption behind the P&L and
+  what it cost. Read them before comparing two runs: a different `fee_rate` makes the
+  P&L incomparable.
 
 <Warning>
   A run is only trustworthy if it's **clean** — `bundle.clean == true` means the skill
@@ -103,8 +115,9 @@ Backtesting is a tight loop: change a threshold, re-run, compare. Because the
 `config_hash` changes whenever the bundle or inputs change, you can tell a real
 improvement from a re-run of the same thing. A few honest practices:
 
-- **Beat the baselines by a margin, not a hair.** Real venues have 1–5% spreads plus
-  fees — a backtest that edges buy-and-hold by 1% is a loss live.
+- **Beat the baselines by a margin, not a hair.** Fees are modelled, but 1–5% spreads,
+  market impact, and queue position are not — a backtest that edges buy-and-hold by 1%
+  is still a loss live.
 - **Vary the window.** A strategy that only works on one month is overfit. Run a few
   windows across different regimes.
 - **Watch `--cadence`.** Too coarse and you miss entries; too fine and you over-trade.

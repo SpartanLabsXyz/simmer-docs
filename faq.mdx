@@ -138,7 +138,7 @@ Zero. No spread, commission, or markup from Simmer. This may change in the futur
 </Accordion>
 
 <Accordion title="What about venue fees?">
-**Polymarket:** Maker fees typically 0%, taker fees vary. The `fee_rate_bps` field on trade responses shows the exact fee.
+**Polymarket:** Makers pay nothing. Takers pay a fee set at match time, not at order placement. Measured across 6,812 back-filled V2 trades, the effective taker fee ran at a median of **246 basis points** (~2.5% of notional). Budget for it. The `fee_rate_bps` field on a trade response cannot tell you the number — see "How do I read the realized fee and fill price from a trade?" below.
 
 **Kalshi:** Standard exchange fees apply.
 
@@ -151,13 +151,13 @@ Simmer passes through venue fees with no additional markup.
 `TradeResult` (SDK 0.21.0+) exposes two new fields:
 
 - **`fill_price`** — effective average fill price per share. Equivalent to `cost / shares_filled`. Prefer this over `new_price` in new code.
-- **`fee_rate_bps`** — taker fee rate in basis points (currently **0** on Polymarket; was `None` in earlier SDK versions).
+- **`fee_rate_bps`** — the fee rate embedded in the signed order, in basis points. On Polymarket V2 this is **always `0`, and `0` means "unknown", not "free"**. V2 determines the taker fee at match time, so no rate exists when the order is signed. Do not read it as a zero-cost fill.
 
 ```python
 result = client.trade(market_id="uuid", side="yes", amount=10.0, venue="polymarket")
 
 print(f"Fill price: {result.fill_price:.4f}")          # e.g. 0.6732
-print(f"Fee (bps):  {result.fee_rate_bps}")            # 0 on Polymarket today
+print(f"Fee (bps):  {result.fee_rate_bps}")            # always 0 on V2 — means "unknown", not "free"
 print(f"Per-share cost: {result.cost / result.shares_filled:.4f}")  # same as fill_price
 
 # After the fact, get_trades() rows expose avg_price and cost too
@@ -165,6 +165,10 @@ trades = client.get_trades()
 ```
 
 Update to `simmer-sdk >= 0.21.0` (`pip install -U simmer-sdk`) to get these fields. Earlier versions return `None` for `fee_rate_bps` and don't expose `fill_price` at all.
+
+<Warning>
+**Do not compute net edge from `fee_rate_bps` on Polymarket.** Under V2 it is always `0` because the fee is decided at match time and is not knowable when the order is signed. The realized fee lands in the on-chain Trade event afterwards and is not yet exposed through the API. Until it is, size against a working assumption rather than zero: the only fees Simmer has measured are 6,812 back-filled V2 trades, which came in at a median **246 bps effective** at an average price of 0.522 — implying a base rate near 500 bps. `fill_price` is unaffected and remains exact.
+</Warning>
 </Accordion>
 
 <Accordion title="Can I buy exactly N shares? Why does passing `shares` on a buy raise an error?">
@@ -186,7 +190,7 @@ result = client.trade(
 print(f"Filled {result.shares_filled} of {target_shares} shares")
 ```
 
-Why the buffer? The exchange rounds order sizes down to the tick grid, so rounding can trim your fill by 0.1–0.3%. A ~0.5% buffer (or `+0.1` on small orders) ensures rounding doesn't drop you below your target. Use `dry_run=True` on the REST endpoint to preview the fill before committing.
+Why the buffer? The exchange rounds order sizes down to the tick grid, so rounding can trim your fill by 0.1–0.3%. A ~0.5% buffer (or `+0.1` on small orders) ensures rounding doesn't drop you below your target. Use `dry_run=True` to preview the fill before committing.
 
 Note: the 5-share minimum is enforced *after* rounding. Orders that quantize to fewer than 5 shares are rejected.
 </Accordion>

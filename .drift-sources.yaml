@@ -52,3 +52,71 @@ heartbeat.mdx:
   notes: |
     Briefing API shape was migrated 2026-05-21 (SIM-1965 deprecated `performance.total_pnl`).
     Authoritative source: the actual `/api/sdk/briefing` endpoint code at local_dev_server.py.
+
+trading-guide.mdx:
+  canonical_sources:
+    - simmer-sdk/simmer_sdk/client.py
+    - simmer/simmer_v3/polymarket_client.py
+  notes: |
+    `trade()` in client.py is authoritative for arguments, defaults and fill semantics.
+    Two traps this page has drifted on before (2026-09-06): `dry_run` is keyword-only
+    from 0.24.6 and is IGNORED on the Kalshi path (SIM-5041, still open); and
+    `fee_rate_bps` is 0 on Polymarket V2 as an "unknown" sentinel, not a zero fee --
+    get_polymarket_fee_rate() in polymarket_client.py is the source for that.
+
+venues.mdx:
+  canonical_sources:
+    - simmer-sdk/simmer_sdk/client.py
+  notes: |
+    The Practice modes table must match what `trade()` actually does per venue.
+    `dry_run` reaches the Kalshi signing path before the flag is read, so the
+    "no position is created" row is not true for Kalshi via the SDK.
+
+faq.mdx:
+  canonical_sources:
+    - simmer/simmer_v3/polymarket_client.py
+    - simmer-sdk/simmer_sdk/backtest/replay/engine.py
+  notes: |
+    Fee copy only. The measured-fee figure (median 246 bps effective across 6,812
+    back-filled V2 trades) lives in the engine.py ReplayConfig comment; update both
+    together or they diverge.
+
+sdk/backtest.mdx:
+  canonical_sources:
+    - simmer-sdk/simmer_sdk/cli.py
+    - simmer-sdk/simmer_sdk/backtest/replay/engine.py
+  notes: |
+    Flag table mirrors cli.py's backtest subparser. The demo output block is real
+    output -- regenerate with `simmer backtest --demo`, never hand-edit. Any
+    ENGINE_VERSION bump changes every config_hash in these pages.
+
+backtesting.mdx:
+  canonical_sources:
+    - simmer-sdk/simmer_sdk/backtest/replay/engine.py
+  notes: |
+    Same demo-output rule as sdk/backtest.mdx. REALISM_GAPS in engine.py is the
+    authoritative list of what the model does not capture.
+
+sdk/position-sizing.mdx:
+  canonical_sources:
+    - simmer/scripts/local_dev_server.py
+  notes: |
+    The bankroll read must use a field the portfolio response actually returns.
+    `available_balance` was documented for months and never existed. Every venue
+    bucket is nullable -- null means "not visible to this key", never zero.
+
+skills/building.mdx:
+  canonical_sources:
+    - simmer/scripts/local_dev_server.py
+    - simmer/_dev/reference/sim-position-dust-semantics.md
+  notes: |
+    Portfolio-reading section. Buckets are nullable (unclaimed agents get sim only),
+    the legacy flat `positions_count` follows the requested venue, and it disagrees
+    with /positions by design on sim dust -- the dust reference doc is authoritative.
+
+plugins/mcp-tools.mdx:
+  canonical_sources:
+    - simmer-sdk/mcp/src/mcp-server.ts
+  notes: |
+    Tool tables mirror the server's registrations. The keyless count is asserted in
+    mcp-server.ts near the startup banner -- check it when editing the Free tools table.
