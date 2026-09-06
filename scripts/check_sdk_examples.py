@@ -33,10 +33,16 @@ Scope / conventions
 
 Escape hatch
 ------------
-Put ``<!-- bind:skip -->`` on the line immediately before a fence to exclude an
+Put ``{/* bind:skip */}`` on the line immediately before a fence to exclude an
 intentionally-illustrative / pseudo-code block. Put
-``<!-- bind:floor=X.Y.Z -->`` before a fence to check that block against a higher
+``{/* bind:floor=X.Y.Z */}`` before a fence to check that block against a higher
 floor than the repo default (e.g. a feature that shipped in a later SDK release).
+
+Use MDX comment syntax, NOT ``<!-- -->``. Mintlify's parser rejects HTML comments
+outright ("Unexpected character `!` (U+0021) before name") and fails the whole
+deployment, which leaves docs.simmer.markets frozen at the last good build. The
+markers are matched as substrings, so either syntax satisfies this script -- only
+one of them survives production.
 
 Usage
 -----
@@ -338,8 +344,8 @@ def main() -> int:
         print(f"    {v.call}")
         print(f"    -> {v.reason} (floor {v.floor})")
     print(
-        "\nFix: correct the example, add `<!-- bind:floor=X.Y.Z -->` if it needs a newer SDK,\n"
-        "or `<!-- bind:skip -->` if it is intentionally illustrative."
+        "\nFix: correct the example, add `{/* bind:floor=X.Y.Z */}` if it needs a newer SDK,\n"
+        "or `{/* bind:skip */}` if it is intentionally illustrative."
     )
     return 1
 
