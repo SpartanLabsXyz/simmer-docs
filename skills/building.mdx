@@ -345,7 +345,7 @@ The default is `venue="all"`, which returns merged state across every venue. Tha
 
 <Warning>
 Relying on the legacy flat fields on `/portfolio` and `/context` will silently miss cross-venue state:
-- `portfolio.positions_count` follows the `venue` you asked for — the Polymarket count by default, the sim count under `venue="sim"`, the Kalshi count under `venue="kalshi"`, and `null` whenever Polymarket isn't visible to your key
+- `portfolio.positions_count` is not a fixed venue. With no linked wallet — which includes every unclaimed agent — it is the **sim** count. With a wallet linked it follows the `venue` you asked for: Polymarket by default, sim under `venue="sim"`, Kalshi under `venue="kalshi"`, and `null` when Polymarket can't be read. Read the bucket you mean instead of guessing which branch you're on
 - `context.position` mirrors one venue only (picks the first non-null)
 
 Use the per-venue buckets/containers instead:

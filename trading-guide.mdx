@@ -76,15 +76,17 @@ Pass `my_probability` to get an edge calculation. Without it, you still get slip
 
 ## 3. Dry run
 
-Test your trade without executing it. Both the REST endpoint and `client.trade(dry_run=True)` (SDK 0.24.6+, keyword-only) validate and price the trade, returning estimated shares, cost, and fees without moving money or signing an order. For a full session with balance tracking instead of a single preview, use `live=False` paper trading — see [Practice modes](/venues#practice-modes).
+Test your trade without executing it. On **sim and Polymarket**, both the REST endpoint and `client.trade(dry_run=True)` (SDK 0.24.6+, keyword-only) validate and price the trade, returning estimated shares, cost, and fees without moving money or signing an order. Kalshi has no `dry_run` — read the warning below before previewing there. For a full session with balance tracking instead of a single preview, use `live=False` paper trading — see [Practice modes](/venues#practice-modes).
 
 <Warning>
-**`dry_run` is not honoured on Kalshi through the Python SDK.** `client.trade(venue="kalshi", dry_run=True)` reaches the Kalshi signing path before the flag is read and **places a real order**. Tracked as SIM-5041. Until it lands, preview Kalshi trades through the REST endpoint, which honours `dry_run` on every venue.
+**`dry_run` does not work on Kalshi, by either route.** Through the Python SDK, `client.trade(venue="kalshi", dry_run=True)` reaches the Kalshi signing path before the flag is read and **places a real order** (SIM-5041). Through REST, `POST /api/sdk/trade` ignores `dry_run` on Kalshi and returns an error telling you to use the SDK — so following it lands you back on the path that executes.
+
+To preview a Kalshi trade, call `POST /api/sdk/trade/kalshi/quote` and simply don't submit. It returns `price`, `in_amount`, and `out_amount` alongside an unsigned transaction; nothing reaches the venue until you sign it and call `/api/sdk/trade/kalshi/submit`.
 </Warning>
 
-A dry run is also **not a permission check**. The server skips account trading-limit enforcement on previews, so a trade that dry-runs clean can still be rejected live for a daily buy cap, a spend cap, or a failed-trade cooldown — read `client.get_settings()` for those. On Polymarket it prices from the market's external price rather than the executable book, so neg-risk cost estimates can differ from the live fill.
+A dry run is also **not a permission check**. The server skips account trading-limit enforcement on previews, so a trade that dry-runs clean can still be rejected live for a daily buy cap, a spend cap, or a failed-trade cooldown — read `client.get_settings()` for those. On Polymarket the preview prices from the executable order book, so the estimate is as good as the book at that moment and can still move before you place.
 
-**REST — every venue:**
+**REST — sim and Polymarket:**
 
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/trade \

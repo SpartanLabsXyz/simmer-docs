@@ -9,6 +9,7 @@
 #
 # Path conventions:
 #   simmer/...      → ~/Documents/code/active/simmer/...
+#   simmer-sdk/...  → ~/Documents/code/active/simmer-sdk/...
 #   simmer-docs/... → ~/Documents/code/active/simmer-docs/...
 #   simmer-labs/... → ~/simmer-labs/...   (Trinity's cwd, separate clone)
 #
@@ -56,21 +57,28 @@ heartbeat.mdx:
 trading-guide.mdx:
   canonical_sources:
     - simmer-sdk/simmer_sdk/client.py
+    - simmer/simmer_v3/sdk_trade.py
     - simmer/simmer_v3/polymarket_client.py
   notes: |
-    `trade()` in client.py is authoritative for arguments, defaults and fill semantics.
-    Two traps this page has drifted on before (2026-09-06): `dry_run` is keyword-only
-    from 0.24.6 and is IGNORED on the Kalshi path (SIM-5041, still open); and
-    `fee_rate_bps` is 0 on Polymarket V2 as an "unknown" sentinel, not a zero fee --
-    get_polymarket_fee_rate() in polymarket_client.py is the source for that.
+    `trade()` in client.py is authoritative for SDK arguments and defaults. SERVER
+    behaviour is sdk_trade.py, NOT the client docstring -- the two disagree today and
+    a 2026-09-06 doc edit shipped the client's stale account of the server. Check both.
+    Three traps this page has drifted on: `dry_run` is keyword-only from 0.24.6 but is
+    ignored on BOTH Kalshi paths (SDK signs and submits, SIM-5041; REST returns an
+    error) -- the only Kalshi preview is /api/sdk/trade/kalshi/quote; Polymarket dry
+    runs price from the EXECUTABLE BOOK since simmer#2151 (2026-08-25), not the market
+    external price, which only the synthetic-sell branch still uses; and `fee_rate_bps`
+    is 0 on Polymarket V2 as an "unknown" sentinel, not a zero fee.
 
 venues.mdx:
   canonical_sources:
     - simmer-sdk/simmer_sdk/client.py
+    - simmer/simmer_v3/sdk_trade.py
   notes: |
     The Practice modes table must match what `trade()` actually does per venue.
-    `dry_run` reaches the Kalshi signing path before the flag is read, so the
-    "no position is created" row is not true for Kalshi via the SDK.
+    `dry_run` is handled in exactly two places in sdk_trade.py -- the polymarket
+    block and the sim LMSR block. Kalshi has neither, so the "no position is
+    created" row does not hold there by either route.
 
 faq.mdx:
   canonical_sources:
@@ -110,8 +118,10 @@ skills/building.mdx:
     - simmer/scripts/local_dev_server.py
     - simmer/_dev/reference/sim-position-dust-semantics.md
   notes: |
-    Portfolio-reading section. Buckets are nullable (unclaimed agents get sim only),
-    the legacy flat `positions_count` follows the requested venue, and it disagrees
+    Portfolio-reading section. Buckets are nullable (unclaimed agents get sim only).
+    The legacy flat `positions_count` has TWO branches: the no-wallet early return
+    reports the SIM count, the wallet-linked path follows the requested venue and can
+    be null. Describing only one branch is the 2026-09-06 defect. It also disagrees
     with /positions by design on sim dust -- the dust reference doc is authoritative.
 
 plugins/mcp-tools.mdx:

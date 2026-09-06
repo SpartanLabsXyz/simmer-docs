@@ -248,7 +248,7 @@ Simmer has three ways to trade without risking real money. Each serves a differe
 |------|---------------|---------------|
 | `venue="sim"` | Server-side \$SIM position (durable, visible to others) | `client.get_positions()` — present across sessions |
 | `live=False` paper | In-memory only; `trade()` returns a `trade_id` starting `paper_` | `client.get_paper_summary()` — gone when the process exits |
-| `dry_run=True` | Nothing — preview only | No position is created (except on Kalshi via the SDK — see below) |
+| `dry_run=True` | Nothing — preview only | No position is created on sim or Polymarket. **Not supported on Kalshi** — see below |
 | Real (`venue="polymarket"` / `"kalshi"`) | On-chain position | `client.get_positions()` |
 
 A `paper_…` trade ID is **not** proof of a persisted \$SIM or real position — it's a local simulation. When unsure what landed, read it back with `get_positions()`.
@@ -266,7 +266,7 @@ All skills support `venue=sim` — you don't need `venue=polymarket` to run a Po
 
 ### Dry run (`dry_run=True`)
 
-A single-trade preview. The server validates the trade, calculates price/shares/cost, and returns the result without executing. No state changes, no order signed.
+A single-trade preview on sim and Polymarket. The server validates the trade, calculates price/shares/cost, and returns the result without executing — no state changes, no order signed. Kalshi is the exception; see the warning below.
 
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/trade \
@@ -293,10 +293,12 @@ print(preview.shares_bought, preview.cost)
 ```
 
 <Warning>
-**Kalshi ignores `dry_run` through the Python SDK and places a real order.** `client.trade(venue="kalshi", dry_run=True)` reaches the Kalshi signing path before the flag is read. Tracked as SIM-5041. Preview Kalshi trades through the REST endpoint instead — it honours `dry_run` on every venue.
+**`dry_run` does not work on Kalshi, by either route.** `client.trade(venue="kalshi", dry_run=True)` reaches the Kalshi signing path before the flag is read and **places a real order** (SIM-5041). `POST /api/sdk/trade` ignores the flag on Kalshi too, returning an error that points you back at the SDK.
+
+Preview a Kalshi trade with `POST /api/sdk/trade/kalshi/quote` instead: it returns `price`, `in_amount`, and `out_amount` with an unsigned transaction, and nothing executes unless you sign it and call `/api/sdk/trade/kalshi/submit`.
 </Warning>
 
-Two limits apply on every venue. A dry run is **not a permission check**: the server skips account trading-limit enforcement on previews, so a clean preview can still be rejected live for a daily buy cap, a spend cap, or a failed-trade cooldown. Read `client.get_settings()` for those. And on Polymarket the preview prices from the market's external price rather than the executable book, so neg-risk estimates can differ from the live fill.
+A dry run is **not a permission check**: the server skips account trading-limit enforcement on previews, so a clean preview can still be rejected live for a daily buy cap, a spend cap, or a failed-trade cooldown. Read `client.get_settings()` for those. On Polymarket the preview prices from the executable order book, so the estimate is only as current as the book at that moment.
 
 For a full session with balance and P&L tracking rather than a single preview, use `live=False` paper trading below.
 
