@@ -248,7 +248,7 @@ Simmer has three ways to trade without risking real money. Each serves a differe
 |------|---------------|---------------|
 | `venue="sim"` | Server-side \$SIM position (durable, visible to others) | `client.get_positions()` — present across sessions |
 | `live=False` paper | In-memory only; `trade()` returns a `trade_id` starting `paper_` | `client.get_paper_summary()` — gone when the process exits |
-| `dry_run=True` | Nothing — preview only | No position is created on sim or Polymarket. **Not supported on Kalshi** — see below |
+| `dry_run=True` | Nothing — preview only | No position is created on sim or Polymarket. Kalshi returns `success=False` without placing an order on current SDKs — see below |
 | Real (`venue="polymarket"` / `"kalshi"`) | On-chain position | `client.get_positions()` |
 
 A `paper_…` trade ID is **not** proof of a persisted \$SIM or real position — it's a local simulation. When unsure what landed, read it back with `get_positions()`.
@@ -266,7 +266,7 @@ All skills support `venue=sim` — you don't need `venue=polymarket` to run a Po
 
 ### Dry run (`dry_run=True`)
 
-A single-trade preview on sim and Polymarket. The server validates the trade, calculates price/shares/cost, and returns the result without executing — no state changes, no order signed. Kalshi is the exception; see the warning below.
+A single-trade preview on sim and Polymarket. The server validates the trade, calculates price/shares/cost, and returns the result without executing — no state changes, no order signed. Kalshi is the exception: there is no preview-pricing path yet, and current SDKs fail closed without placing an order.
 
 ```bash
 curl -X POST https://api.simmer.markets/api/sdk/trade \
@@ -293,7 +293,7 @@ print(preview.shares_bought, preview.cost)
 ```
 
 <Warning>
-**`dry_run` does not work on Kalshi, by either route.** `client.trade(venue="kalshi", dry_run=True)` reaches the Kalshi signing path before the flag is read and **places a real order** (SIM-5041). `POST /api/sdk/trade` ignores the flag on Kalshi too, returning an error that points you back at the SDK.
+**Kalshi `dry_run` is unavailable, but current SDKs fail closed.** In `simmer-sdk` 0.25.2 and later, `client.trade(venue="kalshi", dry_run=True)` returns `success=False` with an error explaining that no preview pricing exists; it does not quote, sign, submit, or place an order. Upgrade if you are on `simmer-sdk` earlier than 0.25.2: those versions reached the Kalshi signing path before the flag was read and could place a real order (SIM-5041). `POST /api/sdk/trade` still has no Kalshi preview path.
 
 Preview a Kalshi trade with `POST /api/sdk/trade/kalshi/quote` instead: it returns `price`, `in_amount`, and `out_amount` with an unsigned transaction, and nothing executes unless you sign it and call `/api/sdk/trade/kalshi/submit`.
 </Warning>

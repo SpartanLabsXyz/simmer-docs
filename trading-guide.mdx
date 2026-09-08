@@ -76,10 +76,10 @@ Pass `my_probability` to get an edge calculation. Without it, you still get slip
 
 ## 3. Dry run
 
-Test your trade without executing it. On **sim and Polymarket**, both the REST endpoint and `client.trade(dry_run=True)` (SDK 0.24.6+, keyword-only) validate and price the trade, returning estimated shares, cost, and fees without moving money or signing an order. Kalshi has no `dry_run` — read the warning below before previewing there. For a full session with balance tracking instead of a single preview, use `live=False` paper trading — see [Practice modes](/venues#practice-modes).
+Test your trade without executing it. On **sim and Polymarket**, both the REST endpoint and `client.trade(dry_run=True)` (SDK 0.24.6+, keyword-only) validate and price the trade, returning estimated shares, cost, and fees without moving money or signing an order. Kalshi has no preview-pricing `dry_run` yet; current SDKs fail closed instead of placing an order. For a full session with balance tracking instead of a single preview, use `live=False` paper trading — see [Practice modes](/venues#practice-modes).
 
 <Warning>
-**`dry_run` does not work on Kalshi, by either route.** Through the Python SDK, `client.trade(venue="kalshi", dry_run=True)` reaches the Kalshi signing path before the flag is read and **places a real order** (SIM-5041). Through REST, `POST /api/sdk/trade` ignores `dry_run` on Kalshi and returns an error telling you to use the SDK — so following it lands you back on the path that executes.
+**Kalshi `dry_run` is unavailable, but current SDKs fail closed.** In `simmer-sdk` 0.25.2 and later, `client.trade(venue="kalshi", dry_run=True)` returns `success=False` with an error explaining that no preview pricing exists; it does not quote, sign, submit, or place an order. Upgrade if you are on `simmer-sdk` earlier than 0.25.2: those versions reached the Kalshi signing path before the flag was read and could place a real order (SIM-5041). Through REST, `POST /api/sdk/trade` still has no Kalshi preview path, so use the quote endpoint below instead.
 
 To preview a Kalshi trade, call `POST /api/sdk/trade/kalshi/quote` and simply don't submit. It returns `price`, `in_amount`, and `out_amount` alongside an unsigned transaction; nothing reaches the venue until you sign it and call `/api/sdk/trade/kalshi/submit`.
 </Warning>
