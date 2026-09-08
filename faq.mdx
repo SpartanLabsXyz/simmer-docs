@@ -51,7 +51,7 @@ LMSR is Simmer's automated market maker for the `sim` venue -- prices move with 
 <Accordion title="Do I need a separate Polymarket or Kalshi account?">
 **Polymarket:** No. Your self-custody wallet trades directly -- no Polymarket account needed.
 
-**Kalshi:** Yes. You need a Kalshi account with API credentials. See the [Kalshi trading docs](/api-reference/kalshi-quote).
+**Kalshi:** No. Simmer trades Kalshi via DFlow on Solana -- you need a funded Solana wallet (`SOLANA_PRIVATE_KEY`) and Proof KYC at [dflow.net/proof](https://dflow.net/proof) for buys, not a Kalshi account.
 </Accordion>
 
 <Accordion title="How do I know when a market is truly resolved?">
@@ -85,8 +85,8 @@ Yes, via **x402 micropayments**. When you hit a rate limit, the `429` response i
 Requires a self-custody wallet with USDC on Base. See [API Overview](/api/overview#premium-api-access-x402) for details.
 </Accordion>
 
-<Accordion title="Is the $20/day skill budget a platform limit?">
-No -- the $20/day limit is **per-skill**, not platform-wide. Each skill has its own configurable daily budget. Adjust it in your skill's environment (e.g., `SIMMER_FASTLOOP_DAILY_BUDGET_USD=25.0`).
+<Accordion title="Is the per-skill daily budget a platform limit?">
+No -- daily skill budgets are **per-skill**, not platform-wide. Defaults vary by skill, and each skill's budget is configurable in that skill's environment (e.g., `SIMMER_FASTLOOP_DAILY_BUDGET_USD=25.0`).
 
 There is also a **platform daily trade count limit** (default 50 trades/day for free tier) and a **daily spending limit** (default $500). Both reset at midnight UTC and are configurable via `POST /api/sdk/settings` or in the dashboard SDK tab.
 </Accordion>
@@ -310,7 +310,7 @@ All 4xx errors include a `fix` field with actionable instructions. You can also 
 </Accordion>
 
 <Accordion title='I get "not enough balance / allowance" but I have funds'>
-Usually a missing USDC.e approval. Activate trading from the dashboard: **Dashboard -> Portfolio -> Activate Trading** (one-time allowance transaction).
+Usually a missing USDC.e approval. Activate trading from the dashboard: **Dashboard -> Wallets -> Fund & activate trading** (one-time allowance transaction).
 
 Also verify you have **USDC.e** (bridged USDC, contract `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`) -- not native USDC on Polygon.
 </Accordion>
@@ -320,10 +320,13 @@ Your agent hasn't been verified. Send the `claim_url` from your registration res
 </Accordion>
 
 <Accordion title="Why does my P&L differ from my Polymarket profile?">
-Simmer shows total P&L (realized + unrealized) sourced from Polymarket's own profile data, so numbers should closely match. Small differences can occur due to:
+Simmer shows total P&L (realized + unrealized) from PolyNode on-chain aggregates, with a cash-flow fallback when the on-chain source is unavailable or incomplete. The cash-flow figure is a different computation from Polymarket's profile P&L, so differences can be real rather than just delayed cache updates. Common causes:
 
-- **Timing** -- Simmer caches P&L and refreshes every 15 minutes
+- **Source** -- PolyNode, cash-flow fallback, and Polymarket profile data do not always compute the same total
+- **Timing** -- Simmer caches P&L and refreshes periodically
 - **Rounding** -- Minor rounding differences
+
+See [Heartbeat P&L methodology](/heartbeat#pnl-methodology) for how to identify which source produced a figure.
 
 If significantly off, report in [Telegram](https://t.me/+m7sN0OLM_780M2Fl).
 </Accordion>
