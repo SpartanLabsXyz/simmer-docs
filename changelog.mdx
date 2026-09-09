@@ -37,6 +37,46 @@ icon: "clock-rotate-left"
 
 ---
 
+## 2026-09-09 — `simmer-sdk` 0.25.4: replay backtests now reject unsupported tag filters
+
+Released [`simmer-sdk` 0.25.4](https://pypi.org/project/simmer-sdk/0.25.4/) on PyPI. The backtest replay server now rejects `tags=` on `get_markets()` instead of silently ignoring it. This was the last discovery filter the replay engine did not implement: a backtest narrowed to a tag slice could accidentally run against the full market universe and report P&L for markets the strategy never meant to trade.
+
+Passing `tags` now raises a clear error naming the unsupported parameter. Omitting it behaves exactly as before.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
+## 2026-09-08 — `simmer-sdk` 0.25.3: replay backtests now reject unsupported venue/status/category filters
+
+Released [`simmer-sdk` 0.25.3](https://pypi.org/project/simmer-sdk/0.25.3/) on PyPI. The backtest replay server now rejects `venue=` and `status=` on `get_markets()`, and `category=` on the importable-market listing, instead of returning an unfiltered result set. Those filters were accepted by the SDK surface but were never implemented inside replay, so a backtest asking for one venue or market state could produce results from markets outside the requested slice.
+
+The fix is intentionally fail-closed: passing one of those unsupported filters raises a clear error naming the parameter. Calls that omit them keep the same market universe, sort order, and default behavior.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
+## 2026-09-07 — `simmer-sdk` 0.25.2: Kalshi dry runs no longer submit real orders
+
+Released [`simmer-sdk` 0.25.2](https://pypi.org/project/simmer-sdk/0.25.2/) on PyPI. `trade(dry_run=True, venue="kalshi")` no longer places a real order. The Kalshi bring-your-own-wallet path did not have a true preview mode: the call fetched a quote, signed a Solana transaction with `SOLANA_PRIVATE_KEY`, and submitted it to the venue even though `dry_run=True` promised a no-op.
+
+Until Kalshi preview pricing exists, `dry_run=True` with `venue="kalshi"` now returns `success=False` with an error that names the missing preview path, before any quote, signing, or submit call. `dry_run` on sim and Polymarket is unchanged.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
+## 2026-09-06 — `simmer-sdk` 0.25.1: paper dry runs and paper/live guards fixed
+
+Released [`simmer-sdk` 0.25.1](https://pypi.org/project/simmer-sdk/0.25.1/) on PyPI. Paper `trade(dry_run=True)` no longer mutates the in-memory paper portfolio. On a `live=False` client, a preview followed by the real paper trade on the same market could double-book shares and cost basis, causing paper expectancy to drift from the strategy's actual trade path. The dry run still returns the same `TradeResult`; it just leaves the book unchanged.
+
+This release also corrects two paper/live safety signals. `venue="polymarket"` with `live=False` no longer prints "LIVE trading with real funds" merely because it is using Polymarket prices. And direct `client.hyperliquid` write methods now honor `live=False` and `readonly()`: reads still work, but `place_order`, `cancel_order`, and `approve_agent` raise instead of submitting from a paper or readonly client.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
 ## 2026-09-06 — `simmer-sdk` 0.25.0: backtests now charge fees by default
 
 Released [`simmer-sdk` 0.25.0](https://pypi.org/project/simmer-sdk/0.25.0/) on PyPI. `simmer backtest` now charges fees, and your numbers will change. `--fee-rate` follows the replay engine's base rate (currently `0.05`) instead of `0`, applied as `notional × rate × (1 - price)`; resting limit orders that fill as makers pay nothing. Pass `--fee-rate 0` for the previous fee-free behaviour.
