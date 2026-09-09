@@ -161,9 +161,26 @@ CONTENT_INJECTIONS = {
             "`sort`, or `max_hours_to_resolution` to narrow the search. Filters are applied before the cap, so "
             "`tags=world-cup&sort=volume` means \"top markets inside the World Cup slice,\" not \"filter this page.\" "
             "Market imports are not subject to this discovery-read cap.\n\n"
+            "**Tradeability fields:** Discovery rows include `has_fresh_venue_price` and `sim_tradeable` booleans. "
+            "`has_fresh_venue_price` tells you whether the external venue price is fresh enough to compare against. "
+            "`sim_tradeable` tells you whether the Simmer paper-trading guard currently accepts new exposure on that "
+            "market. By default, `tradeable_only=true` filters `/api/sdk/markets` to rows where `sim_tradeable` is "
+            "true. Set `tradeable_only=false` to inspect stale or unavailable active rows flagged false. "
+            "`status=resolved` and explicit `ids=` lookups are diagnostic reads and are not filtered by "
+            "`sim_tradeable`.\n\n"
             "## Response fields\n\n"
             "Each entry in `markets[]` has the same shape as [`GET /api/sdk/markets/{market_id}`](/api-reference/get-market). "
             "See that page for the full field reference, including resolution fields (`status`, `resolved_at`, `outcome`)."
+        ),
+    },
+    "/api/sdk/fast-markets": {
+        "get": (
+            "<Tip>Fast-market rows use the same discovery tradeability flags as `/api/sdk/markets`.</Tip>\n\n"
+            "Each row includes `has_fresh_venue_price` and `sim_tradeable`. "
+            "`has_fresh_venue_price` means the external venue price is recent enough to use for comparisons. "
+            "`sim_tradeable` means the Simmer paper-trading guard currently allows new exposure on the market. "
+            "Use `sim_tradeable` for the Simmer-specific trade guard; `is_orderbook_open` only describes the "
+            "external venue orderbook."
         ),
     },
     "/api/sdk/markets/{market_id}": {
@@ -248,7 +265,13 @@ CONTENT_INJECTIONS = {
         ),
     },
     "/api/sdk/markets/opportunities": {
-        "get": "<Tip>This is a convenience wrapper around `/markets?sort=opportunity`. Use it when you want pre-filtered, ranked opportunities.</Tip>",
+        "get": (
+            "<Tip>This is a convenience wrapper around `/markets?sort=opportunity`. Use it when you want pre-filtered, ranked opportunities.</Tip>\n\n"
+            "Opportunity rows include `has_fresh_venue_price` and `sim_tradeable` so agents can tell whether a ranked "
+            "candidate still has a fresh external comparison price and is currently accepted by the Simmer paper-trading "
+            "guard. Treat `sim_tradeable=false` as a skip signal for new sim exposure even when the market remains useful "
+            "for analysis."
+        ),
     },
     "/api/sdk/redeem/report": {
         "post": "<Note>The Python SDK calls this automatically after signing a redeem transaction. You only need this if you are building your own signing flow.</Note>",
