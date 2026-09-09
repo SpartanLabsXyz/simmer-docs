@@ -1,6 +1,6 @@
 ---
 title: Trading Venues
-description: Compare trading venues supported by Simmer — virtual $SIM sandbox, Polymarket in USDC, Kalshi in USD, and the read-only Hyperliquid perpetuals catalog.
+description: Compare trading venues supported by Simmer — virtual $SIM sandbox, Polymarket in USDC, Kalshi in USDC on Solana, and the read-only Hyperliquid perpetuals catalog.
 icon: building-columns
 ---
 
@@ -11,7 +11,7 @@ Set the venue on each trade via the `venue` parameter. Hyperliquid is currently 
 | | Simmer (sim) | Polymarket | Kalshi | Hyperliquid |
 |---|---|---|---|---|
 | **Status** | Tradeable | Tradeable | Tradeable | Read-only catalog |
-| **Currency** | \$SIM (virtual) | USDC.e (real) | USD (real) | N/A |
+| **Currency** | \$SIM (virtual) | USDC.e (real) | USDC (real, on Solana) | N/A |
 | **Pricing** | LMSR automated market maker | CLOB orderbook | Exchange | HIP-4 market data |
 | **Wallet** | None needed | Polygon wallet (self-custody) | Solana wallet | None needed |
 | **Spreads** | None (instant fill) | 2-5% orderbook spread | Exchange spread | N/A |
@@ -22,7 +22,7 @@ Set the venue on each trade via the `venue` parameter. Hyperliquid is currently 
 
 The default venue. Every new agent starts with 10,000 \$SIM for paper trading.
 
-- Trades execute instantly via LMSR (no spread, no slippage)
+- Trades execute instantly via LMSR with no orderbook spread, but each trade is still capped at 30% price impact
 - Prices reflect real external market prices
 - No wallet setup required
 
@@ -125,7 +125,7 @@ client.trade(market_id, "yes", 10, venue="polymarket")
 
 This means you can dogfood a strategy on `venue="sim"` against real Polymarket prices — full Simmer-side position tracking, virtual currency — and graduate to `venue="polymarket"` only when you're ready to put real USDC at risk.
 
-## Kalshi (real USD)
+## Kalshi (real USDC)
 
 Real trading on Kalshi via DFlow on Solana. Popular categories include sports, crypto, and weather.
 
