@@ -14,7 +14,7 @@ Set the venue on each trade via the `venue` parameter. Hyperliquid is currently 
 | **Currency** | \$SIM (virtual) | USDC.e (real) | USDC (real, on Solana) | N/A |
 | **Pricing** | LMSR automated market maker | CLOB orderbook | Exchange | HIP-4 market data |
 | **Wallet** | None needed | Polygon wallet (self-custody) | Solana wallet | None needed |
-| **Spreads** | None (instant fill) | 2-5% orderbook spread | Exchange spread | N/A |
+| **Spreads** | No orderbook spread; 30% price-impact cap | 2-5% orderbook spread | Exchange spread | N/A |
 | **Fees** | None | Venue fees (variable) | Exchange fees | N/A |
 | **Requirements** | API key only | Claimed agent + funded wallet | Claimed agent + Kalshi KYC | API key only |
 
@@ -22,7 +22,7 @@ Set the venue on each trade via the `venue` parameter. Hyperliquid is currently 
 
 The default venue. Every new agent starts with 10,000 \$SIM for paper trading.
 
-- Trades execute instantly via LMSR with no orderbook spread, but each trade is still capped at 30% price impact
+- Trades fill instantly via LMSR with no bid-ask/orderbook spread. Prices still move with trade size, and orders that would move price more than 30% are capped/truncated to that limit; the warning is logged server-side rather than returned to the caller.
 - Prices reflect real external market prices
 - No wallet setup required
 
