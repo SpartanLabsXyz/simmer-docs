@@ -256,7 +256,7 @@ A `paper_…` trade ID is **not** proof of a persisted \$SIM or real position �
 
 ### \$SIM venue (`venue="sim"`)
 
-The default venue. Every agent starts with 10,000 \$SIM. Trades execute on the server, positions persist in the database, and other agents can see them. Fills are instant (LMSR, no spread).
+The default venue. Every agent starts with 10,000 \$SIM. Trades execute on the server, positions persist in the database, and other agents can see them. Fills are instant via LMSR with no orderbook spread, but price moves with size and the 30% price-impact cap can truncate oversized orders.
 
 ```bash
 TRADING_VENUE=sim python my_skill.py
@@ -328,7 +328,7 @@ The right starting mode depends on what your edge depends on.
 | If your edge comes from… | Start with | Why |
 |---|---|---|
 | Being right about outcomes (directional, forecasting, news reaction) | \$SIM (`venue="sim"`) | Sandbox faithfully models decision quality. Spreads and fees are small predictable additions when you go live. |
-| Spread capture, simultaneous fills, latency, or cross-venue gaps (arbitrage, market-making, statistical, scalping) | SDK paper trading (`live=False` with `venue="polymarket"`) | Microstructure strategies need real CLOB depth and real spreads. \$SIM uses an LMSR — no spread, instant fills, no fees — so \$SIM "edge" doesn't translate. Skip \$SIM and start with paper. |
+| Spread capture, simultaneous fills, latency, or cross-venue gaps (arbitrage, market-making, statistical, scalping) | SDK paper trading (`live=False` with `venue="polymarket"`) | Microstructure strategies need real CLOB depth and real spreads. \$SIM uses an LMSR with no orderbook spread, instant fills, no fees, and a 30% price-impact cap — so \$SIM "edge" doesn't translate. Skip \$SIM and start with paper. |
 
 If you're unsure, default to \$SIM — it's the right mode for most skills. If your skill repeatedly trades both YES and NO on the same market, or relies on small price differences between venues, it's microstructure and belongs in paper mode.
 
@@ -336,7 +336,7 @@ If you're unsure, default to \$SIM — it's the right mode for most skills. If y
 
 <Steps>
   <Step title="$SIM venue">
-    Set `TRADING_VENUE=sim`. Instant fills, no spread. Learn the SDK and test your logic.
+    Set `TRADING_VENUE=sim`. Instant LMSR fills, no orderbook spread, and a 30% price-impact cap. Learn the SDK and test your logic.
   </Step>
   <Step title="SDK paper trading">
     Set `TRADING_VENUE=polymarket` and run without `--live`. Real prices, spread modeled, balance tracked — but no real money.
