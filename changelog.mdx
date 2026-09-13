@@ -77,6 +77,16 @@ This release also corrects two paper/live safety signals. `venue="polymarket"` w
 
 ---
 
+## 2026-09-10 — `simmer-sdk` 0.25.5: empty market searches explain themselves, and tradeability lands on Market objects
+
+Released [`simmer-sdk` 0.25.5](https://pypi.org/project/simmer-sdk/0.25.5/) on PyPI. `get_markets()` now returns a `MarketList` — a `list` subclass that carries `empty_reason`, `hint`, and `matched_before_tradeable_filter` alongside the market entries. An agent that gets an empty list can now tell "no such markets exist" from "matching markets exist, but the default tradeability filter dropped them", then follow the embedded hint and retry with `tradeable_only=False` when that is the right move.
+
+`Market` objects now expose `sim_tradeable` and `is_orderbook_open`, which the API was already returning but the SDK parser was dropping. Existing callers do not need code changes: iteration, `len`, indexing, slicing, `== []`, and `isinstance(x, list)` all behave the same on `MarketList`; the new fields are additive, and omitting `tradeable_only` keeps the same default behavior.
+
+`pip install --upgrade simmer-sdk`
+
+---
+
 ## 2026-09-06 — `simmer-sdk` 0.25.0: backtests now charge fees by default
 
 Released [`simmer-sdk` 0.25.0](https://pypi.org/project/simmer-sdk/0.25.0/) on PyPI. `simmer backtest` now charges fees, and your numbers will change. `--fee-rate` follows the replay engine's base rate (currently `0.05`) instead of `0`, applied as `notional × rate × (1 - price)`; resting limit orders that fill as makers pay nothing. Pass `--fee-rate 0` for the previous fee-free behaviour.
