@@ -74,9 +74,22 @@ Before trading, always check context. It tells you about slippage, existing posi
 Pass `my_probability` to get an edge calculation. Without it, you still get slippage and position data but no TRADE/HOLD recommendation.
 </Tip>
 
+<a id="dry-run" />
+
 ## 3. Dry run
 
 Test your trade without executing it. On **sim and Polymarket**, both the REST endpoint and `client.trade(dry_run=True)` (SDK 0.24.6+, keyword-only) validate and price the trade, returning estimated shares, cost, and fees without moving money or signing an order. Kalshi has no preview-pricing `dry_run` yet; current SDKs fail closed instead of placing an order. For a full session with balance tracking instead of a single preview, use `live=False` paper trading — see [Practice modes](/venues#practice-modes).
+
+⚠️ **The defaults differ by method, so read them rather than assuming.**
+`trade()` is `dry_run=False` — it places for real unless you ask otherwise.
+`place_combo()` is `dry_run=True` — it previews unless you pass `dry_run=False`.
+
+⚠️ **`dry_run` is not honored on `venue="kalshi"`.** Kalshi BYOW has no preview
+pricing path yet, so `client.trade(..., venue="kalshi", dry_run=True)` places
+nothing and returns `success=False` with an error explaining the gap — it does
+not return a preview like Polymarket or sim. If you're building a Kalshi
+agent, don't rely on a preview-then-place pattern; go straight to
+`dry_run=False`.
 
 <Warning>
 **Kalshi `dry_run` is unavailable, but current SDKs fail closed.** In `simmer-sdk` 0.25.2 and later, `client.trade(venue="kalshi", dry_run=True)` returns `success=False` with an error explaining that no preview pricing exists; it does not quote, sign, submit, or place an order. Upgrade if you are on `simmer-sdk` earlier than 0.25.2: those versions reached the Kalshi signing path before the flag was read and could place a real order (SIM-5041). Through REST, `POST /api/sdk/trade` still has no Kalshi preview path, so use the quote endpoint below instead.

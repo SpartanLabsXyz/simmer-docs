@@ -42,6 +42,16 @@ Simmer skills are **agent-runtime-agnostic**. Every skill is a portable folder w
 
 We don't publish speculative install commands — if a runtime isn't explicitly confirmed, the syntax above gets added the moment we verify it end-to-end.
 
+<a id="grok-bot" />
+
+## Grok Bot
+
+Install this skill with `clawhub install simmer --workdir <your agent-data dir> --dir workflows` — Grok Bot loads skills from `workflows/`, not the default `./skills`. If `npx clawhub` stalls, `bun add -g clawhub` works.
+
+<Warning>
+**Register a separate agent for it and leave that agent unclaimed:** Grok Bot's cloud computer is shared by every bot on your account, so any key stored there is readable by all of them, and an unclaimed agent is $SIM-locked no matter what `venue=` anything passes. Keep your claimed, wallet-linked agent's key off that machine.
+</Warning>
+
 ## Why portable skills matter
 
 Before agentskills.io, installing a skill in OpenClaw vs Hermes vs Claude Code meant three different formats, three different packaging steps, and no way to move a strategy across runtimes without re-authoring it. The open standard fixed that: `SKILL.md` + frontmatter is universal, and a well-written skill runs anywhere the format is supported.
