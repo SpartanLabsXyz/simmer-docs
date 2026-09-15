@@ -155,7 +155,7 @@ Released [`simmer-sdk` 0.24.3](https://pypi.org/project/simmer-sdk/0.24.3/) on P
 
 Released [`simmer-mcp` v3.4.9](https://www.npmjs.com/package/simmer-mcp/v/3.4.9) on npm. All 21 MCP tools now emit `readOnlyHint` and `destructiveHint` annotations from the existing `mutates` metadata. MCP clients that enforce plan mode or read-only mode were previously falling back to name-based heuristics; because Simmer tools use the `simmer_` prefix rather than `get` or `list`, five safe read tools were misclassified as writes and blocked.
 
-The write-capable paths remain gated. Tools that can place live orders or modify the local experiment workspace carry explicit destructive annotations, while simulated backtests and ordinary read tools are annotated as read-only. Upgrade with `npm install -g simmer-mcp` or keep using `npx -y simmer-mcp` to pick up the latest package on launch.
+The write-capable paths remain gated. Tools that can place live orders or modify the local experiment workspace carry explicit destructive annotations, while simulated backtests and ordinary read tools are annotated as read-only. Upgrade with `npm install -g simmer-mcp@latest` or use `npx -y simmer-mcp@latest` in your MCP config to run the current npm release on launch.
 
 ---
 
@@ -509,7 +509,7 @@ This stage is **read-only**. Hyperliquid markets may appear in `client.get_marke
 
 ## 2026-05-24 — `simmer-mcp` listed on the official MCP Registry
 
-`simmer-mcp` is now discoverable on the [official MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.adlai88/simmer-mcp`. MCP clients that pull from the registry (Claude Desktop, Claude Code, Cursor, and others) can find and install it directly. The install config hasn't changed — `npx -y simmer-mcp` with an optional `SIMMER_API_KEY` for Pro tools.
+`simmer-mcp` is now discoverable on the [official MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.adlai88/simmer-mcp`. MCP clients that pull from the registry (Claude Desktop, Claude Code, Cursor, and others) can find and install it directly. The recommended install config is now `npx -y simmer-mcp@latest` with an optional `SIMMER_API_KEY` for Pro tools.
 
 ---
 
