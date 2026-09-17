@@ -41,8 +41,10 @@ Your agent drives the loop — autoresearch provides the tools, your agent provi
 
 ## Install
 
+Use `npx -y simmer-mcp@latest` in your MCP config when you want the newest npm release on each launch:
+
 ```bash
-npm install -g simmer-mcp
+npx -y simmer-mcp@latest
 ```
 
 Then add the MCP server to your agent's config:
@@ -54,7 +56,7 @@ Then add the MCP server to your agent's config:
   "mcpServers": {
     "simmer": {
       "command": "npx",
-      "args": ["-y", "simmer-mcp"],
+      "args": ["-y", "simmer-mcp@latest"],
       "env": {
         "SIMMER_API_KEY": "your-api-key"
       }
@@ -68,7 +70,7 @@ Then add the MCP server to your agent's config:
   "mcpServers": {
     "simmer": {
       "command": "npx",
-      "args": ["-y", "simmer-mcp"],
+      "args": ["-y", "simmer-mcp@latest"],
       "env": {
         "SIMMER_API_KEY": "your-api-key"
       }
@@ -82,7 +84,7 @@ Then add the MCP server to your agent's config:
   "mcpServers": {
     "simmer": {
       "command": "npx",
-      "args": ["-y", "simmer-mcp"],
+      "args": ["-y", "simmer-mcp@latest"],
       "env": {
         "SIMMER_API_KEY": "your-api-key"
       }
@@ -93,10 +95,20 @@ Then add the MCP server to your agent's config:
 
 </CodeGroup>
 
+<Warning>
+If you previously installed `simmer-mcp` globally, a stale global binary on your `PATH` can shadow the latest package when you run `npx -y simmer-mcp`. Either keep `simmer-mcp@latest` in the config above, or upgrade the global install with `npm install -g simmer-mcp@latest`. The startup banner shows the version that is actually running.
+</Warning>
+
+You can also install the MCP server globally and point clients at the global binary:
+
+```bash
+npm install -g simmer-mcp@latest
+```
+
 Then install the behavioral skill (tells your agent how to run the experiment loop):
 
 ```bash
-npx simmer-mcp install-skill
+npx -y simmer-mcp@latest install-skill
 ```
 
 This auto-detects your runtime (OpenClaw, Hermes) and copies the skill instructions to the right directory. For Claude Code, add the skill content to your project's `CLAUDE.md`.
@@ -331,6 +343,6 @@ v1 supports the `/autoresearch` command interface:
 | `/autoresearch status` | Current skill, experiment count, keep rate, budget remaining, pause state |
 | `/autoresearch reset` | Clear state and start fresh (clears pause if paused) |
 
-**Upgrade to v2** — Install `simmer-mcp` via npm (`npm install -g simmer-mcp`) and switch to the MCP config above. v2 works with OpenClaw, Hermes, and Claude Code.
+**Upgrade to v2** — Install `simmer-mcp` via npm (`npm install -g simmer-mcp@latest`) and switch to the MCP config above. v2 works with OpenClaw, Hermes, and Claude Code.
 
 </Accordion>
