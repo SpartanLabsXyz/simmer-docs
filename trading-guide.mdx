@@ -86,6 +86,10 @@ To preview a Kalshi trade, call `POST /api/sdk/trade/kalshi/quote` and simply do
 
 A dry run is also **not a permission check**. The server skips account trading-limit enforcement on previews, so a trade that dry-runs clean can still be rejected live for a daily buy cap, a spend cap, or a failed-trade cooldown — read `client.get_settings()` for those. On Polymarket the preview prices from the executable order book, so the estimate is as good as the book at that moment and can still move before you place.
 
+<Warning>
+**`client.trade()` and `client.place_combo()` default `dry_run` differently.** `trade()` defaults to `dry_run=False` — it places for real unless you pass `dry_run=True`. `place_combo()` defaults to `dry_run=True` — it previews and places nothing unless you explicitly pass `dry_run=False`. Calling `place_combo()` without reading its default produces no error and no fill; check `result.success` and the response's `dry_run` field to confirm which one you got.
+</Warning>
+
 **REST — sim and Polymarket:**
 
 ```bash
