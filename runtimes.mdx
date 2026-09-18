@@ -39,8 +39,17 @@ Simmer skills are **agent-runtime-agnostic**. Every skill is a portable folder w
 | **Cursor** | 🟡 Install syntax pending | Skills load from a project's skills directory per [Cursor's skills docs](https://cursor.com/docs/skills). |
 | **Codex** | 🟡 Install syntax pending | Skills compatible per [OpenAI Codex skills docs](https://learn.chatgpt.com/docs/build-skills). |
 | **Cline, Goose, OpenHands, Factory, etc.** | 🟡 Install syntax pending | Most are agentskills.io-standard clients — our skills load as-is from a folder; check each runtime's skills guide. |
+| **Grok Bot** | 🟡 Install syntax pending | Install into `workflows/` — see [shared-computer warning below](#grok-bot) before storing a real-money key. |
 
 We don't publish speculative install commands — if a runtime isn't explicitly confirmed, the syntax above gets added the moment we verify it end-to-end.
+
+## Grok Bot
+
+Install the skill folder into Grok Bot's `workflows/` directory — it's picked up the same way as any agentskills.io-compliant skill.
+
+<Warning>
+**Grok Bot's cloud computer is shared across every bot on your account.** Any credential stored there — including a Simmer API key or a wallet's private key — is readable by every other bot running on that same shared computer, not just the one you configured. Register a separate Simmer agent for Grok Bot and leave that agent unclaimed (sim/paper only) rather than storing a real-money key on shared infrastructure.
+</Warning>
 
 ## Why portable skills matter
 
