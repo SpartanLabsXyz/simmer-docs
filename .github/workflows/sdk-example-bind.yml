@@ -29,13 +29,32 @@ jobs:
 
       - name: Install simmer-sdk for ${{ matrix.target }} bind
         run: |
+          install_pinned_sdk() {
+            version="$1"
+            attempts=10
+            delay=30
+            for attempt in $(seq 1 "$attempts"); do
+              echo "Installing simmer-sdk==$version (attempt $attempt/$attempts)"
+              # --no-cache-dir: pip caches the PyPI index page (max-age 600s), so a
+              # retry inside that window would re-read the miss and never see the release.
+              if pip install --no-cache-dir "simmer-sdk==$version" pytest; then
+                return 0
+              fi
+              if [ "$attempt" -eq "$attempts" ]; then
+                break
+              fi
+              echo "simmer-sdk==$version is not available yet; retrying in ${delay}s"
+              sleep "$delay"
+            done
+            echo "Failed to install simmer-sdk==$version after $attempts attempts"
+            return 1
+          }
+
           FLOOR="$(cat .sdk-doc-floor)"
           if [ "${{ matrix.target }}" = "floor" ]; then
-            echo "Installing simmer-sdk==$FLOOR"
-            pip install "simmer-sdk==$FLOOR" pytest
+            install_pinned_sdk "$FLOOR"
           elif [ -n "${{ github.event.client_payload.sdk_version || '' }}" ]; then
-            echo "Installing dispatched simmer-sdk==${{ github.event.client_payload.sdk_version }}"
-            pip install "simmer-sdk==${{ github.event.client_payload.sdk_version }}" pytest
+            install_pinned_sdk "${{ github.event.client_payload.sdk_version }}"
           else
             echo "Installing latest simmer-sdk"
             pip install --upgrade simmer-sdk pytest
