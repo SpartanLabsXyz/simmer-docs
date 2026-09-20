@@ -35,7 +35,9 @@ jobs:
             delay=30
             for attempt in $(seq 1 "$attempts"); do
               echo "Installing simmer-sdk==$version (attempt $attempt/$attempts)"
-              if pip install "simmer-sdk==$version" pytest; then
+              # --no-cache-dir: pip caches the PyPI index page (max-age 600s), so a
+              # retry inside that window would re-read the miss and never see the release.
+              if pip install --no-cache-dir "simmer-sdk==$version" pytest; then
                 return 0
               fi
               if [ "$attempt" -eq "$attempts" ]; then
