@@ -8,7 +8,7 @@ icon: bolt
 **Pro & Elite feature.** Reactor is available on [Simmer Pro](https://simmer.markets/dashboard?ref=docs&utm_campaign=docs) and Elite plans (Elite includes everything in Pro).
 </Info>
 
-Reactor is Simmer's signal bus. **Producers** (Simmer's server-side relay services) detect on-chain events and write typed signals. **Consumer skills** poll `GET /api/sdk/reactor/pending`, branch on `payload.type`, act, and DELETE the signal on success. Skills subscribe to specific signal types, so a copytrading skill ignores any signal type it does not handle.
+Reactor is Simmer's signal bus. **Producers** (Simmer's server-side relay services) detect on-chain events and write typed signals. **Consumer skills** poll `GET /api/sdk/reactor/pending`, branch on the signal's `type`, act, and DELETE the signal by its `signal_id` on success. Skills subscribe to specific signal types, so a copytrading skill ignores any signal type it does not handle.
 
 ## How it works
 
@@ -21,7 +21,7 @@ Reactor pending queue
        ↓
 Consumer skill (your agent, any runtime)
   ↓ GET /api/sdk/reactor/pending
-  ↓ branch on payload.type
+  ↓ branch on type (absent = copytrading)
   └─ type == "copytrading"  → mirror trade via SimmerClient.trade()
   ↓ DELETE /api/sdk/reactor/pending/{id} on success
 ```
@@ -29,7 +29,7 @@ Consumer skill (your agent, any runtime)
 1. **Detect** — A producer (relay or detector) monitors on-chain or order-flow data in real time
 2. **Resolve** — Server-side: market IDs mapped, sizes computed, payload assembled
 3. **Queue** — Typed signal written to your pending feed with a 120s expiry window
-4. **Consume** — Your skill polls the endpoint, reads `payload.type`, and acts accordingly
+4. **Consume** — Your skill polls the endpoint, reads the signal's `type` (absent on copytrading signals), and acts accordingly
 5. **Acknowledge** — DELETE on success clears the signal; unacknowledged signals expire automatically
 
 <Warning>
@@ -38,7 +38,7 @@ Consumer skill (your agent, any runtime)
 
 ## Signal type catalog
 
-Reactor delivers typed signals such as `copytrading`; older seasonal signal types are documented below for reference. Your skill should filter by `payload.type` on every poll so signal types it does not handle are ignored.
+Reactor delivers typed signals such as `copytrading`; older seasonal signal types are documented below for reference. Copytrading signals carry **no** `type` field; seasonal signals set one (for example `"type": "shock_ladder"`). Filter on every poll so signal types your skill does not handle are ignored: a copytrading consumer keeps only signals with no `type`.
 
 ### `copytrading` — Whale trade mirroring
 
@@ -78,14 +78,15 @@ curl -X PATCH "https://api.simmer.markets/api/sdk/reactor/config" \
 
 | Field | Description |
 |-------|-------------|
-| `type` | `"copytrading"` |
-| `tx_hash` | Unique transaction hash (used for dedup + DELETE) |
-| `taker_wallet` | Whale wallet address |
-| `taker_side` | BUY or SELL |
-| `taker_size` | Trade size in shares |
-| `taker_price` | Execution price (0.0–1.0) |
+| `signal_id` | Acknowledgement key: DELETE `/api/sdk/reactor/pending/{signal_id}`. Usually the transaction hash; maker-fill signals use a longer, leg-scoped id |
+| `event_type` | `"settlement"` (the on-chain event that produced the signal; not a signal type) |
+| `tx_hash` | On-chain transaction hash, for audit. Do not DELETE by it |
 | `market_id` | Pre-resolved Simmer market UUID (trade-ready) |
-| `market_title` | Human-readable market name |
+| `whale.wallet` | Whale wallet address |
+| `whale.side` | BUY or SELL |
+| `whale.size` | Trade size in shares |
+| `whale.price` | Execution price (0.0–1.0) |
+| `whale.market_title` | Human-readable market name |
 | `side` | Mapped side for your mirror trade (yes/no) |
 | `action` | buy or sell |
 | `amount` | Computed mirror amount (USD) |
@@ -180,19 +181,16 @@ The copytrading skill follows this consumer loop:
 from simmer_sdk import SimmerClient
 
 client = SimmerClient()
-signals = client._request("GET", "/api/sdk/reactor/pending").get("signals", [])
+signals = client._request("GET", "/api/sdk/reactor/pending").get("reactor_signals", [])
 
 for signal in signals:
-    signal_type = signal.get("type")
+    if signal.get("type") is not None:
+        continue  # copytrading signals carry no type; skip other signal types
 
-    if signal_type == "copytrading":
-        # mirror trade ...
-        pass
-    else:
-        continue  # ignore unknown types
+    # mirror trade ...
 
-    # acknowledge
-    client._request("DELETE", f"/api/sdk/reactor/pending/{signal['tx_hash']}")
+    # acknowledge by signal_id, never by tx_hash
+    client._request("DELETE", f"/api/sdk/reactor/pending/{signal['signal_id']}")
 ```
 
 Skills installed from ClawHub include this loop; you don't need to write it yourself.
