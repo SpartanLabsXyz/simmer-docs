@@ -44,6 +44,8 @@ These classmethods are sugar over the regular `SimmerClient(api_key=..., ...)` c
 
 <Warning>
 For live Polymarket clients with `WALLET_PRIVATE_KEY` or `OWS_WALLET`, regular `SimmerClient(...)` construction checks pending risk alerts and may submit stop-loss/take-profit exit orders. This is intentional for self-custody safety: Simmer's server cannot sign those exits. Use `SimmerClient.readonly(...)` for API-key validation, preflight/status checks, and other non-trading paths.
+
+A readonly client raises `RuntimeError` on every call that changes the account: trades, cancels, redeems, approvals, wallet linking, settings, monitors, alerts and webhooks (SDK 0.25.9). Market imports stay allowed. `live=False` is narrower: it simulates `trade()`, `place_combo()` and Hyperliquid orders, and every other call still acts on the real account.
 </Warning>
 
 ## Quick example
@@ -117,11 +119,13 @@ result.new_price        # Effective fill price (same value as fill_price; prefer
 result.fee_rate_bps     # Fee rate in the signed order, bps (SDK 0.21.0). Always 0 on
                         # Polymarket V2 — that means "unknown", not "free". See /faq#fees.
 result.fully_filled     # Boolean — shares_filled >= shares_requested
-result.fill_status      # "filled", "submitted", "unconfirmed", or "failed" (see Trading Guide)
+result.fill_status      # "filled", "partially_filled", "submitted", "unconfirmed", or "failed" (see Trading Guide)
 result.order_status     # Polymarket order status: "matched", "live", "delayed"
 result.error            # Error message if failed
 result.hint             # Resolution hint if failed
-result.warnings         # List of warnings
+result.warnings         # Server notices, e.g. why a fill is not confirmed yet. None when there are none (SDK 0.25.10)
+result.client_order_id  # ID for this order attempt, set even when order_id is not (SDK 0.25.10)
+result.exchange_order_id_pending  # True when the exchange order ID has not come back yet (SDK 0.25.10)
 result.skip_reason      # Why trade was skipped (e.g. "conflicts skipped")
 ```
 

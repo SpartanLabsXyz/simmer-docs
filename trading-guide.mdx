@@ -93,7 +93,7 @@ To preview a Kalshi trade, call `POST /api/sdk/trade/kalshi/quote` and simply do
 **Two things a dry run is not, both of which will bite you if you treat it as a safety gate:**
 
 - **Not a permission check.** The server skips account trading-limit enforcement on a dry run, so a clean preview can still be rejected live for a daily cap, a spend cap, or a cooldown. Read `client.get_settings()` for those.
-- **Not an accurate price on Polymarket.** It prices from the market's external price rather than the executable book, so on neg-risk markets (YES and NO as independent CLOB tokens) the estimate can differ from the fill. When the entry price is the thing you need right, call `/api/sdk/markets/{id}/executable-price`.
+- **Not an accurate price on Polymarket.** It prices from the market's external price rather than the executable book, so on neg-risk markets (YES and NO as independent CLOB tokens) the estimate can differ from the fill. When the entry price is the thing you need right, call `/api/sdk/markets/{id}/executable-price`. Its response includes `quote_ts` and `quote_age_seconds`: the quote can come from a cached book, so on fast markets skip the trade or re-fetch when the age is more than you can accept. Both are `null` when no book is available.
 
 **REST — sim and Polymarket:**
 
@@ -261,9 +261,11 @@ Order types apply only to Polymarket. Sim and Kalshi venues execute at market au
 |---|---|---|
 | `"filled"` | Order matched and confirmed on-chain | Use `shares_bought` and `cost` directly |
 | `"partially_filled"` | FAK order crossed with less than the requested size | Check `shares_filled`; re-order the remainder if needed |
-| `"submitted"` | GTC order placed on the book, waiting for a counterparty | Monitor via `get_positions()`, or cancel |
+| `"submitted"` | GTC order placed on the book, waiting for a counterparty. Also an immediate (FAK/FOK) order that Polymarket reported as delayed; `order_status` is `"delayed"` | GTC: monitor via `get_positions()`, or cancel. Delayed: poll `get_positions()`; the fill usually confirms within seconds |
 | `"unconfirmed"` | Order sent, fill data confirming (~1-15 seconds) | Poll `get_positions()` or wait briefly |
 | `"failed"` | Order failed to execute | Check `result.error` for details |
+
+`"submitted"` and `"unconfirmed"` results report `shares_bought=0` and `cost=0` until the fill is confirmed. Read `result.warnings` for the reason, and check `get_positions()` before you retry: retrying on the response alone can buy twice.
 
 <Warning>
 Don't use `success` alone to confirm a fill. A GTC order returns `success=true` with `cost=0` and `fill_status="submitted"` — that's correct behavior, not a false positive. The order is on the book, waiting for a match.
