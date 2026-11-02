@@ -8849,19 +8849,47 @@
             "title": "Pnl Percent"
           },
           "trades_count": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Trades Count"
           },
           "win_count": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Win Count"
           },
           "loss_count": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Loss Count"
           },
           "win_rate": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Win Rate"
           },
           "created_at": {
@@ -8891,11 +8919,7 @@
         "required": [
           "id",
           "name",
-          "status",
-          "trades_count",
-          "win_count",
-          "loss_count",
-          "win_rate"
+          "status"
         ],
         "title": "SdkAgentLeaderboardEntry",
         "description": "Leaderboard entry for an SDK agent (OpenClaw)."
@@ -9686,14 +9710,26 @@
             "title": "Realized Pnl"
           },
           "total_trades": {
-            "type": "integer",
-            "title": "Total Trades",
-            "default": 0
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Trades"
           },
           "markets_traded": {
-            "type": "integer",
-            "title": "Markets Traded",
-            "default": 0
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Markets Traded"
           }
         },
         "type": "object",
