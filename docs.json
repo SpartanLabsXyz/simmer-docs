@@ -85,8 +85,7 @@
             "pages": [
               "POST /api/sdk/agents/register",
               "GET /api/sdk/agents/me",
-              "PATCH /api/sdk/agents/me/settings",
-              "GET /api/sdk/agents/claim/{claim_code}"
+              "PATCH /api/sdk/agents/me/settings"
             ]
           },
           {

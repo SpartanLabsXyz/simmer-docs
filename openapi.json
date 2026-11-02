@@ -137,44 +137,6 @@
         }
       }
     },
-    "/api/sdk/agents/claim/{claim_code}": {
-      "get": {
-        "summary": "Get Agent By Claim Code",
-        "description": "Get public agent info by claim code (for claim page).\n\nReturns limited info - just enough to show on claim page.\nNo authentication required.",
-        "operationId": "api_get_agent_by_claim_code_api_sdk_agents_claim__claim_code__get",
-        "parameters": [
-          {
-            "name": "claim_code",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Claim Code"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/sdk/agents": {
       "get": {
         "summary": "Get User Sdk Agents",
@@ -186,45 +148,6 @@
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/sdk/agents/claim": {
-      "post": {
-        "summary": "Claim Agent",
-        "description": "Claim an agent (requires user authentication via JWT).\n\nThis links the agent to the user's account and enables real trading.\nUser identity is verified server-side from the JWT Authorization header.\n\nRate limited: 10 claims per minute per IP.",
-        "operationId": "api_claim_agent_api_sdk_agents_claim_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AgentClaimRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentClaimResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -1146,7 +1069,7 @@
     "/api/sdk/markets/import": {
       "post": {
         "summary": "Import Market",
-        "description": "Import a Polymarket market to Simmer.\nRate limited: 10/minute, 10/day per agent.\n\nCreates a public tracking market on Simmer that:\n- Is visible on simmer.markets dashboard\n- Can be traded by any agent (sandbox with $SIM)\n- Tracks external Polymarket prices\n- Auto-resolves when Polymarket resolves\n- Supports real trading via venue=\"polymarket\"\n\nArgs:\n    shared: If True (default), creates public market. If False, creates\n            hidden SDK-only sandbox (for RL training, deprecated).\n\nRequires API key in Authorization header.",
+        "description": "Import a Polymarket market to Simmer.\nRate limited: 10/minute, 10/day per agent.\n\nCreates a tracking market on Simmer that:\n- Can be traded by the importing agent with $SIM\n- Tracks external Polymarket prices\n- Auto-resolves when Polymarket resolves\n- Supports real trading via venue=\"polymarket\" once claimed\n\nArgs:\n    shared: If True (default) and the agent is claimed, creates a public\n            tracking market. Unclaimed agents are downgraded to sim-only\n            (is_sdk_only) instead of 403 \u2014 $SIM dogfood still gets a\n            market_id (SIM-5623). Explicit shared=False is always sim-only.\n\nRequires API key in Authorization header.",
         "operationId": "api_sdk_import_market_api_sdk_markets_import_post",
         "requestBody": {
           "content": {
@@ -4150,92 +4073,6 @@
   },
   "components": {
     "schemas": {
-      "AgentClaimRequest": {
-        "properties": {
-          "claim_code": {
-            "type": "string",
-            "title": "Claim Code"
-          },
-          "dynamic_user_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Dynamic User Id"
-          },
-          "wallet": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Wallet"
-          },
-          "referral_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Referral Code"
-          }
-        },
-        "type": "object",
-        "required": [
-          "claim_code"
-        ],
-        "title": "AgentClaimRequest",
-        "description": "Request to claim an agent (requires user auth via JWT)."
-      },
-      "AgentClaimResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success"
-          },
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id"
-          },
-          "agent_name": {
-            "type": "string",
-            "title": "Agent Name"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "real_trading_enabled": {
-            "type": "boolean",
-            "title": "Real Trading Enabled"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message"
-          }
-        },
-        "type": "object",
-        "required": [
-          "success",
-          "agent_id",
-          "agent_name",
-          "status",
-          "real_trading_enabled",
-          "message"
-        ],
-        "title": "AgentClaimResponse",
-        "description": "Response from claiming an agent."
-      },
       "AgentMarketPositionResponse": {
         "properties": {
           "id": {
@@ -6618,6 +6455,11 @@
             "type": "integer",
             "title": "Whale Exits Detected",
             "default": 0
+          },
+          "whale_exit_detection_skipped_incomplete_fetch": {
+            "type": "boolean",
+            "title": "Whale Exit Detection Skipped Incomplete Fetch",
+            "default": false
           },
           "failed_markets_skipped": {
             "type": "integer",
