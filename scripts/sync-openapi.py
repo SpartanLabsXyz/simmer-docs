@@ -22,9 +22,9 @@ INCLUDE = [
     "POST /api/sdk/agents/register",
     "GET /api/sdk/agents/me",
     "PATCH /api/sdk/agents/me/settings",
-    "GET /api/sdk/agents/claim/{claim_code}",
+    # Claim lookup/submission require a browser-session JWT. They are dashboard
+    # flows, not SDK/API-key endpoints, so keep them out of public agent docs.
     "GET /api/sdk/agents",
-    "POST /api/sdk/agents/claim",
     "POST /api/sdk/agents/{agent_id}/reactivate",
     "POST /api/sdk/agents/{agent_id}/release",
     "PATCH /api/sdk/agents/{agent_id}/settings",
